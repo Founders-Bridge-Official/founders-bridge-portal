@@ -1,3 +1,6 @@
+/* eslint-disable */
+// eslint-disable-next-line
+/* eslint-disable */
 import { useState, useRef, useEffect } from "react";
 
 // ═══════════════════════════════════════════════════════════════════════

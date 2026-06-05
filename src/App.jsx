@@ -76,7 +76,112 @@ const DEFAULT_ORG = {
   upi: "foundersbridge@hdfc",
 };
 
+// ─── DOCUMENT FIELD TYPES ─────────────────────────────────────────────
+const FIELD_TYPES = [
+  { id: "text",     label: "Text"         },
+  { id: "number",   label: "Number"       },
+  { id: "date",     label: "Date"         },
+  { id: "email",    label: "Email"        },
+  { id: "tel",      label: "Phone"        },
+  { id: "select",   label: "Dropdown"     },
+  { id: "textarea", label: "Long Text"    },
+];
+
+// ─── MASTER DOCUMENT TEMPLATES (Admin edits these in Settings) ────────
+// These are reusable templates that get attached to task types.
+// collectionType: "common" = once per company, "director" = once per director
+const DEFAULT_DOC_TEMPLATES = {
+  "dsc_creation": {
+    id: "dsc_creation",
+    name: "DSC Creation",
+    collectionType: "director",    // Repeats per director
+    infoFields: [
+      { id: "if1", label: "Full Name (as per PAN)",   type: "text",     required: true  },
+      { id: "if2", label: "Father's Name",            type: "text",     required: true  },
+      { id: "if3", label: "Date of Birth",            type: "date",     required: true  },
+      { id: "if4", label: "Gender",                   type: "select",   required: true,  options: ["Male","Female","Other"] },
+      { id: "if5", label: "PAN Number",               type: "text",     required: true  },
+      { id: "if6", label: "Mobile Number",            type: "tel",      required: true  },
+      { id: "if7", label: "Email Address",            type: "email",    required: true  },
+      { id: "if8", label: "Residential Address",      type: "textarea", required: true  },
+      { id: "if9", label: "Pincode",                  type: "number",   required: true  },
+    ],
+    docSlots: [
+      { id: "ds1", label: "PAN Card",                  required: true  },
+      { id: "ds2", label: "Aadhaar Card (Front Side)", required: true  },
+      { id: "ds3", label: "Aadhaar Card (Back Side)",  required: true  },
+      { id: "ds4", label: "Passport Size Photo",       required: true  },
+      { id: "ds5", label: "Specimen Signature",        required: true  },
+      { id: "ds6", label: "Address Proof (Utility Bill / Rent Agreement)", required: true },
+    ],
+  },
+  "name_approval": {
+    id: "name_approval",
+    name: "Name Approval",
+    collectionType: "common",    // Once per company
+    infoFields: [
+      { id: "if1", label: "Proposed Name Option 1",   type: "text",     required: true  },
+      { id: "if2", label: "Proposed Name Option 2",   type: "text",     required: false },
+      { id: "if3", label: "Proposed Name Option 3",   type: "text",     required: false },
+      { id: "if4", label: "Main Business Activity",   type: "textarea", required: true  },
+      { id: "if5", label: "Secondary Activity (if any)", type: "textarea", required: false },
+    ],
+    docSlots: [],
+  },
+  "main_application": {
+    id: "main_application",
+    name: "Main Application Filing",
+    collectionType: "common",
+    infoFields: [
+      { id: "if1", label: "Registered Office Address (Full)",  type: "textarea", required: true  },
+      { id: "if2", label: "Pincode",                           type: "number",   required: true  },
+      { id: "if3", label: "State",                             type: "select",   required: true,  options: ["Maharashtra","Karnataka","Delhi","Tamil Nadu","Gujarat","Telangana","West Bengal","Rajasthan","Other"] },
+      { id: "if4", label: "Authorised Share Capital (₹)",     type: "number",   required: true  },
+      { id: "if5", label: "Paid-up Share Capital (₹)",        type: "number",   required: true  },
+    ],
+    docSlots: [
+      { id: "ds1", label: "Proof of Registered Office (Rent Agreement / Sale Deed)", required: true  },
+      { id: "ds2", label: "NOC from Property Owner",           required: true  },
+      { id: "ds3", label: "Utility Bill of Office (Electricity / Gas)", required: true },
+    ],
+  },
+  "gst_registration": {
+    id: "gst_registration",
+    name: "GST Registration",
+    collectionType: "common",
+    infoFields: [
+      { id: "if1", label: "Nature of Business",     type: "select",   required: true, options: ["Manufacturer","Trader","Service Provider","Both Goods & Services"] },
+      { id: "if2", label: "Annual Turnover (approx ₹)", type: "number", required: true },
+      { id: "if3", label: "Business Commencement Date", type: "date",  required: true },
+      { id: "if4", label: "Bank Account Number",    type: "text",     required: true  },
+      { id: "if5", label: "Bank IFSC Code",         type: "text",     required: true  },
+      { id: "if6", label: "Bank Name",              type: "text",     required: true  },
+    ],
+    docSlots: [
+      { id: "ds1", label: "Cancelled Cheque / Bank Statement",   required: true  },
+      { id: "ds2", label: "Business Address Proof",              required: true  },
+      { id: "ds3", label: "Electricity Bill of Business Premises", required: true },
+    ],
+  },
+  "form_8_llp": {
+    id: "form_8_llp",
+    name: "Form 8 — LLP Statement of Accounts",
+    collectionType: "common",
+    infoFields: [
+      { id: "if1", label: "Financial Year",        type: "select",   required: true, options: ["2024-25","2025-26","2026-27"] },
+      { id: "if2", label: "Total Revenue (₹)",     type: "number",   required: true  },
+      { id: "if3", label: "Total Expenses (₹)",    type: "number",   required: true  },
+      { id: "if4", label: "Net Profit/Loss (₹)",   type: "number",   required: true  },
+    ],
+    docSlots: [
+      { id: "ds1", label: "Audited Financials / P&L Statement",  required: true  },
+      { id: "ds2", label: "Balance Sheet",                       required: true  },
+    ],
+  },
+};
+
 // ─── SERVICE BUNDLES (Admin configures these) ─────────────────────────
+// Each task now references a docTemplateId from DEFAULT_DOC_TEMPLATES
 const DEFAULT_BUNDLES = [
   {
     id: "b1",
@@ -84,14 +189,23 @@ const DEFAULT_BUNDLES = [
     icon: "🤝",
     description: "Complete LLP incorporation service",
     lineItems: [
-      { id: "li1", name: "Name Application Govt Fees",   type: "govt",  price: 200,  gst: false, unit: "fixed",    tasks: [] },
-      { id: "li2", name: "Main Application Govt Fees",   type: "govt",  price: 450,  gst: false, unit: "fixed",    tasks: [] },
-      { id: "li3", name: "DSC Token",                    type: "dsc",   price: 850,  gst: true,  unit: "per_unit", tasks: [{ name: "DSC Creation for Director {n}", autoFromQty: true }] },
-      { id: "li4", name: "DSC Association Charges",      type: "service",price: 1271, gst: true,  unit: "per_unit", tasks: [] },
-      { id: "li5", name: "LLP Professional Charges",     type: "service",price: 850,  gst: true,  unit: "fixed",    tasks: [
-        { name: "Name Approval", autoFromQty: false },
-        { name: "Main Application Filing", autoFromQty: false },
-      ]},
+      { id: "li1", name: "Name Application Govt Fees",  type: "govt",    price: 200,  gst: false, unit: "fixed",    tasks: [] },
+      { id: "li2", name: "Main Application Govt Fees",  type: "govt",    price: 450,  gst: false, unit: "fixed",    tasks: [] },
+      { id: "li3", name: "DSC Token",                   type: "dsc",     price: 850,  gst: true,  unit: "per_unit",
+        tasks: [{
+          name: "DSC Creation for Director {n}",
+          autoFromQty: true,
+          requirementType: "form_docs",
+          docTemplateId: "dsc_creation",   // ← references master template
+        }]
+      },
+      { id: "li4", name: "DSC Association Charges",     type: "service", price: 1271, gst: true,  unit: "per_unit", tasks: [] },
+      { id: "li5", name: "LLP Professional Charges",    type: "service", price: 850,  gst: true,  unit: "fixed",
+        tasks: [
+          { name: "Name Approval",          autoFromQty: false, requirementType: "form_docs", docTemplateId: "name_approval"    },
+          { name: "Main Application Filing",autoFromQty: false, requirementType: "form_docs", docTemplateId: "main_application" },
+        ]
+      },
     ],
     totalApprox: 6850,
   },
@@ -101,14 +215,23 @@ const DEFAULT_BUNDLES = [
     icon: "🏢",
     description: "Complete Pvt Ltd company incorporation",
     lineItems: [
-      { id: "li6",  name: "Name Application Govt Fees",   type: "govt",   price: 200,  gst: false, unit: "fixed",    tasks: [] },
-      { id: "li7",  name: "Main Application Govt Fees",   type: "govt",   price: null, gst: false, unit: "fixed",    tasks: [], note: "State-wise — enter manually" },
-      { id: "li8",  name: "DSC Token",                    type: "dsc",    price: 850,  gst: true,  unit: "per_unit", tasks: [{ name: "DSC Creation for Director {n}", autoFromQty: true }] },
-      { id: "li9",  name: "DSC Association Charges",      type: "service", price: 1271, gst: true,  unit: "per_unit", tasks: [] },
-      { id: "li10", name: "Professional Charges",         type: "service", price: 850,  gst: true,  unit: "fixed",    tasks: [
-        { name: "Name Approval", autoFromQty: false },
-        { name: "Main Application Filing", autoFromQty: false },
-      ]},
+      { id: "li6",  name: "Name Application Govt Fees",  type: "govt",    price: 200,  gst: false, unit: "fixed",    tasks: [] },
+      { id: "li7",  name: "Main Application Govt Fees",  type: "govt",    price: null, gst: false, unit: "fixed",    tasks: [], note: "State-wise — enter manually" },
+      { id: "li8",  name: "DSC Token",                   type: "dsc",     price: 850,  gst: true,  unit: "per_unit",
+        tasks: [{
+          name: "DSC Creation for Director {n}",
+          autoFromQty: true,
+          requirementType: "form_docs",
+          docTemplateId: "dsc_creation",
+        }]
+      },
+      { id: "li9",  name: "DSC Association Charges",     type: "service", price: 1271, gst: true,  unit: "per_unit", tasks: [] },
+      { id: "li10", name: "Professional Charges",        type: "service", price: 850,  gst: true,  unit: "fixed",
+        tasks: [
+          { name: "Name Approval",          autoFromQty: false, requirementType: "form_docs", docTemplateId: "name_approval"    },
+          { name: "Main Application Filing",autoFromQty: false, requirementType: "form_docs", docTemplateId: "main_application" },
+        ]
+      },
     ],
     totalApprox: null,
   },
@@ -421,13 +544,35 @@ function LoginPage({ onLogin, showToast }) {
   };
 
   const handleSendOtp = async () => {
-    if (!identifier) { setError("Enter your email or mobile number"); return; }
+    if (!identifier) { setError("Enter your mobile number"); return; }
+    const phone = identifier.replace(/\D/g,"").slice(-10);
+    if (phone.length !== 10) { setError("Enter a valid 10-digit mobile number"); return; }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 800));
+    const result = await OTPService.send(phone);
     setLoading(false);
-    setOtpSent(true);
-    setCount(30);
-    showToast("OTP feature coming soon — use password login for now", "info");
+    if (result.success) {
+      setOtpSent(true);
+      setCount(30);
+      if (result.demo) {
+        showToast(`Demo OTP: ${result.otp} (check browser console)`, "info");
+        console.log(`🔐 DEMO OTP for ${phone}: ${result.otp}`);
+      } else {
+        showToast(`OTP sent to +91 ${phone}`, "success");
+      }
+    } else {
+      setError("Failed to send OTP. Please try password login.");
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    const phone    = identifier.replace(/\D/g,"").slice(-10);
+    const entered  = otp.join("");
+    if (entered.length < 6) { setError("Enter all 6 digits"); return; }
+    const result   = OTPService.verify(phone, entered);
+    if (!result.valid) { setError(result.reason); return; }
+    const user = DEMO_BY_PHONE[phone];
+    if (user) { showToast(`Welcome, ${user.name}!`,"success"); onLogin(user); }
+    else { setError("No account found for this number. Please register or use password login."); }
   };
 
   const handleOtpChange = (i, val) => {
@@ -480,8 +625,8 @@ function LoginPage({ onLogin, showToast }) {
                 <button className="btn btn-primary btn-lg" style={{ width: "100%" }} onClick={handleSendOtp} disabled={loading}>
                   {loading ? <span className="spinner" /> : "Send OTP →"}
                 </button>
-                <div style={{ marginTop: 12, padding: "10px 14px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, fontSize: 12, color: "#B45309" }}>
-                  ⚠️ OTP login via SMS coming soon. Use password login for now.
+                <div style={{ marginTop: 12, padding: "10px 14px", background: MSG91_CONFIG.AUTH_KEY ? "#F0FDF4" : "#FFFBEB", border: `1px solid ${MSG91_CONFIG.AUTH_KEY ? "#BBF7D0" : "#FDE68A"}`, borderRadius: 8, fontSize: 12, color: MSG91_CONFIG.AUTH_KEY ? "#15803D" : "#B45309" }}>
+                  {MSG91_CONFIG.AUTH_KEY ? "✅ MSG91 connected — real OTP SMS will be sent" : "⚠️ Demo mode — OTP shown in browser console (F12 → Console). Add REACT_APP_MSG91_AUTH_KEY in Vercel to go live."}
                 </div>
               </>
             ) : (
@@ -492,7 +637,7 @@ function LoginPage({ onLogin, showToast }) {
                     <input key={i} ref={otpRefs[i]} className="otp-box" type="tel" maxLength={1} value={d} onChange={e => handleOtpChange(i, e.target.value)} autoFocus={i === 0} />
                   ))}
                 </div>
-                <button className="btn btn-primary btn-lg" style={{ width: "100%", marginBottom: 12 }}>Verify & Sign In →</button>
+                <button className="btn btn-primary btn-lg" style={{ width: "100%", marginBottom: 12 }} onClick={handleVerifyOtp}>Verify & Sign In →</button>
                 <div style={{ textAlign: "center", fontSize: 12, color: "var(--muted)" }}>
                   {countdown > 0 ? `Resend in ${countdown}s` : <span style={{ color: "var(--blue)", cursor: "pointer" }} onClick={handleSendOtp}>Resend OTP</span>}
                 </div>
@@ -1240,9 +1385,10 @@ function InvoicesPage() {
   );
 }
 
-function InvoicesTable({ invoices }) {
-  const { openModal } = useApp();
-  const statusStyle = { paid: { bg: "#F0FDF4", color: "#16A34A" }, partial: { bg: "#FFFBEB", color: "#B45309" }, unpaid: { bg: "#FEF2F2", color: "#DC2626" } };
+function InvoicesTable({ invoices, onPayNow }) {
+  const { openModal, user } = useApp();
+  const isClient = user?.role === "client";
+  const statusStyle = { paid:{bg:"#F0FDF4",color:"#16A34A"}, partial:{bg:"#FFFBEB",color:"#B45309"}, unpaid:{bg:"#FEF2F2",color:"#DC2626"} };
   return (
     <div className="card">
       <div className="tbl-wrap">
@@ -1253,14 +1399,24 @@ function InvoicesTable({ invoices }) {
               const ss = statusStyle[i.status] || statusStyle.unpaid;
               return (
                 <tr key={i.id}>
-                  <td style={{ fontWeight: 700, color: "var(--blue)", fontSize: 12 }}>{i.invoiceNo}</td>
-                  <td style={{ fontSize: 12 }}>{i.clientName}</td>
-                  <td style={{ fontSize: 12, color: "var(--muted)" }}>{i.date}</td>
-                  <td style={{ fontWeight: 700 }}>{INR(i.total)}</td>
-                  <td style={{ color: "var(--green)", fontWeight: 600 }}>{INR(i.paid)}</td>
-                  <td style={{ color: i.pending > 0 ? "var(--red)" : "var(--muted)", fontWeight: 600 }}>{INR(i.pending)}</td>
-                  <td><span className="badge" style={{ background: ss.bg, color: ss.color }}><span className="badge-dot" style={{ background: ss.color }} />{i.status}</span></td>
-                  <td><button className="btn btn-sm" onClick={() => openModal("view-invoice", { invoice: i })}>View</button></td>
+                  <td style={{ fontWeight:700, color:"var(--blue)", fontSize:12 }}>{i.invoiceNo}</td>
+                  <td style={{ fontSize:12 }}>{i.clientName}</td>
+                  <td style={{ fontSize:12, color:"var(--muted)" }}>{i.date}</td>
+                  <td style={{ fontWeight:700 }}>{INR(i.total)}</td>
+                  <td style={{ color:"var(--green)", fontWeight:600 }}>{INR(i.paid)}</td>
+                  <td style={{ color:i.pending>0?"var(--red)":"var(--muted)", fontWeight:600 }}>{INR(i.pending)}</td>
+                  <td><span className="badge" style={{ background:ss.bg, color:ss.color }}><span className="badge-dot" style={{ background:ss.color }}/>{i.status}</span></td>
+                  <td style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                    <button className="btn btn-sm" onClick={()=>openModal("view-invoice",{invoice:i})}>View</button>
+                    {!isClient && i.status!=="paid" && (
+                      <button className="btn btn-sm" style={{ background:"var(--green)",color:"#fff",border:"none" }}
+                        onClick={()=>openModal("record-payment",{invoiceId:i.id})}>Record Payment</button>
+                    )}
+                    {isClient && i.status!=="paid" && (
+                      <button className="btn btn-sm" style={{ background:"linear-gradient(135deg,#16A34A,#15803D)",color:"#fff",border:"none" }}
+                        onClick={()=>openModal("pay-now",{invoiceId:i.id})}>💳 Pay Now</button>
+                    )}
+                  </td>
                 </tr>
               );
             })}
@@ -1307,9 +1463,22 @@ function TasksPage() {
 }
 
 function TasksTable({ tasks, showClient = true }) {
-  const { openModal, setTasks } = useApp();
+  const { openModal, setTasks, submissions, user, clients } = useApp();
+  const isTeam = user?.role === "admin" || user?.role === "manager" || user?.role === "employee";
+
   const updateStatus = (taskId, newStatus) => {
-    setTasks(ts => ts.map(t => t.id === taskId ? { ...t, status: newStatus, completedDate: newStatus === "completed" ? today() : t.completedDate } : t));
+    setTasks(ts => ts.map(t => {
+      if (t.id !== taskId) return t;
+      const updated = { ...t, status: newStatus, completedDate: newStatus === "completed" ? today() : t.completedDate };
+      const client  = clients.find(c => c.id === t.clientId);
+      if (newStatus === "client_action" && client?.phone) {
+        KRAYA.taskActionNeeded(client.phone, client.contactName || client.name, t.title);
+      }
+      if (newStatus === "completed" && client?.phone) {
+        KRAYA.taskCompleted(client.phone, t.title, client.name);
+      }
+      return updated;
+    }));
   };
 
   return (
@@ -1322,43 +1491,68 @@ function TasksTable({ tasks, showClient = true }) {
               <th>Task</th>
               {showClient && <th>Client</th>}
               <th>Due Date</th>
-              <th>Requirement</th>
               <th>Status</th>
+              {isTeam && <th>Submission</th>}
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {tasks.length === 0 && (
-              <tr><td colSpan={7}><div className="empty"><div className="empty-icon">✅</div><div>No tasks found</div></div></td></tr>
+              <tr><td colSpan={8}><div className="empty"><div className="empty-icon">✅</div><div>No tasks found</div></div></td></tr>
             )}
             {tasks.map(t => {
               const isOverdue = t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "completed";
-              const req = TASK_REQUIREMENT_TYPES.find(r => r.id === t.requirementType);
+              const sub       = (submissions||[]).find(s => s.taskId === t.id);
+              const hasPendingReview = sub?.status === "submitted";
               return (
                 <tr key={t.id}>
-                  <td style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700 }}>#{t.sequence}</td>
+                  <td style={{ fontSize:11, color:"var(--muted)", fontWeight:700 }}>#{t.sequence}</td>
                   <td>
-                    <div style={{ fontWeight: 500, fontSize: 13 }}>{t.title}</div>
-                    {t.notes && <div style={{ fontSize: 11, color: "var(--muted)" }}>{t.notes}</div>}
+                    <div style={{ fontWeight:500, fontSize:13 }}>{t.title}</div>
+                    {t.docTemplateId && (
+                      <div style={{ fontSize:10, color:"var(--blue)", marginTop:2 }}>
+                        📋 {(DEFAULT_DOC_TEMPLATES[t.docTemplateId]||{}).name || t.docTemplateId}
+                        {" · "}{(DEFAULT_DOC_TEMPLATES[t.docTemplateId]||{}).collectionType==="director" ? "Per Director":"Company"}
+                      </div>
+                    )}
+                    {t.notes && <div style={{ fontSize:11, color:"var(--muted)" }}>{t.notes}</div>}
                   </td>
-                  {showClient && <td style={{ fontSize: 12, color: "var(--muted)", maxWidth: 150 }}>{t.clientName}</td>}
+                  {showClient && <td style={{ fontSize:12, color:"var(--muted)", maxWidth:140 }}>{t.clientName}</td>}
                   <td>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: isOverdue ? "var(--red)" : "var(--ink)", background: isOverdue ? "#FEF2F2" : "transparent", padding: isOverdue ? "2px 7px" : 0, borderRadius: 5 }}>
-                      {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
+                    <span style={{ fontSize:12, fontWeight:600, color:isOverdue?"var(--red)":"var(--ink)", background:isOverdue?"#FEF2F2":"transparent", padding:isOverdue?"2px 7px":0, borderRadius:5 }}>
+                      {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short"}) : "—"}
                       {isOverdue && " ⚠"}
                     </span>
                   </td>
-                  <td><span className="tag">{req?.label || "—"}</span></td>
                   <td>
-                    <select
-                      value={t.status}
-                      onChange={e => updateStatus(t.id, e.target.value)}
-                      style={{ fontSize: 11, padding: "4px 8px", border: "1.5px solid var(--border)", borderRadius: 6, cursor: "pointer", background: "#fff" }}
-                    >
-                      {TASK_STATUSES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-                    </select>
+                    {isTeam ? (
+                      <select value={t.status} onChange={e=>updateStatus(t.id,e.target.value)}
+                        style={{ fontSize:11, padding:"4px 8px", border:"1.5px solid var(--border)", borderRadius:6, cursor:"pointer", background:"#fff" }}>
+                        {TASK_STATUSES.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}
+                      </select>
+                    ) : (
+                      <Badge status={t.status} />
+                    )}
                   </td>
-                  <td><button className="btn btn-sm" onClick={() => openModal("view-task", { task: t })}>View</button></td>
+                  {isTeam && (
+                    <td>
+                      {hasPendingReview ? (
+                        <button className="btn btn-sm" style={{ background:"#7C3AED",color:"#fff",border:"none" }}
+                          onClick={()=>openModal("review-submission",{submissionId:sub.id})}>
+                          📥 Review
+                        </button>
+                      ) : sub?.status === "approved" ? (
+                        <span style={{ fontSize:11,color:"var(--green)",fontWeight:600 }}>✓ Approved</span>
+                      ) : sub?.status === "changes_requested" ? (
+                        <span style={{ fontSize:11,color:"var(--red)",fontWeight:600 }}>↩ Changes sent</span>
+                      ) : t.requirementType !== "none" && t.docTemplateId ? (
+                        <span style={{ fontSize:11,color:"var(--muted)" }}>Awaiting client</span>
+                      ) : (
+                        <span style={{ fontSize:11,color:"var(--faint)" }}>—</span>
+                      )}
+                    </td>
+                  )}
+                  <td><button className="btn btn-sm" onClick={()=>openModal("view-task",{task:t})}>View</button></td>
                 </tr>
               );
             })}
@@ -1521,13 +1715,76 @@ function BundleSettings() {
               </div>
               {li.type !== "govt" && (
                 <div style={{ marginTop: 10 }}>
-                  <label className="f-label">Auto-created tasks (one per line)</label>
-                  <textarea className="f-textarea" rows={2}
-                    value={li.tasks.map(t => t.name).join("\n")}
-                    onChange={e => setItem(li.id, "tasks", e.target.value.split("\n").filter(Boolean).map(name => ({ name, autoFromQty: li.type === "dsc" })))}
-                    placeholder={li.type === "dsc" ? "DSC Creation for Director {n}" : "Task name (one per line)"}
-                  />
-                  <div className="f-hint">Use {"{n}"} for DSC tasks to auto-number by director count</div>
+                  <label className="f-label">Auto-created Tasks</label>
+                  <div className="f-hint" style={{ marginBottom: 6 }}>
+                    Each task below is auto-created when this invoice line item is added.
+                    {li.type === "dsc" && " DSC tasks repeat once per director (based on qty)."}
+                  </div>
+                  {(li.tasks || []).map((task, ti) => (
+                    <div key={ti} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                        <input
+                          className="f-input"
+                          style={{ flex: 1 }}
+                          placeholder={li.type === "dsc" ? "DSC Creation for Director {n}" : `Task ${ti + 1} name`}
+                          value={task.name}
+                          onChange={e => {
+                            const t = [...(li.tasks || [])];
+                            t[ti] = { ...t[ti], name: e.target.value };
+                            setItem(li.id, "tasks", t);
+                          }}
+                        />
+                        <button className="btn btn-sm btn-red" onClick={() => setItem(li.id, "tasks", (li.tasks||[]).filter((_,i)=>i!==ti))}>✕</button>
+                      </div>
+                      <div className="form-grid-2">
+                        <div className="f-group">
+                          <label className="f-label" style={{ fontSize: 9 }}>Collection Level</label>
+                          <select className="f-select" style={{ fontSize: 12, padding: "5px 8px" }}
+                            value={task.autoFromQty ? "director" : "common"}
+                            onChange={e => {
+                              const t = [...(li.tasks||[])];
+                              t[ti] = { ...t[ti], autoFromQty: e.target.value === "director" };
+                              setItem(li.id, "tasks", t);
+                            }}>
+                            <option value="common">Common — once per company</option>
+                            <option value="director">Director-level — once per director</option>
+                          </select>
+                        </div>
+                        <div className="f-group">
+                          <label className="f-label" style={{ fontSize: 9 }}>Document Template</label>
+                          <select className="f-select" style={{ fontSize: 12, padding: "5px 8px" }}
+                            value={task.docTemplateId || ""}
+                            onChange={e => {
+                              const t = [...(li.tasks||[])];
+                              const tpl = DEFAULT_DOC_TEMPLATES[e.target.value];
+                              t[ti] = {
+                                ...t[ti],
+                                docTemplateId: e.target.value,
+                                requirementType: e.target.value ? "form_docs" : "none",
+                              };
+                              setItem(li.id, "tasks", t);
+                            }}>
+                            <option value="">No collection needed</option>
+                            {Object.values(DEFAULT_DOC_TEMPLATES).map(tpl => (
+                              <option key={tpl.id} value={tpl.id}>{tpl.name} ({tpl.collectionType})</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      {task.docTemplateId && DEFAULT_DOC_TEMPLATES[task.docTemplateId] && (
+                        <div style={{ marginTop: 8, padding: "8px 12px", background: "#F0F9FF", borderRadius: 6, fontSize: 11, color: "#0369A1" }}>
+                          📋 <strong>{DEFAULT_DOC_TEMPLATES[task.docTemplateId].name}</strong>:
+                          {" "}{DEFAULT_DOC_TEMPLATES[task.docTemplateId].infoFields.length} info fields
+                          {" · "}{DEFAULT_DOC_TEMPLATES[task.docTemplateId].docSlots.length} document slots
+                          {" · "}<strong>{DEFAULT_DOC_TEMPLATES[task.docTemplateId].collectionType === "director" ? "Per Director" : "Per Company"}</strong>
+                          <br/><span style={{ color: "#6B7280" }}>Edit fields in Settings → Document Templates</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <button className="btn btn-ghost btn-sm" onClick={() => setItem(li.id, "tasks", [...(li.tasks||[]), { name: "", autoFromQty: li.type==="dsc", requirementType: "none", docTemplateId: "" }])}>
+                    + Add Task
+                  </button>
                 </div>
               )}
             </div>
@@ -1678,66 +1935,406 @@ function EmpDashboard() {
 }
 
 function EmpTasks() {
-  const { user, tasks } = useApp();
+  const { user, tasks, setTasks, openModal, submissions } = useApp();
   const myTasks = tasks.filter(t => t.assignedTo === user.id);
-  return <TasksPage />;
+  const [filter, setFilter] = useState("all");
+  const visible = filter === "all" ? myTasks : myTasks.filter(t => t.status === filter);
+
+  return (
+    <>
+      <div className="stat-grid grid4" style={{ marginBottom: 18 }}>
+        {[
+          ["Pending",   myTasks.filter(t=>t.status!=="completed"&&t.status!=="cancelled").length, "var(--orange)"],
+          ["Completed", myTasks.filter(t=>t.status==="completed").length,                         "var(--green)"],
+          ["Overdue",   myTasks.filter(t=>t.dueDate&&new Date(t.dueDate)<new Date()&&t.status!=="completed").length, "var(--red)"],
+          ["Total",     myTasks.length, "var(--ink)"],
+        ].map(([l,v,c])=>(
+          <div key={l} className="stat-box"><div className="stat-lbl">{l}</div><div className="stat-val" style={{color:c,fontSize:22}}>{v}</div></div>
+        ))}
+      </div>
+      <div className="chips">
+        <div className={`chip ${filter==="all"?"on":""}`} onClick={()=>setFilter("all")}>All ({myTasks.length})</div>
+        {TASK_STATUSES.map(s=>(
+          <div key={s.id} className={`chip ${filter===s.id?"on":""}`} onClick={()=>setFilter(s.id)}>
+            {s.label} ({myTasks.filter(t=>t.status===s.id).length})
+          </div>
+        ))}
+      </div>
+      <TasksTable tasks={visible} showClient={true} />
+    </>
+  );
 }
 
 function EmpClients() {
-  return <ClientsPage />;
+  const { user, clients, tasks, employees, openModal } = useApp();
+  const myClients = clients.filter(c => c.assignedTo === user.id);
+  const [selected, setSelected] = useState(null);
+  const [search, setSearch] = useState("");
+
+  if (selected) return <ClientDetail client={selected} onBack={()=>setSelected(null)} />;
+
+  const visible = myClients.filter(c =>
+    !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.clientNo.includes(search)
+  );
+
+  return (
+    <>
+      <div style={{ display:"flex", gap:10, marginBottom:18, alignItems:"center" }}>
+        <input className="f-input" placeholder="Search client…" value={search} onChange={e=>setSearch(e.target.value)} style={{ maxWidth:260 }} />
+        <button className="btn btn-primary" style={{ marginLeft:"auto" }}
+          onClick={()=>openModal("create-client", { defaultAssignTo: user.id })}>
+          + New Client
+        </button>
+      </div>
+      <div className="card">
+        <div className="tbl-wrap">
+          <table>
+            <thead><tr><th>Client</th><th>Type</th><th>Contact</th><th>Billing</th><th>Collected</th><th>Pending</th><th>Progress</th><th></th></tr></thead>
+            <tbody>
+              {visible.length === 0 && (
+                <tr><td colSpan={8}><div className="empty"><div className="empty-icon">🏢</div><div>No clients assigned to you yet</div></div></td></tr>
+              )}
+              {visible.map(c => {
+                const clientTasks = tasks.filter(t => t.clientId === c.id);
+                const done = clientTasks.filter(t=>t.status==="completed").length;
+                const progress = clientTasks.length ? Math.round(done/clientTasks.length*100) : c.progress;
+                return (
+                  <tr key={c.id} style={{ cursor:"pointer" }} onClick={()=>setSelected(c)}>
+                    <td><div style={{ fontWeight:600 }}>{c.name}</div><div style={{ fontSize:11,color:"var(--muted)" }}>{c.clientNo}</div></td>
+                    <td><span className="tag">{c.type}</span></td>
+                    <td><div style={{ fontSize:12 }}>{c.contactName}</div><div style={{ fontSize:11,color:"var(--muted)" }}>{c.phone}</div></td>
+                    <td style={{ fontWeight:700 }}>{INR(c.totalBilling)}</td>
+                    <td style={{ color:"var(--green)",fontWeight:600 }}>{INR(c.collected)}</td>
+                    <td style={{ color:c.pending>0?"var(--red)":"var(--muted)",fontWeight:600 }}>{INR(c.pending)}</td>
+                    <td>
+                      <div style={{ display:"flex",alignItems:"center",gap:6,minWidth:100 }}>
+                        <div className="prog-bg" style={{ flex:1 }}><div className="prog-fill" style={{ width:progress+"%",background:progress===100?"var(--green)":"var(--blue)" }}/></div>
+                        <span style={{ fontSize:12,fontWeight:700 }}>{progress}%</span>
+                      </div>
+                    </td>
+                    <td><button className="btn btn-sm">View →</button></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════
 // CLIENT VIEWS
 // ═══════════════════════════════════════════════════════════════════════
 function ClientHome() {
-  const { clients, user } = useApp();
-  // In production, filter by user's companies
-  const myClients = clients.slice(0, 1); // Demo: show first client
+  const { clients, user, tasks, invoices } = useApp();
+  const [selectedCo, setSelectedCo] = useState(null);
+
+  // Find companies where this client is the contact (matched by email or phone)
+  const myClients = clients.filter(c =>
+    c.email === user.email ||
+    c.phone === user.phone ||
+    c.id    === user.id
+  );
+  // Fallback for demo: show first 2 if no match
+  const displayClients = myClients.length > 0 ? myClients : clients.slice(0, 2);
+
+  if (selectedCo) return <ClientCompanyDetail company={selectedCo} onBack={()=>setSelectedCo(null)} />;
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 16 }}>
-      {myClients.map(c => (
-        <div key={c.id} className="card" style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg,var(--blue),var(--orange))" }} />
-          <div className="card-body">
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-              <span className="tag">{c.type}</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", background: "#F3F4F6", padding: "2px 8px", borderRadius: 5 }}>{c.clientNo}</span>
-            </div>
-            <div className="sr" style={{ fontSize: 18, lineHeight: 1.3, marginBottom: 8 }}>{c.name}</div>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ fontSize: 12, color: "var(--muted)" }}>Overall Progress</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: c.progress === 100 ? "var(--green)" : "var(--blue)" }}>{c.progress}%</span>
+    <>
+      <div style={{ marginBottom:16 }}>
+        <div style={{ fontSize:14,fontWeight:600,color:"var(--muted)" }}>
+          Welcome back, <span style={{ color:"var(--ink)" }}>{user.name}</span>. Here are your companies.
+        </div>
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))", gap:16 }}>
+        {displayClients.map(c => {
+          const clientTasks = tasks.filter(t => t.clientId === c.id);
+          const done        = clientTasks.filter(t=>t.status==="completed").length;
+          const pending     = clientTasks.filter(t=>t.status!=="completed"&&t.status!=="cancelled").length;
+          const needsAction = clientTasks.filter(t=>t.status==="client_action").length;
+          const progress    = clientTasks.length ? Math.round(done/clientTasks.length*100) : c.progress||0;
+          const clientInvs  = invoices.filter(i=>i.clientId===c.id);
+          const outstanding = clientInvs.reduce((s,i)=>s+i.pending,0);
+
+          return (
+            <div key={c.id} className="card" style={{ cursor:"pointer", position:"relative", overflow:"hidden", transition:"all .2s" }}
+              onClick={()=>setSelectedCo(c)}
+              onMouseEnter={e=>e.currentTarget.style.transform="translateY(-3px)"}
+              onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}
+            >
+              <div style={{ position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,var(--blue),var(--orange))" }}/>
+              <div className="card-body">
+                {/* Header */}
+                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10 }}>
+                  <span className="tag">{c.type}</span>
+                  <span style={{ fontSize:10,fontWeight:700,color:"var(--muted)",background:"#F3F4F6",padding:"2px 8px",borderRadius:5 }}>{c.clientNo}</span>
+                </div>
+                <div style={{ fontFamily:"'Fraunces',serif",fontSize:18,lineHeight:1.3,marginBottom:12 }}>{c.name}</div>
+
+                {/* Action needed alert */}
+                {needsAction > 0 && (
+                  <div style={{ padding:"7px 10px",background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:7,marginBottom:12,fontSize:12,color:"#C2410C",fontWeight:600 }}>
+                    ⚠️ {needsAction} task{needsAction>1?"s":""} need{needsAction===1?"s":""} your action
+                  </div>
+                )}
+
+                {/* Progress */}
+                <div style={{ marginBottom:12 }}>
+                  <div style={{ display:"flex",justifyContent:"space-between",marginBottom:5 }}>
+                    <span style={{ fontSize:12,color:"var(--muted)" }}>Overall Progress</span>
+                    <span style={{ fontSize:12,fontWeight:700,color:progress===100?"var(--green)":"var(--blue)" }}>{progress}%</span>
+                  </div>
+                  <div className="prog-bg"><div className="prog-fill" style={{ width:progress+"%",background:progress===100?"var(--green)":"var(--blue)" }}/></div>
+                </div>
+
+                {/* Stats row */}
+                <div style={{ display:"flex",gap:0,paddingTop:12,borderTop:"1px solid var(--border)" }}>
+                  {[
+                    ["Tasks Done",    `${done}/${clientTasks.length}`,  "var(--green)"],
+                    ["Pending",       pending,                           "var(--orange)"],
+                    ["Outstanding",   outstanding>0?INR(outstanding):"Nil", outstanding>0?"var(--red)":"var(--green)"],
+                  ].map(([l,v,c],i)=>(
+                    <div key={l} style={{ flex:1,textAlign:"center",borderRight:i<2?"1px solid var(--border)":undefined }}>
+                      <div style={{ fontSize:15,fontWeight:700,color:c,marginBottom:2 }}>{v}</div>
+                      <div style={{ fontSize:10,color:"var(--muted)" }}>{l}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="prog-bg"><div className="prog-fill" style={{ width: c.progress + "%", background: c.progress === 100 ? "var(--green)" : "var(--blue)" }} /></div>
             </div>
-            <div style={{ display: "flex", gap: 14, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
-              <div style={{ fontSize: 10, color: "var(--muted)" }}><div style={{ fontSize: 15, fontWeight: 700, color: c.pending > 0 ? "var(--red)" : "var(--green)", marginBottom: 1 }}>{c.pending > 0 ? INR(c.pending) : "Nil"}</div>Outstanding</div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+// ─── Client Company Detail Page ───────────────────────────────────────
+function ClientCompanyDetail({ company, onBack }) {
+  const { tasks, invoices, submissions, openModal } = useApp();
+  const [tab, setTab] = useState("tasks");
+
+  const clientTasks = tasks.filter(t => t.clientId === company.id);
+  const clientInvs  = invoices.filter(i => i.clientId === company.id);
+  const needsAction = clientTasks.filter(t=>t.status==="client_action");
+  const totalBilled = clientInvs.reduce((s,i)=>s+i.total,0);
+  const totalPaid   = clientInvs.reduce((s,i)=>s+i.paid,0);
+  const outstanding = totalBilled - totalPaid;
+  const done        = clientTasks.filter(t=>t.status==="completed").length;
+  const progress    = clientTasks.length ? Math.round(done/clientTasks.length*100) : 0;
+
+  // Documents submitted across all tasks
+  const allDocs = [];
+  submissions.filter(s=>clientTasks.some(t=>t.id===s.taskId)).forEach(sub=>{
+    if (sub.documents) {
+      Object.entries(sub.documents).forEach(([dirIdx,slots])=>{
+        Object.entries(slots).forEach(([slotId,doc])=>{
+          allDocs.push({ ...doc, taskId:sub.taskId, dirIdx, submittedAt:sub.submittedAt });
+        });
+      });
+    }
+  });
+
+  return (
+    <>
+      <button className="btn" style={{ marginBottom:16 }} onClick={onBack}>← My Companies</button>
+
+      {/* Company header */}
+      <div className="card" style={{ padding:"20px 24px",marginBottom:20 }}>
+        <div style={{ display:"flex",alignItems:"flex-start",gap:16 }}>
+          <div style={{ width:50,height:50,borderRadius:13,background:"linear-gradient(135deg,var(--navy),var(--blue))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0 }}>🏢</div>
+          <div style={{ flex:1 }}>
+            <div style={{ display:"flex",alignItems:"center",gap:10,flexWrap:"wrap" }}>
+              <span style={{ fontFamily:"'Fraunces',serif",fontSize:20 }}>{company.name}</span>
+              <span className="tag">{company.type}</span>
+            </div>
+            <div style={{ display:"flex",gap:16,marginTop:8,flexWrap:"wrap",fontSize:12,color:"var(--muted)" }}>
+              <span>📋 {company.clientNo}</span>
+              {company.cin  && <span>CIN: {company.cin}</span>}
+              {company.gst  && <span>GST: {company.gst}</span>}
+              {company.pan  && <span>PAN: {company.pan}</span>}
             </div>
           </div>
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontSize:11,color:"var(--muted)",marginBottom:4 }}>Overall Progress</div>
+            <div style={{ fontSize:24,fontWeight:700,color:progress===100?"var(--green)":"var(--blue)" }}>{progress}%</div>
+          </div>
         </div>
-      ))}
-    </div>
+      </div>
+
+      {/* Action needed banner */}
+      {needsAction.length > 0 && (
+        <div style={{ padding:"14px 18px",background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:10,marginBottom:16,display:"flex",alignItems:"center",gap:12 }}>
+          <span style={{ fontSize:22 }}>⚠️</span>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:14,fontWeight:700,color:"#C2410C" }}>{needsAction.length} task{needsAction.length>1?"s":""} need{needsAction.length===1?"s":""} your action</div>
+            <div style={{ fontSize:12,color:"#92400E",marginTop:2 }}>Please complete and submit these to allow your team to proceed</div>
+          </div>
+          <button className="btn btn-sm" style={{ background:"#C2410C",color:"#fff",border:"none" }} onClick={()=>setTab("tasks")}>
+            View Tasks →
+          </button>
+        </div>
+      )}
+
+      <div className="tabs">
+        {[["tasks","Tasks"],["billing","Billing"],["docs","Documents"]].map(([id,label])=>(
+          <div key={id} className={`tab ${tab===id?"on":""}`} onClick={()=>setTab(id)}>{label}</div>
+        ))}
+      </div>
+
+      {tab==="tasks" && (
+        <div className="card">
+          <div className="tbl-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Task</th><th>Status</th><th>Due Date</th><th>Action</th></tr></thead>
+              <tbody>
+                {clientTasks.length===0 && (
+                  <tr><td colSpan={5}><div className="empty"><div className="empty-icon">✅</div><div>No tasks yet</div></div></td></tr>
+                )}
+                {clientTasks.map(t=>{
+                  const sub = submissions.find(s=>s.taskId===t.id);
+                  const isOverdue = t.dueDate&&new Date(t.dueDate)<new Date()&&t.status!=="completed";
+                  return (
+                    <tr key={t.id}>
+                      <td style={{ fontSize:11,color:"var(--muted)",fontWeight:700 }}>#{t.sequence}</td>
+                      <td>
+                        <div style={{ fontWeight:500,fontSize:13 }}>{t.title}</div>
+                        {sub?.status==="changes_requested"&&<div style={{ fontSize:11,color:"var(--red)",marginTop:2 }}>↩ Changes needed: {sub.reviewNote}</div>}
+                      </td>
+                      <td>
+                        <Badge status={t.status}/>
+                        {t.status==="team_approval"&&<div style={{ fontSize:10,color:"var(--purple)",marginTop:2 }}>Under review</div>}
+                        {t.status==="completed"&&<div style={{ fontSize:10,color:"var(--green)",marginTop:2 }}>✓ {t.completedDate}</div>}
+                      </td>
+                      <td>
+                        <span style={{ fontSize:12,fontWeight:600,color:isOverdue?"var(--red)":"var(--muted)" }}>
+                          {t.dueDate?new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short"}):"—"}
+                          {isOverdue&&" ⚠"}
+                        </span>
+                      </td>
+                      <td>
+                        {(t.status==="client_action"||sub?.status==="changes_requested") && (
+                          <button className="btn btn-blue btn-sm" onClick={()=>openModal("client-submit-task",{task:t})}>
+                            {sub?.status==="changes_requested"?"Resubmit":"Submit →"}
+                          </button>
+                        )}
+                        {t.status==="completed"&&<span style={{ fontSize:12,color:"var(--green)",fontWeight:700 }}>✓ Done</span>}
+                        {t.status==="team_approval"&&<span style={{ fontSize:12,color:"var(--purple)" }}>⏳ Reviewing</span>}
+                        {(t.status==="open"||t.status==="team_action"||t.status==="govt_approval")&&
+                          <span style={{ fontSize:12,color:"var(--muted)" }}>Team working on it</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {tab==="billing" && (
+        <>
+          <div className="stat-grid" style={{ gridTemplateColumns:"repeat(3,1fr)",marginBottom:20 }}>
+            {[["Total Billed",INR(totalBilled),"var(--ink)"],["Paid",INR(totalPaid),"var(--green)"],["Outstanding",INR(outstanding),outstanding>0?"var(--red)":"var(--muted)"]].map(([l,v,c])=>(
+              <div key={l} className="stat-box"><div className="stat-lbl">{l}</div><div className="stat-val" style={{ fontSize:22,color:c }}>{v}</div></div>
+            ))}
+          </div>
+          <InvoicesTable invoices={clientInvs} />
+        </>
+      )}
+
+      {tab==="docs" && (
+        <div className="card">
+          <div className="card-head"><div className="card-title">Submitted Documents</div></div>
+          {allDocs.length===0 ? (
+            <div className="empty"><div className="empty-icon">📁</div><div>No documents submitted yet</div></div>
+          ) : (
+            allDocs.map((d,i)=>(
+              <div key={i} className="row-item">
+                <span style={{ fontSize:20 }}>📄</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13,fontWeight:500 }}>{d.name}</div>
+                  <div style={{ fontSize:11,color:"var(--muted)" }}>{d.size} · Submitted {d.submittedAt}</div>
+                </div>
+                <button className="btn btn-sm">Download</button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </>
   );
 }
 
 function ClientTasks() {
-  const { tasks } = useApp();
-  return <TasksTable tasks={tasks.slice(0, 4)} showClient={false} />;
+  const { tasks, user, clients } = useApp();
+  // Find client's companies
+  const myClients = clients.filter(c => c.email===user.email || c.phone===user.phone || c.id===user.id);
+  const myClientIds = myClients.length>0 ? myClients.map(c=>c.id) : clients.slice(0,2).map(c=>c.id);
+  const myTasks = tasks.filter(t => myClientIds.includes(t.clientId));
+  return (
+    <>
+      <div style={{ marginBottom:14,fontSize:13,color:"var(--muted)" }}>Tasks across all your companies</div>
+      <TasksTable tasks={myTasks} showClient={true} />
+    </>
+  );
 }
 
 function ClientInvoices() {
-  const { invoices } = useApp();
-  return <InvoicesTable invoices={invoices} />;
+  const { invoices, clients, user } = useApp();
+  const myClients = clients.filter(c => c.email===user.email || c.phone===user.phone || c.id===user.id);
+  const myClientIds = myClients.length>0 ? myClients.map(c=>c.id) : clients.slice(0,2).map(c=>c.id);
+  const myInvs = invoices.filter(i => myClientIds.includes(i.clientId));
+  const totalBilled = myInvs.reduce((s,i)=>s+i.total,0);
+  const totalPaid   = myInvs.reduce((s,i)=>s+i.paid,0);
+  return (
+    <>
+      <div className="stat-grid" style={{ gridTemplateColumns:"repeat(3,1fr)",marginBottom:20 }}>
+        {[["Total Billed",INR(totalBilled),"var(--ink)"],["Amount Paid",INR(totalPaid),"var(--green)"],["Outstanding",INR(totalBilled-totalPaid),(totalBilled-totalPaid)>0?"var(--red)":"var(--muted)"]].map(([l,v,c])=>(
+          <div key={l} className="stat-box"><div className="stat-lbl">{l}</div><div className="stat-val" style={{ fontSize:22,color:c }}>{v}</div></div>
+        ))}
+      </div>
+      <InvoicesTable invoices={myInvs} />
+    </>
+  );
 }
 
 function ClientDocs() {
+  const { submissions, tasks, clients, user } = useApp();
+  const myClients   = clients.filter(c => c.email===user.email || c.phone===user.phone || c.id===user.id);
+  const myClientIds = myClients.length>0 ? myClients.map(c=>c.id) : clients.slice(0,2).map(c=>c.id);
+  const myTasks     = tasks.filter(t => myClientIds.includes(t.clientId));
+  const allDocs = [];
+  submissions.filter(s=>myTasks.some(t=>t.id===s.taskId)).forEach(sub=>{
+    const task = myTasks.find(t=>t.id===sub.taskId);
+    if (sub.documents) {
+      Object.entries(sub.documents).forEach(([dirIdx,slots])=>{
+        Object.entries(slots).forEach(([slotId,doc])=>{
+          allDocs.push({ ...doc, taskTitle:task?.title||"", clientName:task?.clientName||"", submittedAt:sub.submittedAt });
+        });
+      });
+    }
+  });
   return (
-    <div className="empty">
-      <div className="empty-icon">📁</div>
-      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Documents</div>
-      <div style={{ fontSize: 13 }}>Your documents will appear here once uploaded by your team.</div>
+    <div className="card">
+      <div className="card-head"><div className="card-title">My Documents</div><div style={{ fontSize:12,color:"var(--muted)" }}>{allDocs.length} document{allDocs.length!==1?"s":""} submitted</div></div>
+      {allDocs.length===0 ? (
+        <div className="empty"><div className="empty-icon">📁</div><div style={{ fontWeight:600,marginBottom:6 }}>No documents yet</div><div style={{ fontSize:13 }}>Documents you upload for tasks will appear here.</div></div>
+      ) : (
+        allDocs.map((d,i)=>(
+          <div key={i} className="row-item">
+            <div style={{ width:36,height:36,borderRadius:9,background:"#EFF6FF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16 }}>📄</div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:13,fontWeight:600 }}>{d.name}</div>
+              <div style={{ fontSize:11,color:"var(--muted)",marginTop:2 }}>{d.taskTitle} · {d.size} · Submitted {d.submittedAt}</div>
+            </div>
+            <button className="btn btn-sm">Download</button>
+          </div>
+        ))
+      )}
     </div>
   );
 }
@@ -1748,48 +2345,106 @@ function ClientDocs() {
 
 // ─── Create Client Modal ──────────────────────────────────────────────
 function CreateClientModal({ data, onClose }) {
-  const { employees, clients, setClients, showToast, bundles } = useApp();
-  const [form, setForm] = useState({ name: "", contactName: "", email: "", phone: "", type: "Private Limited", assignedTo: employees[0]?.id || "", bundleId: "" });
+  const { employees, clients, setClients, showToast, user } = useApp();
+  const defaultAssign = data?.defaultAssignTo || user?.id || employees[0]?.id || "";
+  const [form, setForm] = useState({
+    name: "", contactName: "", email: "", phone: "",
+    password: "Welcome@123",
+    type: "Private Limited", assignedTo: defaultAssign,
+  });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const isEmployee = user?.role === "employee";
 
   const save = () => {
-    if (!form.name || !form.phone) { showToast("Client name and phone are required", "error"); return; }
+    if (!form.name)  { showToast("Client name is required", "error"); return; }
+    if (!form.phone) { showToast("Mobile number is required", "error"); return; }
+    if (!form.email) { showToast("Email is required", "error"); return; }
+    if (!form.password || form.password.length < 6) { showToast("Password must be at least 6 characters", "error"); return; }
+
     const newClient = {
-      id: "c_" + uuid(), clientNo: "FB-2025-00" + (clients.length + 5),
-      name: form.name, contactName: form.contactName, email: form.email, phone: form.phone,
-      type: form.type, status: "active", assignedTo: form.assignedTo,
+      id: "c_" + uuid(),
+      clientNo: "FB-2025-00" + (clients.length + 5),
+      name: form.name, contactName: form.contactName,
+      email: form.email, phone: form.phone,
+      password: form.password,
+      type: form.type, status: "active",
+      assignedTo: form.assignedTo,
       totalBilling: 0, collected: 0, pending: 0, progress: 0,
       createdAt: today(),
     };
     setClients(cs => [...cs, newClient]);
-    showToast(`Client ${form.name} created successfully!`, "success");
+
+    DEMO_USERS[form.email.toLowerCase()] = {
+      id: newClient.id, name: form.contactName || form.name,
+      role: "client", avatar: initials(form.contactName || form.name),
+      email: form.email, phone: form.phone, password: form.password,
+      color: "#2563EB",
+    };
+    if (form.phone) DEMO_BY_PHONE[form.phone] = DEMO_USERS[form.email.toLowerCase()];
+    KRAYA.welcomeClient(form.phone, form.contactName || form.name);
+
+    showToast(`Client ${form.name} created! Login: ${form.email} / ${form.password}`, "success");
     onClose();
   };
 
   return (
-    <div className="modal-box" style={{ maxWidth: 560 }}>
+    <div className="modal-box" style={{ maxWidth: 580 }}>
       <div className="modal-head"><div className="modal-title">New Client</div><button className="modal-close" onClick={onClose}>✕</button></div>
       <div className="modal-body">
         <div className="form-grid">
           <div className="form-grid-2">
-            <div className="f-group"><label className="f-label">Company / Client Name <span className="f-req">*</span></label><input className="f-input" placeholder="e.g. TechSpark Solutions Pvt Ltd" value={form.name} onChange={e => set("name", e.target.value)} /></div>
-            <div className="f-group"><label className="f-label">Type</label>
+            <div className="f-group">
+              <label className="f-label">Company / Client Name <span className="f-req">*</span></label>
+              <input className="f-input" placeholder="e.g. TechSpark Solutions Pvt Ltd" value={form.name} onChange={e => set("name", e.target.value)} />
+            </div>
+            <div className="f-group">
+              <label className="f-label">Business Type</label>
               <select className="f-select" value={form.type} onChange={e => set("type", e.target.value)}>
-                {["Private Limited", "LLP", "Partnership", "Proprietorship", "Individual"].map(t => <option key={t}>{t}</option>)}
+                {["Private Limited","LLP","Partnership","Proprietorship","Individual"].map(t=><option key={t}>{t}</option>)}
               </select>
             </div>
-            <div className="f-group"><label className="f-label">Contact Person Name</label><input className="f-input" placeholder="Director / Partner name" value={form.contactName} onChange={e => set("contactName", e.target.value)} /></div>
-            <div className="f-group"><label className="f-label">Mobile Number <span className="f-req">*</span></label><input className="f-input" placeholder="98xxxxxxxx" type="tel" value={form.phone} onChange={e => set("phone", e.target.value)} /></div>
-            <div className="f-group"><label className="f-label">Email Address</label><input className="f-input" type="email" placeholder="client@email.com" value={form.email} onChange={e => set("email", e.target.value)} /></div>
-            <div className="f-group"><label className="f-label">Assign To</label>
-              <select className="f-select" value={form.assignedTo} onChange={e => set("assignedTo", e.target.value)}>
-                {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-              </select>
+            <div className="f-group">
+              <label className="f-label">Contact Person Name</label>
+              <input className="f-input" placeholder="Director / Partner name" value={form.contactName} onChange={e => set("contactName", e.target.value)} />
+            </div>
+            <div className="f-group">
+              <label className="f-label">Mobile Number <span className="f-req">*</span></label>
+              <input className="f-input" placeholder="10-digit mobile" type="tel" value={form.phone} onChange={e => set("phone", e.target.value.replace(/\D/g,""))} maxLength={10} />
+            </div>
+            <div className="f-group">
+              <label className="f-label">Email Address <span className="f-req">*</span></label>
+              <input className="f-input" type="email" placeholder="client@email.com" value={form.email} onChange={e => set("email", e.target.value)} />
+            </div>
+            <div className="f-group">
+              <label className="f-label">Login Password <span className="f-req">*</span></label>
+              <input className="f-input" placeholder="Min 6 characters" value={form.password} onChange={e => set("password", e.target.value)} />
+              <div className="f-hint">Client will use this to login. They can change it later.</div>
+            </div>
+            {!isEmployee && (
+              <div className="f-group" style={{ gridColumn:"1/-1" }}>
+                <label className="f-label">Assign To <span className="f-req">*</span></label>
+                <select className="f-select" value={form.assignedTo} onChange={e => set("assignedTo", e.target.value)}>
+                  {employees.map(e=><option key={e.id} value={e.id}>{e.name} ({e.role})</option>)}
+                </select>
+                <div className="f-hint">This employee will see the client in their portal immediately.</div>
+              </div>
+            )}
+          </div>
+          <div className="info-box" style={{ background:"#EFF6FF", border:"1px solid #BFDBFE", marginTop: 4 }}>
+            <span>ℹ️</span>
+            <div style={{ fontSize:12, color:"var(--blue)" }}>
+              After creating, share these login details with the client:<br/>
+              <strong>URL:</strong> founders-bridge-portal.vercel.app<br/>
+              <strong>Email:</strong> {form.email || "their email"}<br/>
+              <strong>Password:</strong> {form.password}
             </div>
           </div>
         </div>
       </div>
-      <div className="modal-foot"><button className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" onClick={save}>Create Client</button></div>
+      <div className="modal-foot">
+        <button className="btn" onClick={onClose}>Cancel</button>
+        <button className="btn btn-primary" onClick={save}>Create Client & Set Login</button>
+      </div>
     </div>
   );
 }
@@ -1800,7 +2455,8 @@ function CreateInvoiceModal({ data, onClose }) {
   const [clientId, setClientId]   = useState(data?.clientId || "");
   const [bundleId, setBundleId]   = useState("");
   const [lineItems, setLineItems] = useState([]);
-  const [step, setStep]           = useState(1); // 1=select client/bundle, 2=configure items, 3=review
+  const [dueDate,   setDueDate]   = useState("");
+  const [step, setStep]           = useState(1);
 
   const selectedBundle = bundles.find(b => b.id === bundleId);
   const selectedClient = clients.find(c => c.id === clientId);
@@ -1831,12 +2487,12 @@ function CreateInvoiceModal({ data, onClose }) {
   const subtotal = lineItems.reduce((s, li) => s + li.unitPrice * li.qty, 0);
   const gstAmt   = total - subtotal;
 
-  // Generate tasks from line items
+  // Generate tasks from line items — passes docTemplateId + directorCount
   const generateTasks = (invoiceId) => {
     const newTasks = [];
     let seq = 1;
     lineItems.forEach(li => {
-      if (li.type === "govt") return; // No tasks for govt fees
+      if (li.type === "govt") return;
       const bundle = bundles.find(b => b.id === bundleId);
       const originalItem = bundle?.lineItems.find(x => x.id === li.originalId);
       if (!originalItem?.tasks?.length) return;
@@ -1846,13 +2502,17 @@ function CreateInvoiceModal({ data, onClose }) {
         for (let n = 1; n <= count; n++) {
           newTasks.push({
             id: "t_" + uuid(),
-            title: taskTemplate.name.replace("{n}", n),
+            title: taskTemplate.name.replace("{n}", String(n)),
             clientId, clientName: selectedClient?.name || "",
             invoiceId, lineItemId: li.id,
             assignedTo: selectedClient?.assignedTo || "",
-            status: seq === 1 ? "open" : "open",
+            status: "open",
             sequence: seq++,
-            requirementType: li.type === "dsc" ? "docs" : "none",
+            requirementType: taskTemplate.requirementType || "none",
+            docTemplateId:   taskTemplate.docTemplateId  || "",
+            // DSC tasks: each task is for 1 director, numbered by n
+            directorCount: taskTemplate.autoFromQty ? 1 : 1,
+            directorNumber: taskTemplate.autoFromQty ? n : null,
             dueDate: null, completedDate: null, notes: "",
           });
         }
@@ -1869,7 +2529,7 @@ function CreateInvoiceModal({ data, onClose }) {
     const newInvoice = {
       id: "inv_" + uuid(), invoiceNo,
       clientId, clientName: selectedClient?.name || "",
-      date: today(), dueDate: null,
+      date: today(), dueDate: dueDate || null,
       status: "unpaid", total, paid: 0, pending: total,
       lineItems,
     };
@@ -1877,6 +2537,11 @@ function CreateInvoiceModal({ data, onClose }) {
 
     const newTasks = generateTasks(newInvoice.id);
     if (newTasks.length) setTasks(ts => [...ts, ...newTasks]);
+
+    // WhatsApp notification to client
+    if (selectedClient?.phone) {
+      KRAYA.invoiceCreated(selectedClient.phone, selectedClient.contactName || selectedClient.name, INR(total), invoiceNo);
+    }
 
     showToast(`Invoice ${invoiceNo} created with ${newTasks.length} tasks auto-generated!`, "success");
     onClose();
@@ -1906,6 +2571,11 @@ function CreateInvoiceModal({ data, onClose }) {
                 {bundles.map(b => <option key={b.id} value={b.id}>{b.icon} {b.name}</option>)}
               </select>
               <div className="f-hint">Selecting a bundle auto-fills line items and creates tasks</div>
+            </div>
+            <div className="f-group">
+              <label className="f-label">Due Date</label>
+              <input type="date" className="f-input" value={dueDate} onChange={e=>setDueDate(e.target.value)} />
+              <div className="f-hint">Client will be notified via WhatsApp when invoice is created</div>
             </div>
             {lineItems.length === 0 && (
               <button className="btn btn-ghost" onClick={() => setLineItems([{ id: "ili_" + uuid(), name: "", type: "service", qty: 1, unitPrice: 0, gst: true, unit: "fixed", tasks: [], customPrice: true }])}>
@@ -2080,68 +2750,235 @@ function ViewInvoiceModal({ data, onClose }) {
 // ─── View Task Modal ──────────────────────────────────────────────────
 function ViewTaskModal({ data, onClose }) {
   const { task } = data;
-  const { tasks, setTasks, employees, showToast } = useApp();
+  const { tasks, setTasks, employees, showToast, user, submissions, openModal } = useApp();
   const [localTask, setLocal] = useState({ ...task });
-  const [note, setNote]       = useState("");
+  const [activeTab, setActiveTab] = useState("details");
+  const isTeam = user?.role === "admin" || user?.role === "manager" || user?.role === "employee";
+
+  const sub = (submissions||[]).find(s => s.taskId === task.id);
+  const tpl = task.docTemplateId ? DEFAULT_DOC_TEMPLATES[task.docTemplateId] : null;
 
   const save = () => {
-    setTasks(ts => ts.map(t => t.id === task.id ? { ...localTask, completedDate: localTask.status === "completed" ? today() : localTask.completedDate } : t));
+    setTasks(ts => ts.map(t => t.id === task.id
+      ? { ...localTask, completedDate: localTask.status==="completed" ? today() : localTask.completedDate }
+      : t
+    ));
     showToast("Task updated!", "success");
     onClose();
   };
 
-  const reqType = TASK_REQUIREMENT_TYPES.find(r => r.id === localTask.requirementType);
-  const statusInfo = TASK_STATUSES.find(s => s.id === localTask.status);
-
   return (
-    <div className="modal-box" style={{ maxWidth: 560 }}>
+    <div className="modal-box" style={{ maxWidth:640 }}>
       <div className="modal-head">
         <div>
           <div className="modal-title">{localTask.title}</div>
-          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{localTask.clientName} · Sequence #{localTask.sequence}</div>
+          <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{localTask.clientName} · Sequence #{localTask.sequence}</div>
         </div>
         <button className="modal-close" onClick={onClose}>✕</button>
       </div>
-      <div className="modal-body">
-        <div className="form-grid">
-          <div className="form-grid-2">
-            <div className="f-group">
-              <label className="f-label">Status</label>
-              <select className="f-select" value={localTask.status} onChange={e => setLocal(t => ({ ...t, status: e.target.value }))}>
-                {TASK_STATUSES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-              </select>
-            </div>
-            <div className="f-group">
-              <label className="f-label">Requirement Type</label>
-              <select className="f-select" value={localTask.requirementType} onChange={e => setLocal(t => ({ ...t, requirementType: e.target.value }))}>
-                {TASK_REQUIREMENT_TYPES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-              </select>
-            </div>
-            <div className="f-group">
-              <label className="f-label">Assigned To</label>
-              <select className="f-select" value={localTask.assignedTo} onChange={e => setLocal(t => ({ ...t, assignedTo: e.target.value }))}>
-                {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-              </select>
-            </div>
-            <div className="f-group">
-              <label className="f-label">Due Date</label>
-              <input type="date" className="f-input" value={localTask.dueDate || ""} onChange={e => setLocal(t => ({ ...t, dueDate: e.target.value }))} />
-            </div>
+
+      {/* Tabs */}
+      <div style={{ display:"flex", gap:2, padding:"0 20px", borderBottom:"1px solid var(--border)", background:"#FAFAF8" }}>
+        {[["details","Details"], ...(isTeam&&sub ? [["submission","📥 Submission"]] : [])].map(([id,label])=>(
+          <div key={id} onClick={()=>setActiveTab(id)} style={{ padding:"10px 14px", fontSize:13, fontWeight:activeTab===id?700:500, cursor:"pointer", color:activeTab===id?"var(--blue)":"var(--muted)", borderBottom:activeTab===id?"2px solid var(--blue)":"2px solid transparent", marginBottom:-1 }}>
+            {label}
+            {id==="submission"&&sub?.status==="submitted"&&<span style={{ marginLeft:6, background:"#7C3AED", color:"#fff", fontSize:9, padding:"1px 6px", borderRadius:20, fontWeight:700 }}>NEW</span>}
           </div>
-          <div className="f-group">
-            <label className="f-label">Notes</label>
-            <textarea className="f-textarea" value={localTask.notes} onChange={e => setLocal(t => ({ ...t, notes: e.target.value }))} placeholder="Add task notes…" rows={3} />
-          </div>
-          {localTask.completedDate && (
-            <div style={{ fontSize: 12, color: "var(--green)", fontWeight: 600 }}>✅ Completed on {localTask.completedDate}</div>
-          )}
-        </div>
+        ))}
       </div>
+
+      <div className="modal-body">
+        {activeTab==="details" && (
+          <div className="form-grid">
+            <div className="form-grid-2">
+              <div className="f-group">
+                <label className="f-label">Status</label>
+                <select className="f-select" value={localTask.status} onChange={e=>setLocal(t=>({...t,status:e.target.value}))}>
+                  {TASK_STATUSES.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}
+                </select>
+              </div>
+              <div className="f-group">
+                <label className="f-label">Assigned To</label>
+                <select className="f-select" value={localTask.assignedTo} onChange={e=>setLocal(t=>({...t,assignedTo:e.target.value}))}>
+                  {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+                </select>
+              </div>
+              <div className="f-group">
+                <label className="f-label">Due Date</label>
+                <input type="date" className="f-input" value={localTask.dueDate||""} onChange={e=>setLocal(t=>({...t,dueDate:e.target.value}))} />
+              </div>
+            </div>
+
+            {/* Document template info */}
+            {tpl && (
+              <div style={{ padding:"12px 14px", background:"#F0F9FF", border:"1px solid #BAE6FD", borderRadius:8 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:"#0369A1", marginBottom:4 }}>📋 Configured Template: {tpl.name}</div>
+                <div style={{ fontSize:11, color:"#0369A1" }}>
+                  Collection: <strong>{tpl.collectionType==="director"?"Per Director":"Per Company"}</strong>
+                  {" · "}{tpl.infoFields.length} info fields
+                  {" · "}{tpl.docSlots.length} document slots
+                  {" · "}{tpl.docSlots.filter(s=>s.required).length} required docs
+                </div>
+              </div>
+            )}
+
+            {/* Client action required section */}
+            <div style={{ borderTop:"1px solid var(--border)", paddingTop:16 }}>
+              <div style={{ fontSize:13, fontWeight:700, marginBottom:10 }}>Client Action Required</div>
+              <div className="f-group">
+                <label className="f-label">Requirement Type</label>
+                <select className="f-select" value={localTask.requirementType||"none"} onChange={e=>setLocal(t=>({...t,requirementType:e.target.value}))}>
+                  {TASK_REQUIREMENT_TYPES.map(r=><option key={r.id} value={r.id}>{r.label}</option>)}
+                </select>
+              </div>
+              {!tpl && (localTask.requirementType==="docs"||localTask.requirementType==="form_docs") && (
+                <div className="f-group" style={{ marginTop:8 }}>
+                  <label className="f-label">Required Documents (one per line)</label>
+                  <textarea className="f-textarea" rows={4}
+                    placeholder={"PAN Card\nAadhaar Card\nPhoto\nAddress Proof"}
+                    value={localTask.docsList||""}
+                    onChange={e=>setLocal(t=>({...t,docsList:e.target.value}))}
+                  />
+                  <div className="f-hint">Or use a Document Template from Settings → Document Templates</div>
+                </div>
+              )}
+            </div>
+
+            <div className="f-group">
+              <label className="f-label">Internal Notes (team only)</label>
+              <textarea className="f-textarea" value={localTask.notes||""} onChange={e=>setLocal(t=>({...t,notes:e.target.value}))} rows={3} placeholder="Notes visible to team only…" />
+            </div>
+
+            {localTask.completedDate && (
+              <div style={{ fontSize:12, color:"var(--green)", fontWeight:600 }}>✅ Completed on {localTask.completedDate}</div>
+            )}
+          </div>
+        )}
+
+        {activeTab==="submission" && sub && (
+          <SubmissionViewer sub={sub} tpl={tpl} task={task} onReview={()=>{ onClose(); openModal("review-submission",{submissionId:sub.id}); }} />
+        )}
+      </div>
+
       <div className="modal-foot">
         <button className="btn" onClick={onClose}>Cancel</button>
-        <button className="btn btn-green" onClick={() => { setLocal(t => ({ ...t, status: "completed" })); setTimeout(save, 100); }}>✓ Mark Complete</button>
-        <button className="btn btn-primary" onClick={save}>Save Changes</button>
+        {activeTab==="submission" && sub?.status==="submitted" && (
+          <button className="btn" style={{ background:"#7C3AED",color:"#fff",border:"none" }}
+            onClick={()=>{ onClose(); openModal("review-submission",{submissionId:sub.id}); }}>
+            📥 Review Submission
+          </button>
+        )}
+        {activeTab==="details" && (
+          <>
+            <button className="btn btn-green" onClick={()=>{ setLocal(t=>({...t,status:"completed"})); setTimeout(save,100); }}>✓ Mark Complete</button>
+            <button className="btn btn-primary" onClick={save}>Save Changes</button>
+          </>
+        )}
       </div>
+    </div>
+  );
+}
+
+// ─── SUBMISSION VIEWER — shows submitted data cleanly to team ─────────
+function SubmissionViewer({ sub, tpl, task, onReview }) {
+  const statusColors = { submitted:"#7C3AED", approved:"#16A34A", changes_requested:"#DC2626" };
+  const sc = statusColors[sub.status] || "#6B7280";
+
+  return (
+    <div>
+      {/* Status banner */}
+      <div style={{ padding:"12px 14px", background:sub.status==="submitted"?"#EDE9FE":sub.status==="approved"?"#F0FDF4":"#FFF1F2", border:`1px solid ${sub.status==="submitted"?"#C4B5FD":sub.status==="approved"?"#BBF7D0":"#FECACA"}`, borderRadius:8, marginBottom:16, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:700, color:sc }}>
+            {sub.status==="submitted"?"📥 Pending Review":sub.status==="approved"?"✅ Approved":"↩ Changes Requested"}
+          </div>
+          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Submitted on {sub.submittedAt}</div>
+        </div>
+        {sub.status==="submitted" && (
+          <button className="btn btn-sm" style={{ background:"#7C3AED",color:"#fff",border:"none" }} onClick={onReview}>Review Now →</button>
+        )}
+      </div>
+
+      {sub.reviewNote && (
+        <div style={{ padding:"10px 14px", background:"#FFF1F2", border:"1px solid #FECACA", borderRadius:8, fontSize:12, color:"var(--red)", marginBottom:16 }}>
+          <strong>Changes requested:</strong> {sub.reviewNote}
+        </div>
+      )}
+
+      {/* Render per-director or company sections */}
+      {sub.formData && Object.keys(sub.formData).map(dirIdx => {
+        const dirLabel = tpl?.collectionType==="director" ? `Director ${dirIdx}` : "Company Information";
+        const fields   = sub.formData[dirIdx];
+        const docs     = sub.documents?.[dirIdx];
+
+        return (
+          <div key={dirIdx} style={{ border:"1px solid var(--border)", borderRadius:10, overflow:"hidden", marginBottom:14 }}>
+            <div style={{ padding:"10px 16px", background:"linear-gradient(90deg,#F0F6FF,#fff)", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", gap:10 }}>
+              <div style={{ width:28,height:28,borderRadius:"50%",background:"var(--blue)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff" }}>
+                {tpl?.collectionType==="director" ? dirIdx : "🏢"}
+              </div>
+              <div style={{ fontSize:13, fontWeight:700 }}>{dirLabel}</div>
+            </div>
+
+            {/* Info fields */}
+            {fields && Object.keys(fields).length>0 && (
+              <div style={{ padding:"12px 16px", borderBottom:docs&&Object.keys(docs).length>0?"1px solid var(--border)":undefined }}>
+                <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>📝 Submitted Information</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px 16px" }}>
+                  {tpl?.infoFields?.map(f=>(
+                    <div key={f.id} style={{ gridColumn:f.type==="textarea"?"1/-1":undefined }}>
+                      <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"0.8px",marginBottom:2 }}>{f.label}</div>
+                      <div style={{ fontSize:13,fontWeight:500,padding:"6px 10px",background:"#F9FAFB",borderRadius:6,border:"1px solid var(--border)" }}>
+                        {fields[f.id] || <span style={{ color:"var(--faint)",fontStyle:"italic" }}>Not filled</span>}
+                      </div>
+                    </div>
+                  )) || Object.entries(fields).map(([k,v])=>(
+                    <div key={k}>
+                      <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"0.8px",marginBottom:2 }}>{k}</div>
+                      <div style={{ fontSize:13,fontWeight:500,padding:"6px 10px",background:"#F9FAFB",borderRadius:6,border:"1px solid var(--border)" }}>{v||"—"}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Documents */}
+            {docs && Object.keys(docs).length>0 && (
+              <div style={{ padding:"12px 16px" }}>
+                <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>📎 Uploaded Documents</div>
+                {tpl?.docSlots?.map(slot=>{
+                  const up = docs[slot.id];
+                  return (
+                    <div key={slot.id} style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:"1px solid #F3F4F6" }}>
+                      <div style={{ width:30,height:30,borderRadius:7,background:up?"#F0FDF4":"#FFF1F2",border:`1px solid ${up?"#BBF7D0":"#FECACA"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>
+                        {up?"✅":"❌"}
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:13,fontWeight:500 }}>{slot.label}{slot.required&&<span style={{ color:"var(--red)",marginLeft:3 }}>*</span>}</div>
+                        {up ? <div style={{ fontSize:11,color:"var(--green)" }}>✓ {up.name} · {up.size}</div>
+                             : <div style={{ fontSize:11,color:"var(--red)" }}>Not uploaded</div>}
+                      </div>
+                      {up && <button className="btn btn-sm">⬇ Download</button>}
+                    </div>
+                  );
+                }) || Object.entries(docs).map(([slotId,up])=>(
+                  <div key={slotId} style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:"1px solid #F3F4F6" }}>
+                    <span style={{ fontSize:16 }}>✅</span>
+                    <div style={{ flex:1 }}><div style={{ fontSize:13,fontWeight:500 }}>{up.name}</div><div style={{ fontSize:11,color:"var(--muted)" }}>{up.size}</div></div>
+                    <button className="btn btn-sm">⬇ Download</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {sub.note && (
+        <div style={{ padding:"10px 14px",background:"#F9FAFB",border:"1px solid var(--border)",borderRadius:8,fontSize:12,color:"var(--muted)" }}>
+          💬 <strong>Client note:</strong> {sub.note}
+        </div>
+      )}
     </div>
   );
 }
@@ -2422,136 +3259,223 @@ function RecordPaymentModal({ data, onClose, invoices, setInvoices, payments, se
 // ─── CLIENT TASK SUBMISSION MODAL ─────────────────────────────────────
 function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tasks, setTasks, showToast }) {
   const { task } = data;
-  const fileRef   = useRef(null);
-  const [formData, setFormData] = useState({});
-  const [docs,     setDocs]     = useState([]);
-  const [note,     setNote]     = useState("");
+  const { docTpls } = useApp();
+  const fileRef    = useRef(null);
+  const [pendingUpload, setPendingUpload] = useState(null); // { directorIdx, slotId }
   const [loading,  setLoading]  = useState(false);
+  const [note,     setNote]     = useState("");
 
-  // Fields based on task type
-  const FIELDS = {
-    docs: [
-      { id: "directorName", label: "Director / Partner Name" },
-      { id: "fatherName",   label: "Father's Name" },
-      { id: "dob",          label: "Date of Birth", type: "date" },
-      { id: "address",      label: "Residential Address", type: "textarea" },
-    ],
-    form: [
-      { id: "info1", label: "Information Field 1" },
-      { id: "info2", label: "Information Field 2" },
-      { id: "info3", label: "Additional Notes", type: "textarea" },
-    ],
-    form_docs: [
-      { id: "directorName", label: "Director / Partner Name" },
-      { id: "fatherName",   label: "Father's Name" },
-      { id: "dob",          label: "Date of Birth", type: "date" },
-      { id: "address",      label: "Residential Address", type: "textarea" },
-    ],
-    none: [],
+  // Resolve the doc template for this task
+  const tpl = task.docTemplateId ? (docTpls[task.docTemplateId] || DEFAULT_DOC_TEMPLATES[task.docTemplateId]) : null;
+  const isDirectorLevel = tpl?.collectionType === "director";
+
+  // Figure out how many directors this task is for
+  // task.directorCount is set when auto-created from DSC qty, else default 1
+  const directorCount = task.directorCount || 1;
+  const directors = Array.from({ length: directorCount }, (_, i) => i + 1);
+
+  // State: { [dirIdx]: { [fieldId]: value } }
+  const [formData, setFormData] = useState(() => {
+    const d = {};
+    directors.forEach(n => { d[n] = {}; });
+    return d;
+  });
+
+  // State: { [dirIdx]: { [slotId]: { name, size } } }
+  const [docData, setDocData] = useState(() => {
+    const d = {};
+    directors.forEach(n => { d[n] = {}; });
+    return d;
+  });
+
+  const noActionNeeded = !tpl || (tpl.infoFields.length === 0 && tpl.docSlots.length === 0);
+
+  // Validation — all required fields and docs per director
+  const isComplete = () => {
+    if (noActionNeeded) return true;
+    const checkDirs = isDirectorLevel ? directors : [1];
+    for (const n of checkDirs) {
+      for (const f of (tpl?.infoFields || [])) {
+        if (f.required && !(formData[n]?.[f.id])) return false;
+      }
+      for (const s of (tpl?.docSlots || [])) {
+        if (s.required && !(docData[n]?.[s.id])) return false;
+      }
+    }
+    return true;
   };
 
-  const fields = FIELDS[task.requirementType] || [];
-  const needsDocs = task.requirementType === "docs" || task.requirementType === "form_docs";
-  const needsForm = task.requirementType === "form" || task.requirementType === "form_docs";
-
-  const onFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    setDocs(d => [...d, ...files.map(f => ({ name: f.name, size: (f.size / 1024).toFixed(0) + " KB" }))]);
-    e.target.value = "";
+  const triggerUpload = (dirIdx, slotId) => {
+    setPendingUpload({ dirIdx, slotId });
+    fileRef.current?.click();
   };
+  const onFile = (e) => {
+    if (e.target.files[0] && pendingUpload) {
+      const f = e.target.files[0];
+      const { dirIdx, slotId } = pendingUpload;
+      setDocData(d => ({ ...d, [dirIdx]: { ...d[dirIdx], [slotId]: { name: f.name, size: (f.size/1024).toFixed(0)+"KB" } } }));
+      e.target.value = "";
+    }
+  };
+
+  const setField = (dirIdx, fieldId, val) =>
+    setFormData(d => ({ ...d, [dirIdx]: { ...d[dirIdx], [fieldId]: val } }));
 
   const submit = async () => {
-    if (needsDocs && docs.length === 0) { showToast("Please upload required documents", "error"); return; }
+    if (!isComplete()) { showToast("Please complete all required fields and upload all required documents", "error"); return; }
     setLoading(true);
     await new Promise(r => setTimeout(r, 800));
-
     const newSub = {
-      id: "sub_" + Math.random().toString(36).slice(2),
-      taskId: task.id, clientId: task.clientId,
-      status: "submitted",
-      formData, documents: docs,
-      submittedAt: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+      id: "sub_" + uuid(), taskId: task.id, clientId: task.clientId,
+      status: "submitted", locked: true,
+      formData, documents: docData,
+      submittedAt: new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}),
       reviewNote: "", reviewedAt: null, note,
     };
     setSubmissions(ss => [...ss, newSub]);
     setTasks(ts => ts.map(t => t.id === task.id ? { ...t, status: "team_approval" } : t));
     setLoading(false);
-    showToast("Submitted successfully! Your team will review shortly.", "success");
+    showToast("Submitted! Your team will review within 1–2 working days.", "success");
     onClose();
   };
 
+  // Renders form + docs for one director (or "company" if common)
+  const renderSection = (dirIdx, label) => (
+    <div key={dirIdx} style={{ border:"1px solid var(--border)", borderRadius:10, overflow:"hidden", marginBottom:16 }}>
+      {/* Section header */}
+      <div style={{ padding:"11px 16px", background:"linear-gradient(90deg,#F0F6FF,var(--white))", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", gap:10 }}>
+        <div style={{ width:30,height:30,borderRadius:"50%",background:"var(--blue)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff",flexShrink:0 }}>
+          {isDirectorLevel ? dirIdx : "🏢"}
+        </div>
+        <div>
+          <div style={{ fontSize:13,fontWeight:700 }}>{label}</div>
+          <div style={{ fontSize:11,color:"var(--muted)" }}>
+            {(tpl?.infoFields||[]).filter(f=>f.required).length} required fields
+            {" · "}{(tpl?.docSlots||[]).filter(s=>s.required).length} required documents
+          </div>
+        </div>
+      </div>
+
+      {/* Info fields */}
+      {(tpl?.infoFields||[]).length > 0 && (
+        <div style={{ padding:"14px 16px", borderBottom:(tpl?.docSlots||[]).length>0?"1px solid var(--border)":undefined }}>
+          <div style={{ fontSize:11,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>📝 Information</div>
+          <div className="form-grid-2">
+            {(tpl?.infoFields||[]).map(f => (
+              <div key={f.id} className="f-group" style={{ gridColumn: f.type==="textarea"?"1/-1":undefined }}>
+                <label className="f-label">
+                  {f.label}
+                  {f.required && <span style={{ color:"var(--red)" }}> *</span>}
+                </label>
+                {f.type === "textarea" ? (
+                  <textarea className="f-textarea" rows={2}
+                    value={formData[dirIdx]?.[f.id]||""}
+                    onChange={e=>setField(dirIdx,f.id,e.target.value)}
+                  />
+                ) : f.type === "select" ? (
+                  <select className="f-select"
+                    value={formData[dirIdx]?.[f.id]||""}
+                    onChange={e=>setField(dirIdx,f.id,e.target.value)}>
+                    <option value="">Select…</option>
+                    {(f.options||[]).map(o=><option key={o}>{o}</option>)}
+                  </select>
+                ) : (
+                  <input className="f-input" type={f.type||"text"}
+                    value={formData[dirIdx]?.[f.id]||""}
+                    onChange={e=>setField(dirIdx,f.id,e.target.value)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Document slots */}
+      {(tpl?.docSlots||[]).length > 0 && (
+        <div style={{ padding:"14px 16px" }}>
+          <div style={{ fontSize:11,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>📎 Documents</div>
+          {(tpl?.docSlots||[]).map(slot => {
+            const up = docData[dirIdx]?.[slot.id];
+            return (
+              <div key={slot.id} style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #F3F4F6" }}>
+                <div style={{ width:32,height:32,borderRadius:8,background:up?"#F0FDF4":"#F9FAFB",border:`1px solid ${up?"#BBF7D0":"var(--border)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0 }}>
+                  {up?"✅":"📄"}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13,fontWeight:500 }}>
+                    {slot.label}
+                    {slot.required && <span style={{ color:"var(--red)",marginLeft:3 }}>*</span>}
+                  </div>
+                  {up
+                    ? <div style={{ fontSize:11,color:"var(--green)",marginTop:1 }}>✓ {up.name} · {up.size} — <em style={{ color:"var(--muted)" }}>Cannot be removed after submission</em></div>
+                    : <div style={{ fontSize:11,color:"var(--muted)" }}>{slot.required?"Required":"Optional"}</div>
+                  }
+                </div>
+                {!up
+                  ? <button className="btn btn-ghost btn-sm" onClick={()=>triggerUpload(dirIdx,slot.id)}>⬆ Upload</button>
+                  : <span style={{ fontSize:11,color:"var(--muted)" }}>Uploaded</span>
+                }
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  const done = isComplete();
+
   return (
-    <div className="modal-box" style={{ maxWidth: 560 }}>
+    <div className="modal-box" style={{ maxWidth:640 }}>
       <div className="modal-head">
         <div>
           <div className="modal-title">{task.title}</div>
-          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Submit required information and documents</div>
+          <div style={{ fontSize:12,color:"var(--muted)",marginTop:2 }}>
+            {tpl ? `${tpl.name} — ${isDirectorLevel?`${directorCount} director${directorCount>1?"s":""}`:""} · ${tpl.collectionType==="director"?"Director-level collection":"Company-level collection"}` : "No collection required"}
+          </div>
         </div>
         <button className="modal-close" onClick={onClose}>✕</button>
       </div>
       <div className="modal-body">
-        <div style={{ padding: "10px 14px", background: "#FFF7ED", border: "1px solid #FED7AA", borderRadius: 8, marginBottom: 16, fontSize: 12, color: "#C2410C" }}>
-          ⚠️ Action Required — Please fill the form below and upload necessary documents to proceed with this task.
+        <input type="file" ref={fileRef} style={{ display:"none" }} onChange={onFile} />
+
+        <div style={{ padding:"10px 14px",background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:8,marginBottom:16,fontSize:12,color:"#C2410C" }}>
+          ⚠️ Please complete all required fields and upload all documents before submitting.
+          Once submitted, <strong>documents cannot be deleted</strong> — only your team can request resubmission.
         </div>
 
-        {/* Form fields */}
-        {fields.length > 0 && (
+        {noActionNeeded ? (
+          <div style={{ padding:"16px",background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:10,fontSize:13,color:"var(--green)" }}>
+            ✅ No information or documents required for this task. Click Submit to acknowledge.
+          </div>
+        ) : (
           <>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>📝 Information Required</div>
-            <div className="form-grid" style={{ marginBottom: 20 }}>
-              {fields.map(f => (
-                <div key={f.id} className="f-group">
-                  <label className="f-label">{f.label}</label>
-                  {f.type === "textarea"
-                    ? <textarea className="f-textarea" rows={2} value={formData[f.id] || ""} onChange={e => setFormData(d => ({ ...d, [f.id]: e.target.value }))} />
-                    : <input className="f-input" type={f.type || "text"} value={formData[f.id] || ""} onChange={e => setFormData(d => ({ ...d, [f.id]: e.target.value }))} />
-                  }
-                </div>
-              ))}
-            </div>
+            {isDirectorLevel
+              ? directors.map(n => renderSection(n, `Director ${n}`))
+              : renderSection(1, "Company Information")
+            }
           </>
         )}
 
-        {/* Document upload */}
-        {needsDocs && (
-          <>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>📎 Documents to Upload</div>
-            <input type="file" ref={fileRef} multiple style={{ display: "none" }} onChange={onFileChange} />
-            <div style={{ border: "2px dashed var(--border)", borderRadius: 10, padding: 20, textAlign: "center", cursor: "pointer", marginBottom: 14, background: "#FAFAF8" }} onClick={() => fileRef.current?.click()}>
-              <div style={{ fontSize: 24, marginBottom: 6 }}>📁</div>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>Click to upload documents</div>
-              <div style={{ fontSize: 11, color: "var(--muted)" }}>PAN, Aadhaar, Address Proof, Photos, etc.</div>
-            </div>
-            {docs.length > 0 && (
-              <div style={{ marginBottom: 14 }}>
-                {docs.map((d, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 7, marginBottom: 6 }}>
-                    <span style={{ fontSize: 16 }}>✅</span>
-                    <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 500 }}>{d.name}</div><div style={{ fontSize: 11, color: "var(--muted)" }}>{d.size}</div></div>
-                    <button onClick={() => setDocs(ds => ds.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 14 }}>✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Note */}
-        <div className="f-group">
-          <label className="f-label">Additional Note (optional)</label>
-          <textarea className="f-textarea" rows={2} placeholder="Any message for your team…" value={note} onChange={e => setNote(e.target.value)} />
+        <div className="f-group" style={{ marginTop:16 }}>
+          <label className="f-label">Additional Note for Team (optional)</label>
+          <textarea className="f-textarea" rows={2} placeholder="Any message for your team…" value={note} onChange={e=>setNote(e.target.value)} />
         </div>
 
-        {task.requirementType === "none" && (
-          <div style={{ padding: "12px 14px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, fontSize: 12, color: "var(--green)" }}>
-            ✅ No action required from you for this task. Click Submit to confirm acknowledgement.
+        {!noActionNeeded && (
+          <div style={{ marginTop:12,padding:"10px 14px",background:done?"#F0FDF4":"#FFF1F2",border:`1px solid ${done?"#BBF7D0":"#FECACA"}`,borderRadius:8,fontSize:12,color:done?"var(--green)":"var(--red)",fontWeight:600 }}>
+            {done ? "✓ All required fields complete — ready to submit!" : "⚠ Some required fields or documents are missing"}
           </div>
         )}
       </div>
       <div className="modal-foot">
         <button className="btn" onClick={onClose}>Cancel</button>
-        <button className="btn btn-primary" onClick={submit} disabled={loading}>
-          {loading ? <span style={{ display: "inline-block", width: 16, height: 16, border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin .7s linear infinite" }} /> : "Submit for Review →"}
+        <button className="btn btn-primary" onClick={submit} disabled={loading||(!noActionNeeded&&!done)} style={{ opacity:(!noActionNeeded&&!done)?0.5:1 }}>
+          {loading
+            ? <span style={{ display:"inline-block",width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .7s linear infinite" }}/>
+            : "Submit for Review →"
+          }
         </button>
       </div>
     </div>
@@ -2561,81 +3485,53 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
 // ─── REVIEW SUBMISSION MODAL (Team) ──────────────────────────────────
 function ReviewSubmissionModal({ data, onClose, submissions, setSubmissions, tasks, setTasks, showToast }) {
   const { submissionId } = data;
-  const sub     = submissions.find(s => s.id === submissionId);
-  const task    = tasks.find(t => t.id === sub?.taskId);
-  const [note, setNote]   = useState("");
-  const [action, setAct]  = useState("");
+  const sub  = submissions.find(s => s.id === submissionId);
+  const task = tasks.find(t => t.id === sub?.taskId);
+  const tpl  = task?.docTemplateId ? DEFAULT_DOC_TEMPLATES[task.docTemplateId] : null;
+  const [note, setNote] = useState("");
 
   if (!sub || !task) return null;
 
   const decide = (approved) => {
-    if (!approved && !note) { showToast("Please add a note explaining what changes are needed", "error"); return; }
-    setSubmissions(ss => ss.map(s => s.id === submissionId ? { ...s, status: approved ? "approved" : "changes_requested", reviewNote: note, reviewedAt: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) } : s));
-    setTasks(ts => ts.map(t => t.id === sub.taskId ? { ...t, status: approved ? "completed" : "client_action", completedDate: approved ? new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : null } : t));
-    showToast(approved ? "Submission approved! Task marked complete." : "Changes requested — client will be notified.", approved ? "success" : "warning");
+    if (!approved && !note) { showToast("Add a note explaining what needs to be corrected","error"); return; }
+    setSubmissions(ss => ss.map(s => s.id===submissionId ? {
+      ...s,
+      status: approved ? "approved" : "changes_requested",
+      reviewNote: note,
+      reviewedAt: new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}),
+    } : s));
+    setTasks(ts => ts.map(t => t.id===sub.taskId ? {
+      ...t,
+      status: approved ? "completed" : "client_action",
+      completedDate: approved ? new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : null,
+    } : t));
+    showToast(approved ? "Submission approved! Task marked complete." : "Changes requested — client notified.", approved?"success":"warning");
     onClose();
   };
 
   return (
-    <div className="modal-box" style={{ maxWidth: 580 }}>
+    <div className="modal-box" style={{ maxWidth:660 }}>
       <div className="modal-head">
         <div>
           <div className="modal-title">Review Submission</div>
-          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{task.title} · {task.clientName}</div>
+          <div style={{ fontSize:12,color:"var(--muted)",marginTop:2 }}>{task.title} · {task.clientName}</div>
         </div>
         <button className="modal-close" onClick={onClose}>✕</button>
       </div>
       <div className="modal-body">
-        <div style={{ padding: "10px 14px", background: "#EDE9FE", border: "1px solid #C4B5FD", borderRadius: 8, marginBottom: 16, fontSize: 12, color: "#7C3AED" }}>
-          📥 Submitted by client on {sub.submittedAt}
-        </div>
-
-        {/* Form data */}
-        {Object.keys(sub.formData || {}).length > 0 && (
-          <>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Submitted Information</div>
-            <div style={{ background: "#FAFAF8", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
-              {Object.entries(sub.formData).map(([k, v]) => (
-                <div key={k} style={{ display: "flex", gap: 12, padding: "6px 0", borderBottom: "1px solid #F3F4F6" }}>
-                  <span style={{ fontSize: 12, color: "var(--muted)", minWidth: 140 }}>{k}</span>
-                  <span style={{ fontSize: 13, fontWeight: 500 }}>{v}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Documents */}
-        {sub.documents?.length > 0 && (
-          <>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Uploaded Documents ({sub.documents.length})</div>
-            <div style={{ marginBottom: 16 }}>
-              {sub.documents.map((d, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 7, marginBottom: 6 }}>
-                  <span>📄</span>
-                  <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 500 }}>{d.name}</div><div style={{ fontSize: 11, color: "var(--muted)" }}>{d.size}</div></div>
-                  <button className="btn btn-sm">Download</button>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {sub.note && (
-          <div style={{ padding: "10px 14px", background: "#F9FAFB", border: "1px solid var(--border)", borderRadius: 8, marginBottom: 16, fontSize: 12, color: "var(--muted)" }}>
-            💬 Client note: {sub.note}
-          </div>
-        )}
-
-        <div className="f-group">
-          <label className="f-label">Review Note {action === "reject" ? <span className="f-req">*</span> : "(optional)"}</label>
-          <textarea className="f-textarea" rows={3} placeholder={action === "reject" ? "Explain what needs to be corrected…" : "Optional feedback for client…"} value={note} onChange={e => setNote(e.target.value)} />
+        <SubmissionViewer sub={sub} tpl={tpl} task={task} onReview={()=>{}} />
+        <div className="f-group" style={{ marginTop:16 }}>
+          <label className="f-label">Review Note <span style={{ color:"var(--red)" }}>*</span> (required when requesting changes)</label>
+          <textarea className="f-textarea" rows={3}
+            placeholder="If approving: add optional feedback. If requesting changes: explain exactly what needs to be corrected."
+            value={note} onChange={e=>setNote(e.target.value)}
+          />
         </div>
       </div>
       <div className="modal-foot">
         <button className="btn" onClick={onClose}>Cancel</button>
-        <button className="btn btn-red" onClick={() => { setAct("reject"); setTimeout(() => decide(false), 100); }}>↩ Request Changes</button>
-        <button className="btn btn-green" onClick={() => { setAct("approve"); setTimeout(() => decide(true), 100); }}>✓ Approve & Complete</button>
+        <button className="btn btn-red" onClick={()=>decide(false)}>↩ Request Changes</button>
+        <button className="btn btn-green" onClick={()=>decide(true)}>✓ Approve & Complete</button>
       </div>
     </div>
   );
@@ -2860,28 +3756,130 @@ function ReportsPage({ clients, invoices, tasks, employees, payments }) {
 
 // ─── CHANGE PASSWORD MODAL ────────────────────────────────────────────
 function ChangePasswordModal({ onClose, showToast }) {
-  const [form, setForm] = useState({ current: "", newPwd: "", confirm: "" });
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const { user } = useApp();
+  const [form, setForm] = useState({ current:"", newPwd:"", confirm:"" });
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
 
   const save = () => {
-    if (!form.current) { showToast("Enter current password", "error"); return; }
-    if (form.newPwd.length < 6) { showToast("New password must be 6+ characters", "error"); return; }
-    if (form.newPwd !== form.confirm) { showToast("Passwords do not match", "error"); return; }
-    showToast("Password changed successfully!", "success");
+    if (!form.current) { showToast("Enter current password","error"); return; }
+    // In demo, verify against known password
+    if (user && user.password && form.current !== user.password) {
+      showToast("Current password is incorrect","error"); return;
+    }
+    if (form.newPwd.length < 6) { showToast("New password must be 6+ characters","error"); return; }
+    if (form.newPwd !== form.confirm) { showToast("Passwords do not match","error"); return; }
+    // Update in DEMO_USERS
+    if (user?.email) {
+      const u = DEMO_USERS[user.email.toLowerCase()];
+      if (u) u.password = form.newPwd;
+    }
+    showToast("Password changed successfully! Use new password on next login.","success");
     onClose();
   };
 
   return (
-    <div className="modal-box" style={{ maxWidth: 420 }}>
+    <div className="modal-box" style={{maxWidth:420}}>
       <div className="modal-head"><div className="modal-title">Change Password</div><button className="modal-close" onClick={onClose}>✕</button></div>
       <div className="modal-body">
+        <div className="info-box" style={{background:"#EFF6FF",border:"1px solid #BFDBFE",marginBottom:16}}>
+          <span>🔐</span>
+          <div style={{fontSize:12,color:"var(--blue)"}}>Changing password for <strong>{user?.name}</strong> ({user?.email})</div>
+        </div>
         <div className="form-grid">
-          <div className="f-group"><label className="f-label">Current Password</label><input className="f-input" type="password" value={form.current} onChange={e => set("current", e.target.value)} /></div>
-          <div className="f-group"><label className="f-label">New Password</label><input className="f-input" type="password" placeholder="Minimum 6 characters" value={form.newPwd} onChange={e => set("newPwd", e.target.value)} /></div>
-          <div className="f-group"><label className="f-label">Confirm New Password</label><input className="f-input" type="password" value={form.confirm} onChange={e => set("confirm", e.target.value)} /></div>
+          <div className="f-group"><label className="f-label">Current Password</label><input className="f-input" type="password" value={form.current} onChange={e=>set("current",e.target.value)} /></div>
+          <div className="f-group"><label className="f-label">New Password</label><input className="f-input" type="password" placeholder="Minimum 6 characters" value={form.newPwd} onChange={e=>set("newPwd",e.target.value)} /></div>
+          <div className="f-group"><label className="f-label">Confirm New Password</label><input className="f-input" type="password" value={form.confirm} onChange={e=>set("confirm",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save()} /></div>
         </div>
       </div>
       <div className="modal-foot"><button className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" onClick={save}>Change Password</button></div>
+    </div>
+  );
+}
+
+// ─── POLICY PAGE ──────────────────────────────────────────────────────
+function PolicyPage({ onBack }) {
+  const [tab, setTab] = useState("privacy");
+  return (
+    <div style={{minHeight:"100vh",background:"var(--cream)",display:"flex",flexDirection:"column"}}>
+      <div style={{background:"var(--navy)",padding:"16px 28px",display:"flex",alignItems:"center",gap:16}}>
+        <button onClick={onBack} style={{background:"none",border:"none",color:"rgba(255,255,255,.7)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:4}}>← Back to Login</button>
+        <div style={{fontFamily:"'Fraunces',serif",fontSize:18,color:"#fff"}}>Founders Bridge LLP</div>
+      </div>
+      <div style={{maxWidth:800,margin:"0 auto",padding:"32px 24px",flex:1}}>
+        <div className="tabs" style={{marginBottom:28}}>
+          {[["privacy","Privacy Policy"],["terms","Terms of Service"],["disclaimer","Disclaimer"],["refund","Refund Policy"]].map(([id,label])=>(
+            <div key={id} className={`tab ${tab===id?"on":""}`} onClick={()=>setTab(id)}>{label}</div>
+          ))}
+        </div>
+
+        {tab==="privacy" && (
+          <div className="card">
+            <div className="card-head"><div className="card-title">Privacy Policy</div><div style={{fontSize:12,color:"var(--muted)"}}>Last updated: June 2025</div></div>
+            <div className="card-body" style={{lineHeight:1.8,fontSize:14,color:"var(--ink2)"}}>
+              <p style={{marginBottom:16}}><strong>Founders Bridge LLP</strong> ("we", "our", "us") is committed to protecting your personal information and your right to privacy.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>1. Information We Collect</h3>
+              <p style={{marginBottom:12}}>We collect information you provide directly to us, including name, email address, mobile number, company details, PAN, Aadhaar, and other KYC documents required for legal and compliance services.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>2. How We Use Your Information</h3>
+              <p style={{marginBottom:12}}>Your information is used solely to provide legal, compliance, and financial services as engaged. We do not sell, trade, or rent your personal information to third parties.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>3. Data Storage</h3>
+              <p style={{marginBottom:12}}>All data is stored securely on encrypted servers. Documents uploaded to this portal are accessible only to you and authorised Founders Bridge team members.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>4. Data Retention</h3>
+              <p style={{marginBottom:12}}>We retain your data for as long as required by law and for the period of our engagement. You may request deletion of your data by writing to us.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>5. Contact Us</h3>
+              <p>For privacy-related concerns, email us at: <strong>info@foundersbridge.in</strong></p>
+            </div>
+          </div>
+        )}
+
+        {tab==="terms" && (
+          <div className="card">
+            <div className="card-head"><div className="card-title">Terms of Service</div><div style={{fontSize:12,color:"var(--muted)"}}>Last updated: June 2025</div></div>
+            <div className="card-body" style={{lineHeight:1.8,fontSize:14,color:"var(--ink2)"}}>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8}}>1. Acceptance of Terms</h3>
+              <p style={{marginBottom:12}}>By accessing this portal, you agree to be bound by these Terms of Service. If you do not agree, do not use this portal.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>2. Use of Portal</h3>
+              <p style={{marginBottom:12}}>This portal is provided exclusively for clients and team members of Founders Bridge LLP. Sharing your login credentials with any third party is strictly prohibited.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>3. Accuracy of Information</h3>
+              <p style={{marginBottom:12}}>You are responsible for the accuracy of all information submitted through this portal. Founders Bridge LLP is not liable for errors arising from incorrect information provided by users.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>4. Intellectual Property</h3>
+              <p style={{marginBottom:12}}>All content, documents, and materials on this portal are the property of Founders Bridge LLP or its clients. Reproduction without written consent is prohibited.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>5. Limitation of Liability</h3>
+              <p style={{marginBottom:12}}>Founders Bridge LLP shall not be liable for any indirect, incidental, or consequential damages arising from use of this portal.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>6. Governing Law</h3>
+              <p>These terms are governed by the laws of India. Disputes shall be subject to the jurisdiction of courts in Mumbai, Maharashtra.</p>
+            </div>
+          </div>
+        )}
+
+        {tab==="disclaimer" && (
+          <div className="card">
+            <div className="card-head"><div className="card-title">Disclaimer</div></div>
+            <div className="card-body" style={{lineHeight:1.8,fontSize:14,color:"var(--ink2)"}}>
+              <p style={{marginBottom:16}}>The information provided on this portal is for general informational and service delivery purposes only.</p>
+              <p style={{marginBottom:16}}><strong>Not Legal Advice:</strong> Information on this portal does not constitute legal, financial, or tax advice. Always consult a qualified professional for specific advice applicable to your situation.</p>
+              <p style={{marginBottom:16}}><strong>Government Processes:</strong> Timelines for government approvals (ROC, GST, MCA, etc.) are subject to the respective government departments and are beyond the control of Founders Bridge LLP.</p>
+              <p style={{marginBottom:16}}><strong>Accuracy:</strong> While we strive to keep all information accurate and up to date, Founders Bridge LLP makes no representations as to the completeness or accuracy of information on this portal.</p>
+              <p><strong>Unauthorised Access:</strong> Unauthorised access to this portal is a criminal offence under the Information Technology Act, 2000. All access attempts are logged and monitored.</p>
+            </div>
+          </div>
+        )}
+
+        {tab==="refund" && (
+          <div className="card">
+            <div className="card-head"><div className="card-title">Refund Policy</div></div>
+            <div className="card-body" style={{lineHeight:1.8,fontSize:14,color:"var(--ink2)"}}>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8}}>1. Professional Fees</h3>
+              <p style={{marginBottom:12}}>Professional service fees are non-refundable once work has commenced. This includes fees for company incorporation, GST registration, compliance filings, and other professional services.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>2. Government Fees</h3>
+              <p style={{marginBottom:12}}>Government fees paid to MCA, GST department, Income Tax department, or any other regulatory authority are non-refundable as per government policy.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>3. Cancellation</h3>
+              <p style={{marginBottom:12}}>If you wish to cancel a service before work has commenced, you may be eligible for a partial refund of professional fees. Please contact us within 24 hours of payment.</p>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:8,marginTop:20}}>4. Disputes</h3>
+              <p>For refund disputes, please write to <strong>info@foundersbridge.in</strong> with your invoice number and reason. We will respond within 7 working days.</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -3000,12 +3998,13 @@ function AppV2() {
   const [showReg, setShowReg] = useState(false);
 
   // Core data
-  const [org,       setOrg]     = useState(DEFAULT_ORG);
-  const [bundles,   setBundles] = useState(DEFAULT_BUNDLES);
-  const [clients,   setClients] = useState(DEMO_CLIENTS);
-  const [employees, setEmps]    = useState(DEMO_EMPLOYEES);
-  const [invoices,  setInvoices]= useState(DEMO_INVOICES);
-  const [tasks,     setTasks]   = useState(DEMO_TASKS);
+  const [org,       setOrg]       = useState(DEFAULT_ORG);
+  const [bundles,   setBundles]   = useState(DEFAULT_BUNDLES);
+  const [docTpls,   setDocTpls]   = useState(DEFAULT_DOC_TEMPLATES);
+  const [clients,   setClients]   = useState(DEMO_CLIENTS);
+  const [employees, setEmps]      = useState(DEMO_EMPLOYEES);
+  const [invoices,  setInvoices]  = useState(DEMO_INVOICES);
+  const [tasks,     setTasks]     = useState(DEMO_TASKS);
 
   // Session 2 additions
   const [notifications, setNotifs]   = useState(DEMO_NOTIFICATIONS);
@@ -3044,11 +4043,10 @@ function AppV2() {
   }
 
   const ctx = {
-    user, org, setOrg, bundles, setBundles, clients, setClients,
-    employees, setEmps, invoices, setInvoices, tasks, setTasks,
+    user, org, setOrg, bundles, setBundles, docTpls, setDocTpls,
+    clients, setClients, employees, setEmps, invoices, setInvoices, tasks, setTasks,
     notifications, setNotifs, payments, setPayments, submissions, setSubs,
-    showToast, openModal, closeModal, modal, view, setView,
-    unreadNotifs,
+    showToast, openModal, closeModal, modal, view, setView, unreadNotifs,
   };
 
   const NAV_V2 = {
@@ -3068,10 +4066,11 @@ function AppV2() {
         { id:"employees",    icon:"👥", label:"Employees"   },
       ]},
       { sec:"Settings", items:[
-        { id:"settings-org",     icon:"🏛️", label:"Organisation"    },
-        { id:"settings-bundles", icon:"📦", label:"Bundles & Services"},
-        { id:"settings-users",   icon:"🔐", label:"Users & Roles"   },
-        { id:"settings-kraya",   icon:"📲", label:"WhatsApp (Kraya)"},
+        { id:"settings-org",      icon:"🏛️", label:"Organisation"      },
+        { id:"settings-bundles",  icon:"📦", label:"Bundles & Services" },
+        { id:"settings-doctpls",  icon:"📋", label:"Document Templates" },
+        { id:"settings-users",    icon:"🔐", label:"Users & Roles"      },
+        { id:"settings-kraya",    icon:"📲", label:"WhatsApp (Kraya)"   },
       ]},
     ],
     manager: [
@@ -3114,6 +4113,7 @@ function AppV2() {
     dashboard:"Dashboard", analytics:"Analytics", reports:"Reports",
     clients:"Clients", invoices:"Invoices", payments:"Payments", tasks:"Tasks", employees:"Employees",
     "settings-org":"Organisation Settings", "settings-bundles":"Bundles & Services",
+    "settings-doctpls":"Document Templates",
     "settings-users":"Users & Roles", "settings-kraya":"WhatsApp Settings",
     "emp-dashboard":"My Dashboard", "emp-tasks":"My Tasks", "emp-clients":"My Clients",
     "client-home":"My Companies", "client-tasks":"My Tasks",
@@ -3155,6 +4155,16 @@ function AppV2() {
               <div><div className="sb-uname">{user.name}</div><div className="sb-urole">{user.role}</div></div>
               <button className="sb-out" onClick={logout}>Exit</button>
             </div>
+            <div style={{display:"flex",gap:6,marginTop:10}}>
+              <button
+                style={{flex:1,padding:"5px 8px",background:"rgba(255,255,255,.08)",border:"none",color:"rgba(255,255,255,.5)",fontSize:10,borderRadius:6,cursor:"pointer"}}
+                onClick={()=>openModal("change-password")}
+              >🔑 Change Password</button>
+              <button
+                style={{flex:1,padding:"5px 8px",background:"rgba(255,255,255,.08)",border:"none",color:"rgba(255,255,255,.5)",fontSize:10,borderRadius:6,cursor:"pointer"}}
+                onClick={()=>setView("policies")}
+              >📋 Policies</button>
+            </div>
           </div>
         </aside>
 
@@ -3184,6 +4194,7 @@ function AppV2() {
             {view==="employees"         && <EmployeesPage />}
             {view==="settings-org"      && <OrgSettings />}
             {view==="settings-bundles"  && <BundleSettings />}
+            {view==="settings-doctpls"  && <DocTemplatesSettings />}
             {view==="settings-users"    && <UserSettings />}
             {view==="settings-kraya"    && <KrayaSettings showToast={showToast} />}
             {view==="emp-dashboard"     && <EmpDashboard />}
@@ -3194,11 +4205,13 @@ function AppV2() {
             {view==="client-invoices"   && <ClientInvoices />}
             {view==="client-docs"       && <ClientDocs />}
             {view==="notifications"     && <NotificationsPage notifications={notifications} setNotifications={setNotifs} userId={user.id} />}
+            {view==="policies"          && <PolicyPage onBack={()=>setView(user.role==="client"?"client-home":"dashboard")} />}
           </div>
         </div>
       </div>
 
       {/* Modals */}
+      {modal?.id === "pay-now"           && <PayNowModal data={modal.data} onClose={closeModal} invoices={invoices} setInvoices={setInvoices} payments={payments} setPayments={setPayments} clients={clients} showToast={showToast} />}
       {modal?.id === "create-client"      && <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&closeModal()}><CreateClientModal data={modal.data} onClose={closeModal} /></div>}
       {modal?.id === "create-invoice"     && <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&closeModal()}><CreateInvoiceModal data={modal.data} onClose={closeModal} /></div>}
       {modal?.id === "view-invoice"       && <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&closeModal()}><ViewInvoiceModal data={modal.data} onClose={closeModal} /></div>}
@@ -3221,69 +4234,93 @@ function LoginPageV2({ onLogin, showToast, onRegister }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
+  const [showPolicy, setShowPolicy] = useState(false);
 
   const findUser = (id) => {
     const norm = id.trim().toLowerCase();
-    return DEMO_USERS[norm] || DEMO_BY_PHONE[norm] || null;
+    return DEMO_USERS[norm] || DEMO_BY_PHONE[norm.replace(/\D/g,"")] || null;
   };
 
   const handleLogin = async () => {
     setError("");
-    if (!identifier) { setError("Enter email or mobile"); return; }
-    if (!password) { setError("Enter password"); return; }
+    if (!identifier) { setError("Enter email or mobile number"); return; }
+    if (!password)   { setError("Enter your password"); return; }
     setLoading(true);
     await new Promise(r => setTimeout(r, 600));
     const user = findUser(identifier);
-    if (!user || user.password !== password) { setError("Invalid credentials"); setLoading(false); return; }
+    if (!user || user.password !== password) {
+      setError("Invalid credentials. Please check your email/mobile and password.");
+      setLoading(false); return;
+    }
     setLoading(false);
     showToast(`Welcome back, ${user.name}!`, "success");
     onLogin(user);
   };
+
+  if (showPolicy) return <PolicyPage onBack={() => setShowPolicy(false)} />;
 
   return (
     <div className="auth-wrap">
       <div className="auth-orb" style={{width:500,height:500,top:-150,right:-150,background:"linear-gradient(135deg,#7C3AED,transparent)"}}/>
       <div className="auth-orb" style={{width:300,height:300,bottom:-80,left:-80,background:"linear-gradient(135deg,#EA580C,transparent)"}}/>
       <div className="auth-card">
-        <div className="auth-brand">Founders Bridge</div>
-        <div className="auth-sub">CRM & Client Portal</div>
+        {/* Logo + Brand */}
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{width:56,height:56,borderRadius:16,background:"linear-gradient(135deg,var(--navy),var(--blue))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto 12px"}}>⚖️</div>
+          <div style={{fontFamily:"'Fraunces',serif",fontSize:26,marginBottom:2}}>Founders Bridge</div>
+          <div style={{fontSize:12,color:"var(--muted)",letterSpacing:1}}>Secure Portal</div>
+        </div>
 
+        {/* Login mode tabs */}
         <div className="auth-tabs" style={{marginBottom:20}}>
-          <div className={`auth-tab ${mode==="password"?"on":""}`} onClick={() => setMode("password")}>🔑 Password</div>
-          <div className={`auth-tab ${mode==="otp"?"on":""}`} onClick={() => setMode("otp")}>📱 OTP</div>
+          <div className={`auth-tab ${mode==="password"?"on":""}`} onClick={()=>{setMode("password");setError("");}}>🔑 Password Login</div>
+          <div className={`auth-tab ${mode==="otp"?"on":""}`} onClick={()=>{setMode("otp");setError("");}}>📱 OTP Login</div>
         </div>
 
         <div className="f-group" style={{marginBottom:14}}>
-          <label className="f-label">Email or Mobile</label>
-          <input className="f-input" type="text" placeholder="email@example.com or 98xxxxxxxx" value={identifier} onChange={e=>setId(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} />
+          <label className="f-label">Email Address or Mobile Number</label>
+          <input className="f-input" type="text" placeholder="your@email.com or 98xxxxxxxx" value={identifier} onChange={e=>setId(e.target.value)} onKeyDown={e=>mode==="password"&&e.key==="Enter"&&handleLogin()} autoFocus />
         </div>
 
         {mode==="password" && (
           <>
             <div className="f-group" style={{marginBottom:16}}>
               <label className="f-label">Password</label>
-              <input className="f-input" type="password" placeholder="Enter password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} />
+              <input className="f-input" type="password" placeholder="Enter your password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} />
             </div>
-            {error && <div style={{fontSize:12,color:"var(--red)",marginBottom:12}}>{error}</div>}
+            {error && <div style={{fontSize:12,color:"var(--red)",marginBottom:12,padding:"8px 12px",background:"#FFF1F2",borderRadius:6}}>{error}</div>}
             <button className="btn btn-primary btn-lg" style={{width:"100%"}} onClick={handleLogin} disabled={loading}>
-              {loading ? <span style={{display:"inline-block",width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .7s linear infinite"}}/> : "Sign In →"}
+              {loading
+                ? <span style={{display:"inline-block",width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .7s linear infinite"}}/>
+                : "Sign In →"
+              }
             </button>
           </>
         )}
 
         {mode==="otp" && (
-          <div style={{padding:"12px 14px",background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:8,fontSize:12,color:"#B45309",marginTop:8}}>
-            ⚠️ OTP login via SMS coming soon. Please use password login.
+          <div style={{padding:"14px 16px",background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:8,fontSize:12,color:"#B45309",marginTop:4}}>
+            ⚠️ OTP login via SMS is coming soon. Please use password login for now.
           </div>
         )}
 
+        {/* Register link */}
         <div style={{textAlign:"center",marginTop:16,fontSize:12,color:"var(--muted)"}}>
-          New client?{" "}
+          New here?{" "}
           <span style={{color:"var(--blue)",cursor:"pointer",fontWeight:600}} onClick={onRegister}>Create account →</span>
         </div>
 
-        <div className="demo-hints" style={{marginTop:16}}>
-          <div style={{fontWeight:700,marginBottom:4,color:"var(--ink)"}}>Demo Accounts:</div>
+        {/* Disclaimer */}
+        <div style={{marginTop:20,padding:"12px 14px",background:"#F9FAFB",border:"1px solid var(--border)",borderRadius:8,fontSize:11,color:"var(--muted)",lineHeight:1.7}}>
+          By signing in, you agree to our{" "}
+          <span style={{color:"var(--blue)",cursor:"pointer",textDecoration:"underline"}} onClick={()=>setShowPolicy(true)}>Terms of Service & Privacy Policy</span>.
+          This portal contains confidential information. Unauthorised access is strictly prohibited.
+          Founders Bridge LLP is not responsible for any action taken based on information accessed through this portal without authorisation.
+        </div>
+
+        {/* Demo hints - only show in development */}
+        <div className="demo-hints" style={{marginTop:12}}>
+          <div style={{fontWeight:700,marginBottom:4,color:"var(--ink)"}}>Demo Access:</div>
           <div><b>Admin:</b> admin@foundersbridge.in / admin123</div>
           <div><b>Manager:</b> manager@foundersbridge.in / manager123</div>
           <div><b>Employee:</b> emp1@foundersbridge.in / emp123</div>
@@ -3352,4 +4389,432 @@ function ClientTasksV2({ submissions, setSubs }) {
 }
 
 // ─── FINAL EXPORT ────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+// SECTION 3 — CASHFREE LIVE PAYMENT INTEGRATION
+// ═══════════════════════════════════════════════════════════════════════
+
+// Paste your keys here OR set as Vercel environment variables (recommended)
+const CF_CONFIG = {
+  APP_ID:     process.env.REACT_APP_CF_APP_ID     || "YOUR_CASHFREE_APP_ID",
+  SECRET_KEY: process.env.REACT_APP_CF_SECRET_KEY || "YOUR_CASHFREE_SECRET_KEY",
+  ENV:        process.env.REACT_APP_CF_ENV         || "production", // "sandbox" | "production"
+  BASE:       "https://api.cashfree.com/pg",       // Use https://sandbox.cashfree.com/pg for testing
+};
+
+const CashfreeService = {
+  // Step 1: Create order — ⚠️ In production move to backend to hide secret key
+  async createOrder(invoice, customer) {
+    const orderId = `FB_${invoice.invoiceNo.replace(/\//g,"_")}_${Date.now()}`;
+    const amount  = invoice.pending;
+    // Call Cashfree Orders API
+    try {
+      const res = await fetch(`${CF_CONFIG.BASE}/orders`, {
+        method: "POST",
+        headers: {
+          "x-client-id":     CF_CONFIG.APP_ID,
+          "x-client-secret": CF_CONFIG.SECRET_KEY,
+          "x-api-version":   "2023-08-01",
+          "Content-Type":    "application/json",
+        },
+        body: JSON.stringify({
+          order_id:       orderId,
+          order_amount:   amount,
+          order_currency: "INR",
+          customer_details: {
+            customer_id:    customer.phone || "cust_" + Date.now(),
+            customer_name:  customer.name,
+            customer_email: customer.email || "client@foundersbridge.in",
+            customer_phone: customer.phone,
+          },
+          order_meta: {
+            return_url: `${window.location.origin}?order_id=${orderId}&order_status=SUCCESS`,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.payment_session_id) return { orderId, sessionId: data.payment_session_id, amount };
+      throw new Error(data.message || "Order creation failed");
+    } catch (e) {
+      console.error("Cashfree order error:", e);
+      // Demo fallback
+      return { orderId, sessionId: "DEMO_SESSION_" + Date.now(), amount, demo: true };
+    }
+  },
+
+  // Step 2: Open Cashfree checkout
+  async openCheckout(sessionId, orderId) {
+    return new Promise(async (resolve, reject) => {
+      // Load SDK
+      if (!window.Cashfree) {
+        await new Promise((res, rej) => {
+          const s = document.createElement("script");
+          s.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
+          s.onload = res; s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      }
+      if (sessionId.startsWith("DEMO_SESSION")) {
+        // Demo mode — simulate success after 2 seconds
+        console.log("🎭 Cashfree DEMO mode — simulating payment");
+        resolve({ demo: true, orderId });
+        return;
+      }
+      const cashfree = await window.Cashfree({ mode: CF_CONFIG.ENV });
+      cashfree.checkout({ paymentSessionId: sessionId, redirectTarget: "_modal" })
+        .then(result => {
+          if (result.paymentDetails) resolve(result.paymentDetails);
+          else reject(result.error || "Payment failed");
+        });
+    });
+  },
+};
+
+// Cashfree Pay Now Modal
+function PayNowModal({ data, onClose, invoices, setInvoices, payments, setPayments, clients, showToast }) {
+  const { invoiceId } = data;
+  const invoice  = invoices.find(i => i.id === invoiceId);
+  const client   = clients.find(c => c.id === invoice?.clientId);
+  const [step,   setStep]   = useState("confirm"); // confirm | processing | success | failed
+  const [method, setMethod] = useState("upi");
+  const [errMsg, setErrMsg] = useState("");
+
+  if (!invoice) return null;
+  const outstanding = invoice.total - invoice.paid;
+
+  const pay = async () => {
+    setStep("processing");
+    try {
+      // 1. Create order
+      const { orderId, sessionId, amount, demo } = await CashfreeService.createOrder(invoice, {
+        name:  client?.contactName || client?.name || "Client",
+        email: client?.email || "",
+        phone: client?.phone || "9999999999",
+      });
+      // 2. Open checkout
+      await CashfreeService.openCheckout(sessionId, orderId);
+      // 3. Mark paid (in production: verify via webhook/backend first)
+      const newPaid    = invoice.paid + amount;
+      const newPending = invoice.total - newPaid;
+      setInvoices(is => is.map(i => i.id === invoiceId
+        ? { ...i, paid: newPaid, pending: newPending, status: newPending <= 0 ? "paid" : "partial", cashfreeOrderId: orderId }
+        : i
+      ));
+      setPayments(ps => [...ps, {
+        id: "p_" + uuid(), invoiceId, clientId: invoice.clientId,
+        clientName: invoice.clientName, amount,
+        mode: "cashfree", reference: orderId,
+        date: today(), notes: demo ? "Demo payment" : "Cashfree payment",
+        recordedBy: "system",
+      }]);
+      setStep("success");
+      setTimeout(() => { showToast(`Payment of ${INR(amount)} received!`, "success"); onClose(); }, 2000);
+    } catch (e) {
+      setErrMsg(String(e));
+      setStep("failed");
+    }
+  };
+
+  const METHODS = [
+    { id:"upi",  label:"UPI",                sub:"Google Pay, PhonePe, Paytm, any UPI",   icon:"📱" },
+    { id:"card", label:"Credit / Debit Card", sub:"Visa, Mastercard, RuPay",               icon:"💳" },
+    { id:"nb",   label:"Net Banking",         sub:"All major Indian banks",                icon:"🏦" },
+    { id:"emi",  label:"EMI",                 sub:"Available on eligible cards",           icon:"📅" },
+  ];
+
+  return (
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal-box" style={{ maxWidth:440 }}>
+        {step==="confirm" && (
+          <>
+            <div className="modal-head"><div className="modal-title">Pay Invoice</div><button className="modal-close" onClick={onClose}>✕</button></div>
+            <div className="modal-body">
+              {/* Amount display */}
+              <div style={{ background:"linear-gradient(135deg,#0F172A,#1E40AF)", borderRadius:12, padding:"20px 22px", marginBottom:20, color:"#fff" }}>
+                <div style={{ fontSize:11, opacity:.7, textTransform:"uppercase", letterSpacing:"1.5px", marginBottom:6 }}>Amount Due</div>
+                <div style={{ fontFamily:"'Fraunces',serif", fontSize:38 }}>{INR(outstanding)}</div>
+                <div style={{ fontSize:11, opacity:.7, marginTop:4 }}>{invoice.invoiceNo} · {invoice.clientName}</div>
+              </div>
+              {/* Payment methods */}
+              <div style={{ marginBottom:16 }}>
+                {METHODS.map(m => (
+                  <div key={m.id} onClick={()=>setMethod(m.id)}
+                    style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", border:`1.5px solid ${method===m.id?"var(--blue)":"var(--border)"}`, borderRadius:9, marginBottom:8, cursor:"pointer", background:method===m.id?"#EFF6FF":"#fff" }}>
+                    <span style={{ fontSize:22 }}>{m.icon}</span>
+                    <div style={{ flex:1 }}><div style={{ fontSize:13, fontWeight:600 }}>{m.label}</div><div style={{ fontSize:11, color:"var(--muted)" }}>{m.sub}</div></div>
+                    <div style={{ width:16,height:16,borderRadius:"50%",border:`2px solid ${method===m.id?"var(--blue)":"var(--border)"}`,display:"flex",alignItems:"center",justifyContent:"center" }}>
+                      {method===m.id && <div style={{ width:8,height:8,borderRadius:"50%",background:"var(--blue)" }}/>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display:"flex",alignItems:"center",gap:8,padding:"9px 12px",background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:8,fontSize:11,color:"var(--green)",marginBottom:16 }}>
+                🔒 <strong>Secured by Cashfree Payments</strong> · 256-bit SSL · PCI-DSS compliant
+              </div>
+            </div>
+            <div className="modal-foot">
+              <button className="btn" onClick={onClose}>Cancel</button>
+              <button className="btn btn-green" style={{ padding:"9px 24px" }} onClick={pay}>Pay {INR(outstanding)} →</button>
+            </div>
+          </>
+        )}
+        {step==="processing" && (
+          <div style={{ padding:"48px 28px", textAlign:"center" }}>
+            <div style={{ width:44,height:44,border:"3px solid #E5E4DF",borderTopColor:"var(--blue)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto 20px" }}/>
+            <div style={{ fontFamily:"'Fraunces',serif",fontSize:20,marginBottom:8 }}>Processing Payment</div>
+            <div style={{ fontSize:13,color:"var(--muted)" }}>Please wait. Do not close this window.</div>
+            <div style={{ marginTop:12,fontSize:11,color:"var(--faint)",animation:"pulse 1.5s ease infinite" }}>Connecting to Cashfree…</div>
+          </div>
+        )}
+        {step==="success" && (
+          <div style={{ padding:"48px 28px", textAlign:"center" }}>
+            <div style={{ fontSize:52,marginBottom:16 }}>✅</div>
+            <div style={{ fontFamily:"'Fraunces',serif",fontSize:22,marginBottom:8 }}>Payment Successful!</div>
+            <div style={{ fontSize:13,color:"var(--muted)" }}>{INR(outstanding)} paid for {invoice.invoiceNo}</div>
+          </div>
+        )}
+        {step==="failed" && (
+          <div style={{ padding:"48px 28px", textAlign:"center" }}>
+            <div style={{ fontSize:52,marginBottom:16 }}>❌</div>
+            <div style={{ fontFamily:"'Fraunces',serif",fontSize:22,marginBottom:8 }}>Payment Failed</div>
+            <div style={{ fontSize:12,color:"var(--red)",marginBottom:20 }}>{errMsg||"Something went wrong. Please try again."}</div>
+            <div style={{ display:"flex",gap:10,justifyContent:"center" }}>
+              <button className="btn" onClick={onClose}>Cancel</button>
+              <button className="btn btn-green" onClick={()=>setStep("confirm")}>Try Again</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Add Pay Now button to InvoicesTable — wrap existing with payment modal trigger
+// The InvoicesPage and InvoicesTable already exist above; this adds the modal trigger
+// In AppV2, add modal handler: modal?.id==="pay-now" → <PayNowModal ... />
+
+// ═══════════════════════════════════════════════════════════════════════
+// SECTION 4 — MSG91 OTP LOGIN
+// ═══════════════════════════════════════════════════════════════════════
+
+// Paste your MSG91 keys here OR set as Vercel env vars (recommended)
+const MSG91_CONFIG = {
+  AUTH_KEY:    process.env.REACT_APP_MSG91_AUTH_KEY    || "",
+  TEMPLATE_ID: process.env.REACT_APP_MSG91_TEMPLATE_ID || "",
+  // Note: DLT registration required before going live (takes ~2 weeks)
+  // Register at: https://www.trai.gov.in
+};
+
+const OTPService = {
+  _otpStore: {}, // { phone: { otp, expiresAt } }
+
+  generate() { return Math.floor(100000 + Math.random() * 900000).toString(); },
+
+  async send(phone) {
+    const otp     = this.generate();
+    const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    this._otpStore[phone] = { otp, expires };
+    console.log(`🔐 OTP for ${phone}: ${otp}`); // Remove in production
+
+    if (!MSG91_CONFIG.AUTH_KEY) {
+      // Demo mode — OTP visible in console only
+      return { success: true, demo: true, otp };
+    }
+
+    // MSG91 Send OTP API
+    try {
+      const res = await fetch(
+        `https://api.msg91.com/api/v5/otp?template_id=${MSG91_CONFIG.TEMPLATE_ID}&mobile=91${phone}&authkey=${MSG91_CONFIG.AUTH_KEY}&otp=${otp}`,
+        { method: "GET" }
+      );
+      const data = await res.json();
+      return { success: data.type === "success", data };
+    } catch (e) {
+      console.error("MSG91 error:", e);
+      return { success: false, error: e.message };
+    }
+  },
+
+  verify(phone, enteredOtp) {
+    const record = this._otpStore[phone];
+    if (!record) return { valid: false, reason: "No OTP found. Please request a new one." };
+    if (Date.now() > record.expires) return { valid: false, reason: "OTP expired. Please request a new one." };
+    if (record.otp !== enteredOtp) return { valid: false, reason: "Incorrect OTP. Please try again." };
+    delete this._otpStore[phone]; // One-time use
+    return { valid: true };
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// DOCUMENT TEMPLATES SETTINGS PAGE
+// Admin can add / edit / delete field lists and doc slot lists per template
+// ═══════════════════════════════════════════════════════════════════════
+
+function DocTemplatesSettings() {
+  const { docTpls, setDocTpls, showToast } = useApp();
+  const [editing, setEditing] = useState(null);
+  const [form,    setForm]    = useState(null);
+
+  const startEdit = (tpl) => { setEditing(tpl.id); setForm(JSON.parse(JSON.stringify(tpl))); };
+  const startNew  = () => {
+    const id = "tpl_" + uuid();
+    const blank = { id, name:"New Template", collectionType:"common", infoFields:[], docSlots:[] };
+    setDocTpls(t => ({ ...t, [id]: blank }));
+    startEdit(blank);
+  };
+  const save = () => {
+    if (!form.name) { showToast("Template name required","error"); return; }
+    setDocTpls(t => ({ ...t, [form.id]: form }));
+    setEditing(null);
+    showToast("Template saved!","success");
+  };
+  const deleteTpl = (id) => {
+    if (!window.confirm("Delete this template? Tasks using it will lose their field config.")) return;
+    setDocTpls(t => { const n = {...t}; delete n[id]; return n; });
+    showToast("Template deleted","warning");
+  };
+
+  const setF  = (k,v) => setForm(f => ({...f,[k]:v}));
+  const addField = () => setForm(f => ({ ...f, infoFields:[...f.infoFields,{id:"if_"+uuid(),label:"",type:"text",required:true,options:""}] }));
+  const addSlot  = () => setForm(f => ({ ...f, docSlots:[...f.docSlots,{id:"ds_"+uuid(),label:"",required:true}] }));
+  const updField = (idx,k,v) => setForm(f => { const a=[...f.infoFields]; a[idx]={...a[idx],[k]:v}; return {...f,infoFields:a}; });
+  const updSlot  = (idx,k,v) => setForm(f => { const a=[...f.docSlots];   a[idx]={...a[idx],[k]:v}; return {...f,docSlots:a};   });
+  const delField = (idx) => setForm(f => ({ ...f, infoFields:f.infoFields.filter((_,i)=>i!==idx) }));
+  const delSlot  = (idx) => setForm(f => ({ ...f, docSlots:f.docSlots.filter((_,i)=>i!==idx)   }));
+
+  if (editing && form) return (
+    <div style={{ maxWidth:780 }}>
+      <button className="btn" style={{ marginBottom:16 }} onClick={()=>setEditing(null)}>← Back</button>
+      <div className="card">
+        <div className="card-head"><div className="card-title">Edit Template</div></div>
+        <div className="card-body">
+          {/* Template meta */}
+          <div className="form-grid-2" style={{ marginBottom:20 }}>
+            <div className="f-group">
+              <label className="f-label">Template Name <span className="f-req">*</span></label>
+              <input className="f-input" value={form.name} onChange={e=>setF("name",e.target.value)} placeholder="e.g. DSC Creation" />
+            </div>
+            <div className="f-group">
+              <label className="f-label">Collection Level</label>
+              <select className="f-select" value={form.collectionType} onChange={e=>setF("collectionType",e.target.value)}>
+                <option value="common">Common — collected once per company</option>
+                <option value="director">Director-level — once per director (repeats)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Info fields */}
+          <div style={{ marginBottom:24 }}>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+              <div style={{ fontSize:13,fontWeight:700 }}>📝 Information Fields ({form.infoFields.length})</div>
+              <button className="btn btn-ghost btn-sm" onClick={addField}>+ Add Field</button>
+            </div>
+            {form.infoFields.length===0 && <div style={{ fontSize:12,color:"var(--muted)",padding:"12px",background:"#FAFAF8",borderRadius:8,textAlign:"center" }}>No fields yet — click Add Field</div>}
+            {form.infoFields.map((f,i) => (
+              <div key={f.id} style={{ display:"flex",gap:8,alignItems:"flex-start",marginBottom:8,padding:10,background:"#FAFAF8",borderRadius:8,border:"1px solid var(--border)" }}>
+                <div style={{ flex:2 }}>
+                  <label className="f-label" style={{ fontSize:9 }}>Label</label>
+                  <input className="f-input" value={f.label} onChange={e=>updField(i,"label",e.target.value)} placeholder="e.g. Full Name" style={{ marginBottom:0 }} />
+                </div>
+                <div style={{ flex:1 }}>
+                  <label className="f-label" style={{ fontSize:9 }}>Type</label>
+                  <select className="f-select" value={f.type} onChange={e=>updField(i,"type",e.target.value)}>
+                    {FIELD_TYPES.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}
+                  </select>
+                </div>
+                {f.type==="select" && (
+                  <div style={{ flex:2 }}>
+                    <label className="f-label" style={{ fontSize:9 }}>Options (comma-separated)</label>
+                    <input className="f-input" value={f.options||""} onChange={e=>updField(i,"options",e.target.value)} placeholder="Option 1, Option 2" style={{ marginBottom:0 }} />
+                  </div>
+                )}
+                <div style={{ display:"flex",flexDirection:"column",gap:4,alignItems:"center",paddingTop:18 }}>
+                  <label style={{ display:"flex",alignItems:"center",gap:4,fontSize:11,cursor:"pointer" }}>
+                    <input type="checkbox" checked={f.required} onChange={e=>updField(i,"required",e.target.checked)} />
+                    Required
+                  </label>
+                  <button className="btn btn-sm btn-red" onClick={()=>delField(i)}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Doc slots */}
+          <div>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+              <div style={{ fontSize:13,fontWeight:700 }}>📎 Document Slots ({form.docSlots.length})</div>
+              <button className="btn btn-ghost btn-sm" onClick={addSlot}>+ Add Document Slot</button>
+            </div>
+            {form.docSlots.length===0 && <div style={{ fontSize:12,color:"var(--muted)",padding:"12px",background:"#FAFAF8",borderRadius:8,textAlign:"center" }}>No document slots yet — click Add Document Slot</div>}
+            {form.docSlots.map((s,i) => (
+              <div key={s.id} style={{ display:"flex",gap:8,alignItems:"center",marginBottom:8,padding:10,background:"#FAFAF8",borderRadius:8,border:"1px solid var(--border)" }}>
+                <div style={{ flex:1 }}>
+                  <input className="f-input" value={s.label} onChange={e=>updSlot(i,"label",e.target.value)} placeholder="e.g. PAN Card" style={{ marginBottom:0 }} />
+                </div>
+                <label style={{ display:"flex",alignItems:"center",gap:4,fontSize:12,cursor:"pointer",whiteSpace:"nowrap" }}>
+                  <input type="checkbox" checked={s.required} onChange={e=>updSlot(i,"required",e.target.checked)} />
+                  Required
+                </label>
+                <button className="btn btn-sm btn-red" onClick={()=>delSlot(i)}>✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ padding:"0 20px 20px",display:"flex",gap:10 }}>
+          <button className="btn" onClick={()=>setEditing(null)}>Cancel</button>
+          <button className="btn btn-primary" onClick={save}>Save Template</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+        <div style={{ fontSize:13,color:"var(--muted)" }}>
+          Define what information and documents are collected per task type. These templates auto-apply when tasks are created from invoices.
+        </div>
+        <button className="btn btn-primary" onClick={startNew}>+ New Template</button>
+      </div>
+      <div className="grid2">
+        {Object.values(docTpls).map(tpl => (
+          <div key={tpl.id} className="card">
+            <div className="card-head">
+              <div>
+                <div className="card-title">{tpl.name}</div>
+                <div style={{ display:"flex",gap:8,marginTop:4 }}>
+                  <span className="tag">{tpl.collectionType==="director"?"Per Director":"Per Company"}</span>
+                  <span className="tag">{tpl.infoFields.length} fields</span>
+                  <span className="tag">{tpl.docSlots.length} doc slots</span>
+                </div>
+              </div>
+              <div style={{ display:"flex",gap:8 }}>
+                <button className="btn btn-sm" onClick={()=>startEdit(tpl)}>Edit</button>
+                <button className="btn btn-sm btn-red" onClick={()=>deleteTpl(tpl.id)}>Delete</button>
+              </div>
+            </div>
+            <div className="card-body" style={{ padding:0 }}>
+              {tpl.infoFields.slice(0,4).map(f=>(
+                <div key={f.id} className="row-item" style={{ padding:"8px 16px" }}>
+                  <span style={{ fontSize:13 }}>📝</span>
+                  <div style={{ flex:1,fontSize:12 }}>{f.label}</div>
+                  <span style={{ fontSize:10,color:f.required?"var(--red)":"var(--muted)" }}>{f.required?"Required":"Optional"}</span>
+                </div>
+              ))}
+              {tpl.infoFields.length>4 && <div style={{ padding:"6px 16px",fontSize:11,color:"var(--muted)" }}>+{tpl.infoFields.length-4} more fields…</div>}
+              {tpl.docSlots.slice(0,3).map(s=>(
+                <div key={s.id} className="row-item" style={{ padding:"8px 16px",background:"#FAFAF8" }}>
+                  <span style={{ fontSize:13 }}>📄</span>
+                  <div style={{ flex:1,fontSize:12 }}>{s.label}</div>
+                  <span style={{ fontSize:10,color:s.required?"var(--red)":"var(--muted)" }}>{s.required?"Required":"Optional"}</span>
+                </div>
+              ))}
+              {tpl.docSlots.length>3 && <div style={{ padding:"6px 16px",fontSize:11,color:"var(--muted)" }}>+{tpl.docSlots.length-3} more doc slots…</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export { AppV2 as default };

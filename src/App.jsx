@@ -1847,7 +1847,7 @@ function OrgSettings() {
   const { org, setOrg, showToast } = useApp();
   const [form, setForm] = useState({ ...org });
   const logoRef = useRef(null);
-  const save = () => { setOrg(form); showToast("Organisation details saved!", "success"); };
+  const save = async () => { setOrg(form); showToast("Organisation details saved!", "success"); };
   const set  = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleLogoUpload = (e) => {
@@ -1940,7 +1940,7 @@ function BundleSettings() {
   const [form, setForm]         = useState(null);
 
   const startEdit = (b) => { setEditing(b.id); setForm(JSON.parse(JSON.stringify(b))); };
-  const save = () => {
+  const save = async () => {
     setBundles(bs => bs.map(b => b.id === form.id ? form : b));
     setEditing(null);
     showToast("Bundle saved!", "success");
@@ -3225,7 +3225,7 @@ function ViewTaskModal({ data, onClose }) {
   const sub = (submissions||[]).find(s => s.taskId === task.id);
   const tpl = task.docTemplateId ? DEFAULT_DOC_TEMPLATES[task.docTemplateId] : null;
 
-  const save = () => {
+  const save = async () => {
     setTasks(ts => ts.map(t => t.id === task.id
       ? { ...localTask, completedDate: localTask.status==="completed" ? today() : localTask.completedDate }
       : t
@@ -3457,7 +3457,7 @@ function CreateEmployeeModal({ data, onClose }) {
   const colors = ["#0F766E", "#B45309", "#0369A1", "#7C3AED", "#DC2626", "#16A34A"];
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const save = () => {
+  const save = async () => {
     if (!form.name || !form.email) { showToast("Name and email required", "error"); return; }
     const newEmp = { id: "e_" + uuid(), ...form, avatar: initials(form.name), color: colors[employees.length % colors.length], clientCount: 0, tasksCompleted: 0, tasksPending: 0 };
     setEmps(es => [...es, newEmp]);
@@ -3646,7 +3646,7 @@ function RecordPaymentModal({ data, onClose, invoices, setInvoices, payments, se
   const [form, setForm] = useState({ amount: outstanding, mode: "bank_transfer", reference: "", date: new Date().toISOString().split("T")[0], notes: "" });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const save = () => {
+  const save = async () => {
     if (!form.amount || form.amount <= 0) { showToast("Enter valid amount", "error"); return; }
     if (form.amount > outstanding) { showToast(`Amount cannot exceed outstanding balance of ${INR(outstanding)}`, "error"); return; }
 
@@ -4227,7 +4227,7 @@ function ChangePasswordModal({ onClose, showToast }) {
   const [form, setForm] = useState({ current:"", newPwd:"", confirm:"" });
   const set = (k,v) => setForm(f=>({...f,[k]:v}));
 
-  const save = () => {
+  const save = async () => {
     if (!form.current) { showToast("Enter current password","error"); return; }
     // In demo, verify against known password
     if (user && user.password && form.current !== user.password) {
@@ -5480,7 +5480,7 @@ function DocTemplatesSettings() {
     setDocTpls(t => ({ ...t, [id]: blank }));
     startEdit(blank);
   };
-  const save = () => {
+  const save = async () => {
     if (!form.name) { showToast("Template name required","error"); return; }
     setDocTpls(t => ({ ...t, [form.id]: form }));
     setEditing(null);

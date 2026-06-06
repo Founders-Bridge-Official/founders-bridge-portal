@@ -69,6 +69,7 @@ const DEFAULT_ORG = {
   pan: "AABCF1234A",
   sac: "998211",
   logo: null,
+  logoUrl: "",
   gstRate: 18,
   bankName: "HDFC Bank",
   accountNo: "XXXXXXXXXXXX",
@@ -189,9 +190,9 @@ const DEFAULT_BUNDLES = [
     icon: "🤝",
     description: "Complete LLP incorporation service",
     lineItems: [
-      { id: "li1", name: "Name Application Govt Fees",  type: "govt",    price: 200,  gst: false, unit: "fixed",    tasks: [] },
-      { id: "li2", name: "Main Application Govt Fees",  type: "govt",    price: 450,  gst: false, unit: "fixed",    tasks: [] },
-      { id: "li3", name: "DSC Token",                   type: "dsc",     price: 850,  gst: true,  unit: "per_unit",
+      { id: "li1", name: "Name Application Govt Fees",  type: "govt",    price: 200,  gst: false, unit: "fixed",    sac: "999799", tasks: [] },
+      { id: "li2", name: "Main Application Govt Fees",  type: "govt",    price: 450,  gst: false, unit: "fixed",    sac: "999799", tasks: [] },
+      { id: "li3", name: "DSC Token",                   type: "dsc",     price: 850,  gst: true,  unit: "per_unit", sac: "998315",
         tasks: [{
           name: "DSC Creation for Director {n}",
           autoFromQty: true,
@@ -199,8 +200,8 @@ const DEFAULT_BUNDLES = [
           docTemplateId: "dsc_creation",   // ← references master template
         }]
       },
-      { id: "li4", name: "DSC Association Charges",     type: "service", price: 1271, gst: true,  unit: "per_unit", tasks: [] },
-      { id: "li5", name: "LLP Professional Charges",    type: "service", price: 850,  gst: true,  unit: "fixed",
+      { id: "li4", name: "DSC Association Charges",     type: "service", price: 1271, gst: true,  unit: "per_unit", sac: "998211", tasks: [] },
+      { id: "li5", name: "LLP Professional Charges",    type: "service", price: 850,  gst: true,  unit: "fixed",    sac: "998211",
         tasks: [
           { name: "Name Approval",          autoFromQty: false, requirementType: "form_docs", docTemplateId: "name_approval"    },
           { name: "Main Application Filing",autoFromQty: false, requirementType: "form_docs", docTemplateId: "main_application" },
@@ -270,11 +271,11 @@ const useApp = () => useContext(AppCtx);
 // STYLES
 // ═══════════════════════════════════════════════════════════════════════
 const G = `
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'DM Sans', sans-serif; background: #F4F3EF; color: #111827; -webkit-font-smoothing: antialiased; }
-button, input, select, textarea { font-family: 'DM Sans', sans-serif; }
+body { font-family: 'Inter', sans-serif; background: #F7F6F2; color: #0B1F3A; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font-family: 'Inter', sans-serif; }
 input, select, textarea { outline: none; }
 table { border-collapse: collapse; width: 100%; }
 
@@ -285,202 +286,205 @@ table { border-collapse: collapse; width: 100%; }
 @keyframes slideIn  { from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1} }
 
 :root {
-  --ink:     #111827;
-  --ink2:    #374151;
+  --navy:    #0B1F3A;
+  --gold:    #C9A14A;
+  --cream:   #F7F6F2;
   --muted:   #6B7280;
+  --navy-lt: #132840;
+  --gold-lt: #F5EDD6;
+  --gold-dk: #A6863A;
+  --ink:     #0B1F3A;
+  --ink2:    #1E3A5F;
   --faint:   #9CA3AF;
-  --cream:   #F4F3EF;
   --white:   #FFFFFF;
-  --border:  #E5E4DF;
-  --border2: #D1D0CB;
-  --blue:    #2563EB;
-  --blue-lt: #EFF6FF;
+  --border:  #E4E2DC;
+  --border2: #D0CEC8;
   --green:   #16A34A;
   --red:     #DC2626;
   --orange:  #EA580C;
   --purple:  #7C3AED;
-  --navy:    #0F172A;
+  --blue:    #1E50A2;
+  --blue-lt: #EEF3FB;
   --r:       12px;
   --r-sm:    8px;
-  --shadow:  0 1px 3px rgba(0,0,0,.08);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+  --shadow:  0 1px 4px rgba(11,31,58,.08);
+  --shadow-md: 0 4px 20px rgba(11,31,58,.12);
+  --shadow-lg: 0 8px 40px rgba(11,31,58,.16);
 }
 
 .app { display:flex; min-height:100vh; }
 
-/* ── Sidebar ── */
-.sb { width:240px; min-height:100vh; background:var(--navy); display:flex; flex-direction:column; position:fixed; top:0;left:0;bottom:0; z-index:100; }
-.sb-logo { padding:24px 20px 18px; border-bottom:1px solid rgba(255,255,255,.07); }
-.sb-brand { font-family:'Fraunces',serif; font-size:19px; color:#fff; line-height:1.2; }
-.sb-tagline { font-size:9px; color:rgba(255,255,255,.3); letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
-.sb-role-pill { margin:12px 12px 4px; padding:8px 12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:8px; }
-.sb-role-name { font-size:11px; font-weight:600; color:#fff; }
-.sb-role-tag  { font-size:9px; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:1px; margin-top:1px; }
+.sb { width:248px; min-height:100vh; background:var(--navy); display:flex; flex-direction:column; position:fixed; top:0;left:0;bottom:0; z-index:100; }
+.sb-logo { padding:22px 20px 16px; border-bottom:1px solid rgba(201,161,74,.2); }
+.sb-brand { font-family:'Cormorant Garamond',serif; font-size:22px; color:#fff; line-height:1.15; font-weight:700; }
+.sb-brand span { color:var(--gold); }
+.sb-tagline { font-size:8px; color:rgba(201,161,74,.5); letter-spacing:3px; text-transform:uppercase; margin-top:3px; }
+.sb-logo-img { width:100%; max-height:44px; object-fit:contain; margin-bottom:8px; filter:brightness(0) invert(1); }
+.sb-role-pill { margin:10px 12px 4px; padding:9px 13px; background:rgba(201,161,74,.1); border:1px solid rgba(201,161,74,.2); border-radius:8px; }
+.sb-role-name { font-size:12px; font-weight:600; color:#fff; }
+.sb-role-tag  { font-size:9px; color:rgba(201,161,74,.6); text-transform:uppercase; letter-spacing:1.2px; margin-top:2px; }
 .sb-nav { flex:1; overflow-y:auto; padding:8px 10px; }
-.sb-section { font-size:9px; color:rgba(255,255,255,.25); text-transform:uppercase; letter-spacing:1.8px; padding:12px 10px 4px; }
-.sb-item { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; color:rgba(255,255,255,.55); transition:.15s; margin-bottom:1px; }
-.sb-item:hover { background:rgba(255,255,255,.07); color:#fff; }
-.sb-item.on { background:rgba(37,99,235,.4); color:#fff; }
-.sb-icon { font-size:15px; width:20px; text-align:center; flex-shrink:0; }
-.sb-badge { margin-left:auto; background:var(--orange); color:#fff; font-size:10px; font-weight:700; min-width:18px; height:18px; padding:0 5px; border-radius:9px; display:flex; align-items:center; justify-content:center; }
-.sb-foot { padding:14px; border-top:1px solid rgba(255,255,255,.06); }
+.sb-section { font-size:8px; color:rgba(201,161,74,.45); text-transform:uppercase; letter-spacing:2px; padding:14px 10px 5px; font-weight:600; }
+.sb-item { display:flex; align-items:center; gap:10px; padding:8px 11px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; color:rgba(255,255,255,.5); transition:all .15s; margin-bottom:1px; }
+.sb-item:hover { background:rgba(255,255,255,.07); color:rgba(255,255,255,.9); }
+.sb-item.on { background:rgba(201,161,74,.15); color:#fff; border-left:2px solid var(--gold); padding-left:9px; }
+.sb-icon { font-size:14px; width:20px; text-align:center; flex-shrink:0; }
+.sb-badge { margin-left:auto; background:var(--red); color:#fff; font-size:9px; font-weight:700; min-width:18px; height:18px; padding:0 5px; border-radius:9px; display:flex; align-items:center; justify-content:center; }
+.sb-foot { padding:14px 14px 10px; border-top:1px solid rgba(201,161,74,.15); }
 .sb-user { display:flex; align-items:center; gap:9px; }
-.sb-av { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; flex-shrink:0; }
+.sb-av { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; flex-shrink:0; border:2px solid rgba(201,161,74,.3); }
 .sb-uname { font-size:12px; font-weight:600; color:#fff; }
-.sb-urole { font-size:10px; color:rgba(255,255,255,.3); text-transform:capitalize; }
-.sb-out { margin-left:auto; background:rgba(255,255,255,.08); border:none; color:rgba(255,255,255,.45); font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer; }
-.sb-out:hover { background:rgba(255,255,255,.16); color:#fff; }
+.sb-urole { font-size:9px; color:rgba(201,161,74,.6); text-transform:capitalize; }
+.sb-out { margin-left:auto; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); color:rgba(255,255,255,.4); font-size:10px; padding:4px 9px; border-radius:6px; cursor:pointer; transition:.15s; }
+.sb-out:hover { background:rgba(201,161,74,.15); color:var(--gold); }
 
-/* ── Main ── */
-.main { margin-left:240px; flex:1; min-height:100vh; display:flex; flex-direction:column; }
-.topbar { height:56px; padding:0 28px; display:flex; align-items:center; gap:12px; background:rgba(244,243,239,.95); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; }
-.topbar-title { font-family:'Fraunces',serif; font-size:19px; flex:1; }
+.main { margin-left:248px; flex:1; min-height:100vh; display:flex; flex-direction:column; }
+.topbar { height:58px; padding:0 28px; display:flex; align-items:center; gap:12px; background:rgba(247,246,242,.97); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; }
+.topbar-title { font-family:'Cormorant Garamond',serif; font-size:20px; flex:1; color:var(--navy); font-weight:700; }
 .page { padding:24px 28px 80px; animation:fadeIn .2s ease; }
 
-/* ── Buttons ── */
-.btn { padding:7px 16px; border-radius:var(--r-sm); font-size:12px; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:var(--white); color:var(--ink2); transition:.15s; display:inline-flex; align-items:center; gap:6px; }
-.btn:hover { border-color:var(--ink); color:var(--ink); }
-.btn-primary { background:var(--ink); color:#fff; border-color:var(--ink); }
-.btn-primary:hover { background:var(--blue); border-color:var(--blue); }
+.btn { padding:7px 16px; border-radius:var(--r-sm); font-size:12px; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:var(--white); color:var(--ink2); transition:all .15s; display:inline-flex; align-items:center; gap:6px; }
+.btn:hover { border-color:var(--navy); color:var(--navy); }
+.btn-primary { background:var(--navy); color:#fff; border-color:var(--navy); }
+.btn-primary:hover { background:var(--navy-lt); }
+.btn-gold { background:var(--gold); color:#fff; border-color:var(--gold); }
+.btn-gold:hover { background:var(--gold-dk); }
 .btn-blue { background:var(--blue); color:#fff; border-color:var(--blue); }
-.btn-blue:hover { background:#1D4ED8; }
+.btn-blue:hover { background:#1a4490; }
 .btn-green { background:var(--green); color:#fff; border-color:var(--green); }
 .btn-green:hover { background:#15803D; }
 .btn-red { background:var(--red); color:#fff; border-color:var(--red); }
 .btn-red:hover { background:#B91C1C; }
 .btn-ghost { background:transparent; border:1.5px dashed var(--border2); color:var(--muted); }
-.btn-ghost:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-lt); }
+.btn-ghost:hover { border-color:var(--gold); color:var(--gold-dk); background:var(--gold-lt); }
 .btn-sm { padding:5px 12px; font-size:11px; }
 .btn-lg { padding:11px 24px; font-size:14px; }
 .btn:disabled { opacity:.4; cursor:not-allowed; }
 
-/* ── Cards ── */
 .card { background:var(--white); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow); }
-.card-head { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
-.card-title { font-family:'Fraunces',serif; font-size:15px; }
+.card-head { padding:15px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.card-title { font-family:'Cormorant Garamond',serif; font-size:16px; color:var(--navy); font-weight:700; }
 .card-body { padding:18px 20px; }
+.card-gold { border-top:3px solid var(--gold); }
 
-/* ── Stats ── */
 .stat-grid { display:grid; gap:14px; margin-bottom:22px; }
-.stat-box { background:var(--white); border:1px solid var(--border); border-radius:var(--r); padding:18px 20px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
-.stat-box::after { content:''; position:absolute; right:-20px; top:-20px; width:80px; height:80px; border-radius:50%; background:var(--blue); opacity:.04; }
-.stat-lbl { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
-.stat-val { font-family:'Fraunces',serif; font-size:28px; margin:6px 0 2px; }
+.stat-box { background:var(--white); border:1px solid var(--border); border-radius:var(--r); padding:18px 20px; box-shadow:var(--shadow); position:relative; overflow:hidden; cursor:pointer; transition:all .2s; }
+.stat-box:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); border-color:var(--gold); }
+.stat-box::before { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--navy),var(--gold)); opacity:0; transition:.2s; }
+.stat-box:hover::before { opacity:1; }
+.stat-lbl { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; }
+.stat-val { font-family:'Cormorant Garamond',serif; font-size:28px; margin:6px 0 2px; color:var(--navy); }
 .stat-note { font-size:11px; color:var(--faint); }
-.stat-icon { font-size:26px; margin-bottom:8px; }
+.stat-icon { font-size:24px; margin-bottom:8px; }
+.stat-drill { font-size:10px; color:var(--gold-dk); font-weight:600; margin-top:6px; }
 
-/* ── Table ── */
 .tbl-wrap { overflow-x:auto; }
 table { width:100%; border-collapse:collapse; font-size:13px; }
-th { padding:9px 14px; text-align:left; font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid var(--border); background:#FAFAF8; white-space:nowrap; }
-td { padding:12px 14px; border-bottom:1px solid #F3F4F6; vertical-align:middle; }
+th { padding:10px 14px; text-align:left; font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid var(--border); background:#FAFAF8; white-space:nowrap; }
+td { padding:12px 14px; border-bottom:1px solid #F0EEE9; vertical-align:middle; }
 tr:last-child td { border-bottom:none; }
 tr:hover td { background:#FAFAF8; }
 
-/* ── Badge ── */
 .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
 .badge-dot { width:5px; height:5px; border-radius:50%; }
 
-/* ── Forms ── */
 .form-grid { display:grid; gap:16px; }
 .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .form-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
 .f-group { display:flex; flex-direction:column; gap:5px; }
 .f-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; }
-.f-input { padding:9px 13px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-size:13px; background:var(--white); transition:.15s; width:100%; }
-.f-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,.08); }
+.f-input { padding:9px 13px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-size:13px; background:var(--white); transition:.15s; width:100%; color:var(--navy); }
+.f-input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,161,74,.1); }
 .f-input:disabled { background:#FAFAF8; color:var(--muted); }
-.f-select { padding:9px 13px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-size:13px; background:var(--white); transition:.15s; width:100%; cursor:pointer; }
-.f-select:focus { border-color:var(--blue); }
-.f-textarea { padding:9px 13px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-size:13px; background:var(--white); transition:.15s; width:100%; resize:vertical; min-height:80px; }
-.f-textarea:focus { border-color:var(--blue); }
+.f-select { padding:9px 13px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-size:13px; background:var(--white); transition:.15s; width:100%; cursor:pointer; color:var(--navy); }
+.f-select:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,161,74,.1); }
+.f-textarea { padding:9px 13px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-size:13px; background:var(--white); transition:.15s; width:100%; resize:vertical; min-height:80px; color:var(--navy); }
+.f-textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,161,74,.1); }
 .f-hint { font-size:11px; color:var(--faint); }
 .f-error { font-size:11px; color:var(--red); }
 .f-req { color:var(--red); }
 
-/* ── Modal ── */
-.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .15s ease; }
-.modal-box { background:var(--white); border-radius:16px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25); animation:fadeUp .2s ease; }
+.modal-overlay { position:fixed; inset:0; background:rgba(11,31,58,.55); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .15s ease; }
+.modal-box { background:var(--white); border-radius:16px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 24px 64px rgba(11,31,58,.28); animation:fadeUp .2s ease; }
 .modal-head { padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:var(--white); z-index:1; }
-.modal-title { font-family:'Fraunces',serif; font-size:18px; }
+.modal-title { font-family:'Cormorant Garamond',serif; font-size:19px; color:var(--navy); font-weight:700; }
 .modal-body { padding:24px; }
-.modal-foot { padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+.modal-foot { padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; background:#FAFAF8; border-radius:0 0 16px 16px; }
 .modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--faint); line-height:1; }
-.modal-close:hover { color:var(--ink); }
+.modal-close:hover { color:var(--navy); }
 
-/* ── Progress ── */
-.prog-bg { height:5px; background:var(--border); border-radius:5px; overflow:hidden; }
-.prog-fill { height:100%; border-radius:5px; transition:width .6s; }
+.prog-bg { height:6px; background:var(--border); border-radius:6px; overflow:hidden; }
+.prog-fill { height:100%; border-radius:6px; transition:width .6s; }
 
-/* ── Tabs ── */
-.tabs { display:flex; gap:2px; background:#EEEDE9; padding:3px; border-radius:10px; width:fit-content; margin-bottom:20px; flex-wrap:wrap; }
+.tabs { display:flex; gap:2px; background:#EDEAE4; padding:3px; border-radius:10px; width:fit-content; margin-bottom:20px; flex-wrap:wrap; }
 .tab { padding:7px 16px; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; color:var(--muted); transition:.15s; white-space:nowrap; }
-.tab.on { background:var(--white); color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.1); font-weight:600; }
+.tab.on { background:var(--white); color:var(--navy); box-shadow:0 1px 4px rgba(11,31,58,.12); font-weight:700; }
 
-/* ── Info box ── */
 .info-box { padding:11px 15px; border-radius:10px; display:flex; gap:10px; align-items:flex-start; margin-bottom:16px; }
 
-/* ── Chips ── */
 .chips { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
 .chip { padding:5px 13px; border-radius:20px; font-size:12px; font-weight:500; border:1.5px solid var(--border); background:var(--white); cursor:pointer; color:var(--muted); transition:.15s; }
-.chip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
-.chip:hover:not(.on) { border-color:var(--ink); color:var(--ink); }
+.chip.on { background:var(--navy); color:#fff; border-color:var(--navy); }
+.chip:hover:not(.on) { border-color:var(--navy); color:var(--navy); }
 
-/* ── Toast ── */
-.toast { position:fixed; top:20px; right:20px; z-index:999; display:flex; align-items:center; gap:10px; padding:12px 18px; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.12); font-size:13px; font-weight:600; max-width:360px; animation:slideIn .2s ease; }
+.toast { position:fixed; top:20px; right:20px; z-index:999; display:flex; align-items:center; gap:10px; padding:12px 18px; border-radius:10px; box-shadow:var(--shadow-lg); font-size:13px; font-weight:600; max-width:380px; animation:slideIn .2s ease; }
 
-/* ── Login ── */
 .auth-wrap { min-height:100vh; background:var(--navy); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
-.auth-orb { position:absolute; border-radius:50%; opacity:.1; pointer-events:none; }
-.auth-card { background:#fff; border-radius:20px; padding:44px 40px; width:440px; z-index:2; box-shadow:0 32px 80px rgba(0,0,0,.35); animation:fadeUp .3s ease; }
-.auth-brand { font-family:'Fraunces',serif; font-size:26px; margin-bottom:2px; }
-.auth-sub { font-size:11px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:32px; }
-.auth-tabs { display:flex; background:#F3F4F6; border-radius:8px; padding:3px; margin-bottom:24px; }
+.auth-orb { position:absolute; border-radius:50%; pointer-events:none; }
+.auth-card { background:#fff; border-radius:20px; padding:44px 40px; width:440px; z-index:2; box-shadow:0 32px 80px rgba(11,31,58,.4); animation:fadeUp .3s ease; }
+.auth-brand { font-family:'Cormorant Garamond',serif; font-size:28px; margin-bottom:2px; color:var(--navy); font-weight:700; }
+.auth-brand span { color:var(--gold); }
+.auth-sub { font-size:10px; color:var(--muted); letter-spacing:2.5px; text-transform:uppercase; margin-bottom:28px; }
+.auth-tabs { display:flex; background:#F3F1EB; border-radius:8px; padding:3px; margin-bottom:24px; }
 .auth-tab { flex:1; padding:8px; border-radius:6px; text-align:center; font-size:13px; font-weight:600; cursor:pointer; color:var(--muted); transition:.15s; }
-.auth-tab.on { background:#fff; color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.08); }
+.auth-tab.on { background:#fff; color:var(--navy); box-shadow:0 1px 4px rgba(11,31,58,.1); }
 .otp-grid { display:flex; gap:10px; justify-content:center; margin:16px 0; }
-.otp-box { width:48px; height:54px; border:1.5px solid var(--border); border-radius:10px; text-align:center; font-size:22px; font-weight:700; transition:.15s; }
-.otp-box:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,.08); }
-.demo-hints { margin-top:20px; padding:14px; background:#F9FAFB; border:1px solid var(--border); border-radius:8px; font-size:11px; color:var(--muted); line-height:2; }
-.demo-hints b { color:var(--ink); }
+.otp-box { width:48px; height:54px; border:1.5px solid var(--border); border-radius:10px; text-align:center; font-size:22px; font-weight:700; transition:.15s; color:var(--navy); }
+.otp-box:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,161,74,.1); }
+.demo-hints { margin-top:20px; padding:14px; background:#F7F6F2; border:1px solid var(--border); border-radius:8px; font-size:11px; color:var(--muted); line-height:2; }
+.demo-hints b { color:var(--navy); }
 
-/* ── Role-specific accents ── */
-.role-admin    .accent { color:#7C3AED; }
-.role-manager  .accent { color:#0369A1; }
-.role-employee .accent { color:#0F766E; }
-.role-client   .accent { color:#2563EB; }
-
-/* ── Avatar ── */
 .av { border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; flex-shrink:0; }
 .av-sm { width:28px; height:28px; font-size:10px; }
 .av-md { width:36px; height:36px; font-size:13px; }
 .av-lg { width:44px; height:44px; font-size:16px; }
 
-/* ── Status badge colors ── */
-.s-open         { background:#F9FAFB; color:#6B7280; }
-.s-team_action  { background:#FFFBEB; color:#D97706; }
-.s-payment      { background:#FEF2F2; color:#DC2626; }
-.s-client_action{ background:#EFF6FF; color:#2563EB; }
-.s-team_approval{ background:#F5F3FF; color:#7C3AED; }
-.s-govt_approval{ background:#F0F9FF; color:#0369A1; }
-.s-completed    { background:#F0FDF4; color:#16A34A; }
-.s-cancelled    { background:#F9FAFB; color:#9CA3AF; }
+.s-open          { background:#F5F5F0; color:#6B7280; }
+.s-team_action   { background:#FFF8EC; color:#B45309; }
+.s-payment       { background:#FEF2F2; color:#DC2626; }
+.s-client_action { background:#EEF3FB; color:#1E50A2; }
+.s-team_approval { background:#F5F3FF; color:#7C3AED; }
+.s-govt_approval { background:#EFF9FF; color:#0369A1; }
+.s-completed     { background:#F0FDF4; color:#16A34A; }
+.s-cancelled     { background:#F5F5F0; color:#9CA3AF; }
 
-/* ── Misc ── */
 .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
 .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
 .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-.sr { font-family:'Fraunces',serif; }
+.sr { font-family:'Cormorant Garamond',serif; }
 .divider { height:1px; background:var(--border); margin:20px 0; }
-.tag { display:inline-block; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; background:#F3F4F6; color:var(--muted); }
+.tag { display:inline-block; padding:2px 8px; border-radius:5px; font-size:10px; font-weight:700; background:#F0EDE6; color:var(--muted); }
+.tag-gold { background:var(--gold-lt); color:var(--gold-dk); }
+.tag-navy { background:rgba(11,31,58,.08); color:var(--navy); }
 .empty { text-align:center; padding:48px 20px; color:var(--faint); }
 .empty-icon { font-size:40px; margin-bottom:12px; }
 .spinner { width:20px; height:20px; border:2.5px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
-.section-label { font-size:10px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; padding:12px 20px 8px; background:#FAFAF8; border-bottom:1px solid #F3F4F6; }
-.row-item { display:flex; align-items:center; gap:12px; padding:13px 20px; border-bottom:1px solid #F3F4F6; transition:background .1s; }
+.section-label { font-size:10px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; padding:12px 20px 8px; background:#FAFAF8; border-bottom:1px solid #F0EEE9; }
+.row-item { display:flex; align-items:center; gap:12px; padding:13px 20px; border-bottom:1px solid #F0EEE9; transition:background .1s; }
 .row-item:last-child { border-bottom:none; }
 .row-item:hover { background:#FAFAF8; }
+.drill-overlay { position:fixed; inset:0; background:rgba(11,31,58,.5); z-index:150; display:flex; align-items:flex-start; justify-content:flex-end; animation:fadeIn .15s ease; }
+.drill-panel { background:var(--white); width:min(680px,95vw); height:100vh; overflow-y:auto; box-shadow:-8px 0 40px rgba(11,31,58,.2); animation:slideIn .2s ease; }
+.drill-head { padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:var(--white); z-index:1; }
+.drill-title { font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--navy); font-weight:700; }
+.drill-body { padding:20px 24px; }
+.ticket-row { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid #F0EEE9; cursor:pointer; transition:background .1s; }
+.ticket-row:hover { background:#FAFAF8; }
+.ticket-priority-high   { border-left:3px solid var(--red); }
+.ticket-priority-medium { border-left:3px solid var(--gold); }
+.ticket-priority-low    { border-left:3px solid var(--green); }
 `;
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // BADGE COMPONENT
@@ -584,11 +588,13 @@ function LoginPage({ onLogin, showToast }) {
 
   return (
     <div className="auth-wrap">
-      <div className="auth-orb" style={{ width: 500, height: 500, top: -150, right: -150, background: "linear-gradient(135deg,#7C3AED,transparent)" }} />
-      <div className="auth-orb" style={{ width: 300, height: 300, bottom: -80, left: -80, background: "linear-gradient(135deg,#EA580C,transparent)" }} />
+      <div className="auth-orb" style={{ width:500,height:500,top:-150,right:-150,background:"linear-gradient(135deg,rgba(201,161,74,.3),transparent)",opacity:.4 }} />
+      <div className="auth-orb" style={{ width:300,height:300,bottom:-80,left:-80,background:"linear-gradient(135deg,rgba(201,161,74,.2),transparent)",opacity:.3 }} />
       <div className="auth-card">
-        <div className="auth-brand">Founders Bridge</div>
-        <div className="auth-sub">CRM & Client Portal</div>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:32,color:"var(--navy)",fontWeight:700,lineHeight:1.1}}>Founders <span style={{color:"var(--gold)"}}>Bridge</span></div>
+          <div style={{fontSize:10,color:"var(--muted)",letterSpacing:"2.5px",textTransform:"uppercase",marginTop:4}}>Legal & Compliance Portal</div>
+        </div>
 
         {/* Login mode tabs */}
         <div className="auth-tabs" style={{ marginBottom: 20 }}>
@@ -941,134 +947,121 @@ const DEMO_TASKS = [
 // ═══════════════════════════════════════════════════════════════════════
 function AdminDashboard() {
   const { clients, invoices, tasks, employees, setView } = useApp();
-  const totalBilling   = clients.reduce((s, c) => s + c.totalBilling, 0);
-  const totalCollected = clients.reduce((s, c) => s + c.collected, 0);
-  const totalPending   = clients.reduce((s, c) => s + c.pending, 0);
-  const completedTasks = tasks.filter(t => t.status === "completed").length;
-  const pendingTasks   = tasks.filter(t => t.status !== "completed" && t.status !== "cancelled").length;
-  const overdueTasks   = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "completed").length;
-  const activeClients  = clients.filter(c => c.status === "active").length;
+  const [drill, setDrill] = useState(null);
+
+  const totalBilling   = clients.reduce((s,c)=>s+c.totalBilling,0);
+  const totalCollected = clients.reduce((s,c)=>s+c.collected,0);
+  const totalPending   = clients.reduce((s,c)=>s+c.pending,0);
+  const completedTasks = tasks.filter(t=>t.status==="completed").length;
+  const pendingTasks   = tasks.filter(t=>t.status!=="completed"&&t.status!=="cancelled").length;
+  const overdueTasks   = tasks.filter(t=>t.dueDate&&new Date(t.dueDate)<new Date()&&t.status!=="completed").length;
+  const activeClients  = clients.filter(c=>c.status==="active").length;
+
+  const STATS = [
+    { id:"clients",   icon:"🏢", label:"Active Clients",  val:activeClients,       note:`${clients.length} total`,       color:"var(--blue)"   },
+    { id:"billing",   icon:"💰", label:"Total Billing",   val:INR(totalBilling),   note:"All time",                      color:"var(--navy)"   },
+    { id:"collected", icon:"✅", label:"Collected",       val:INR(totalCollected), note:`${Math.round(totalCollected/Math.max(totalBilling,1)*100)}% rate`, color:"var(--green)" },
+    { id:"pending",   icon:"⏳", label:"Outstanding",     val:INR(totalPending),   note:`${clients.filter(c=>c.pending>0).length} clients`,  color:"var(--red)"    },
+    { id:"pending_tasks",  icon:"📋", label:"Pending Tasks",   val:pendingTasks,   note:"Needs action",                  color:"var(--orange)" },
+    { id:"overdue_tasks",  icon:"⚠️",  label:"Overdue Tasks",  val:overdueTasks,   note:"Past due date",                 color:"var(--red)"    },
+    { id:"completed_tasks",icon:"🎯", label:"Completed Tasks", val:completedTasks, note:"All time",                      color:"var(--green)"  },
+    { id:"employees", icon:"👥", label:"Team Members",    val:employees.length,    note:"Active team",                   color:"var(--navy)"   },
+  ];
 
   return (
     <>
-      {/* Stats */}
-      <div className="stat-grid grid4" style={{ marginBottom: 22 }}>
-        {[
-          { icon: "🏢", label: "Active Clients",    val: activeClients,       note: `${clients.length} total`,            color: "var(--blue)" },
-          { icon: "💰", label: "Total Billing",     val: INR(totalBilling),   note: "All clients",                        color: "var(--ink)" },
-          { icon: "✅", label: "Collected",         val: INR(totalCollected), note: `${Math.round(totalCollected/totalBilling*100)||0}% of total`, color: "var(--green)" },
-          { icon: "⏳", label: "Pending",           val: INR(totalPending),   note: `${clients.filter(c=>c.pending>0).length} clients`, color: "var(--red)" },
-        ].map(s => (
-          <div key={s.label} className="stat-box">
+      <div className="stat-grid grid4" style={{marginBottom:22}}>
+        {STATS.map(s=>(
+          <div key={s.id} className="stat-box" onClick={()=>setDrill({type:s.id,title:s.label})}>
             <div className="stat-icon">{s.icon}</div>
             <div className="stat-lbl">{s.label}</div>
-            <div className="stat-val" style={{ color: s.color, fontSize: 22 }}>{s.val}</div>
+            <div className="stat-val" style={{color:s.color,fontSize:22}}>{s.val}</div>
             <div className="stat-note">{s.note}</div>
+            <div className="stat-drill">Click to expand →</div>
           </div>
         ))}
       </div>
 
-      <div className="grid2" style={{ marginBottom: 22 }}>
-        {/* Task overview */}
+      <div className="grid2" style={{marginBottom:22}}>
         <div className="card">
           <div className="card-head">
-            <div className="card-title">Task Overview</div>
-            <button className="btn btn-sm" onClick={() => setView("tasks")}>View All →</button>
+            <div className="card-title">Recent Pending Tasks</div>
+            <button className="btn btn-sm" onClick={()=>setView("tasks")}>View All →</button>
           </div>
-          <div className="card-body">
-            <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-              {[["Pending", pendingTasks, "var(--orange)","#FFF7ED"], ["Completed", completedTasks, "var(--green)","#F0FDF4"], ["Overdue", overdueTasks, "var(--red)","#FEF2F2"]].map(([l, n, c, bg]) => (
-                <div key={l} style={{ flex: 1, textAlign: "center", padding: "12px 8px", borderRadius: 10, background: bg }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: c }}>{n}</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{l}</div>
-                </div>
-              ))}
-            </div>
-            {tasks.filter(t => t.status !== "completed" && t.status !== "cancelled").slice(0, 4).map(t => (
-              <div key={t.id} className="row-item">
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{t.title}</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)" }}>{t.clientName}</div>
-                </div>
-                <Badge status={t.status} />
+          <div style={{padding:"12px 16px",display:"flex",gap:10,borderBottom:"1px solid var(--border)"}}>
+            {[["Pending",pendingTasks,"var(--orange)","#FFF8EC"],["Completed",completedTasks,"var(--green)","#F0FDF4"],["Overdue",overdueTasks,"var(--red)","#FEF2F2"]].map(([l,n,c,bg])=>(
+              <div key={l} style={{flex:1,textAlign:"center",padding:"10px 8px",borderRadius:9,background:bg,cursor:"pointer"}} onClick={()=>setDrill({type:l.toLowerCase()+"_tasks",title:l+" Tasks"})}>
+                <div style={{fontSize:20,fontWeight:700,color:c}}>{n}</div>
+                <div style={{fontSize:10,color:"var(--muted)",marginTop:2}}>{l}</div>
               </div>
             ))}
           </div>
+          {tasks.filter(t=>t.status!=="completed"&&t.status!=="cancelled").slice(0,4).map(t=>(
+            <div key={t.id} className="row-item">
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:500}}>{t.title}</div>
+                <div style={{fontSize:11,color:"var(--muted)"}}>{t.clientName}</div>
+              </div>
+              <Badge status={t.status}/>
+            </div>
+          ))}
         </div>
 
-        {/* Employee performance */}
         <div className="card">
           <div className="card-head">
-            <div className="card-title">Employee Performance</div>
-            <button className="btn btn-sm" onClick={() => setView("employees")}>View All →</button>
+            <div className="card-title">Team Performance</div>
+            <button className="btn btn-sm" onClick={()=>setView("employees")}>View All →</button>
           </div>
-          <div className="card-body" style={{ padding: 0 }}>
-            {employees.map(emp => {
-              const empTasks     = tasks.filter(t => t.assignedTo === emp.id);
-              const empCompleted = empTasks.filter(t => t.status === "completed").length;
-              const empPending   = empTasks.filter(t => t.status !== "completed" && t.status !== "cancelled").length;
-              const empClients   = clients.filter(c => c.assignedTo === emp.id).length;
-              const pct          = empTasks.length ? Math.round(empCompleted / empTasks.length * 100) : 0;
-              return (
-                <div key={emp.id} className="row-item">
-                  <div className="av av-md" style={{ background: emp.color }}>{emp.avatar}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{emp.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--muted)" }}>{empClients} clients · {empCompleted}/{empTasks.length} tasks done</div>
-                    <div className="prog-bg" style={{ marginTop: 5, maxWidth: 200 }}>
-                      <div className="prog-fill" style={{ width: pct + "%", background: pct === 100 ? "var(--green)" : "var(--blue)" }} />
-                    </div>
+          {employees.map(emp=>{
+            const empTasks    = tasks.filter(t=>t.assignedTo===emp.id);
+            const empCompleted= empTasks.filter(t=>t.status==="completed").length;
+            const empClients  = clients.filter(c=>c.assignedTo===emp.id).length;
+            const pct         = empTasks.length ? Math.round(empCompleted/empTasks.length*100) : 0;
+            return (
+              <div key={emp.id} className="row-item" style={{cursor:"pointer"}} onClick={()=>setDrill({type:"emp_"+emp.id,title:emp.name+"'s Tasks"})}>
+                <div className="av av-md" style={{background:emp.color}}>{emp.avatar}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:600}}>{emp.name}</div>
+                  <div style={{fontSize:11,color:"var(--muted)"}}>{empClients} clients · {empCompleted}/{empTasks.length} tasks</div>
+                  <div className="prog-bg" style={{marginTop:5,maxWidth:160}}>
+                    <div className="prog-fill" style={{width:pct+"%",background:pct===100?"var(--green)":pct>60?"var(--gold)":"var(--blue)"}}/>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: pct === 100 ? "var(--green)" : "var(--blue)" }}>{pct}%</div>
                 </div>
-              );
-            })}
-          </div>
+                <div style={{fontSize:13,fontWeight:700,color:pct===100?"var(--green)":pct>60?"var(--gold-dk)":"var(--blue)"}}>{pct}%</div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Client list */}
       <div className="card">
         <div className="card-head">
-          <div className="card-title">Client Status</div>
-          <button className="btn btn-sm" onClick={() => setView("clients")}>View All →</button>
+          <div className="card-title">Client Overview</div>
+          <button className="btn btn-sm" onClick={()=>setView("clients")}>View All →</button>
         </div>
         <div className="tbl-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>Client</th><th>Type</th><th>Assigned To</th><th>Total Billing</th><th>Collected</th><th>Pending</th><th>Progress</th><th>Status</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Client</th><th>Onboarded</th><th>Assigned To</th><th>Billing</th><th>Collected</th><th>Outstanding</th><th>Tasks</th><th>Progress</th></tr></thead>
             <tbody>
-              {clients.slice(0, 5).map(c => {
-                const emp = employees.find(e => e.id === c.assignedTo);
+              {clients.slice(0,6).map(c=>{
+                const emp        = employees.find(e=>e.id===c.assignedTo);
+                const clientTasks= tasks.filter(t=>t.clientId===c.id);
+                const done       = clientTasks.filter(t=>t.status==="completed").length;
+                const pct        = clientTasks.length ? Math.round(done/clientTasks.length*100) : c.progress;
                 return (
                   <tr key={c.id}>
-                    <td>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</div>
-                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{c.clientNo}</div>
-                    </td>
-                    <td><span className="tag">{c.type}</span></td>
-                    <td>
-                      {emp && <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <div className="av av-sm" style={{ background: emp.color }}>{emp.avatar}</div>
-                        <span style={{ fontSize: 12 }}>{emp.name}</span>
-                      </div>}
-                    </td>
-                    <td style={{ fontWeight: 600 }}>{INR(c.totalBilling)}</td>
-                    <td style={{ color: "var(--green)", fontWeight: 600 }}>{INR(c.collected)}</td>
-                    <td style={{ color: c.pending > 0 ? "var(--red)" : "var(--muted)", fontWeight: 600 }}>{INR(c.pending)}</td>
-                    <td style={{ minWidth: 120 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div className="prog-bg" style={{ flex: 1 }}>
-                          <div className="prog-fill" style={{ width: c.progress + "%", background: c.progress === 100 ? "var(--green)" : "var(--blue)" }} />
-                        </div>
-                        <span style={{ fontSize: 12, fontWeight: 700 }}>{c.progress}%</span>
+                    <td><div style={{fontWeight:600}}>{c.name}</div><div style={{fontSize:11,color:"var(--muted)"}}>{c.clientNo}</div></td>
+                    <td style={{fontSize:12,color:"var(--muted)"}}>{c.createdAt}</td>
+                    <td>{emp&&<div style={{display:"flex",alignItems:"center",gap:6}}><div className="av av-sm" style={{background:emp.color}}>{emp.avatar}</div><span style={{fontSize:12}}>{emp.name}</span></div>}</td>
+                    <td style={{fontWeight:700}}>{INR(c.totalBilling)}</td>
+                    <td style={{color:"var(--green)",fontWeight:600}}>{INR(c.collected)}</td>
+                    <td style={{color:c.pending>0?"var(--red)":"var(--muted)",fontWeight:600}}>{INR(c.pending)}</td>
+                    <td style={{fontSize:12}}>{done}/{clientTasks.length}</td>
+                    <td style={{minWidth:110}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <div className="prog-bg" style={{flex:1}}><div className="prog-fill" style={{width:pct+"%",background:pct===100?"var(--green)":pct>60?"var(--gold)":"var(--blue)"}}/></div>
+                        <span style={{fontSize:12,fontWeight:700}}>{pct}%</span>
                       </div>
-                    </td>
-                    <td>
-                      <Badge status={c.status === "active" ? "completed" : "open"} label={c.status === "active" ? "Active" : "Pending"} />
                     </td>
                   </tr>
                 );
@@ -1077,7 +1070,172 @@ function AdminDashboard() {
           </table>
         </div>
       </div>
+
+      {drill && <DrillPanel type={drill.type} title={drill.title} onClose={()=>setDrill(null)} />}
     </>
+  );
+}
+
+// ─── DRILL DOWN PANEL ────────────────────────────────────────────────
+function DrillPanel({ type, title, onClose }) {
+  const { clients, tasks, employees, invoices, payments } = useApp();
+
+  const renderContent = () => {
+    // Active clients list
+    if (type === "clients") {
+      const list = clients.filter(c=>c.status==="active");
+      return (
+        <div className="tbl-wrap">
+          <table>
+            <thead><tr><th>Client</th><th>Onboarded</th><th>Type</th><th>Assigned To</th><th>Total Billing</th><th>Collected</th><th>Outstanding</th><th>Total Tasks</th><th>Pending</th><th>Completed</th></tr></thead>
+            <tbody>
+              {list.map(c=>{
+                const emp         = employees.find(e=>e.id===c.assignedTo);
+                const clientTasks = tasks.filter(t=>t.clientId===c.id);
+                const done        = clientTasks.filter(t=>t.status==="completed").length;
+                const pending     = clientTasks.filter(t=>t.status!=="completed"&&t.status!=="cancelled").length;
+                return (
+                  <tr key={c.id}>
+                    <td><div style={{fontWeight:600,fontSize:13}}>{c.name}</div><div style={{fontSize:11,color:"var(--muted)"}}>{c.clientNo}</div></td>
+                    <td style={{fontSize:12,color:"var(--muted)"}}>{c.createdAt}</td>
+                    <td><span className="tag">{c.type}</span></td>
+                    <td style={{fontSize:12}}>{emp?.name||"—"}</td>
+                    <td style={{fontWeight:700}}>{INR(c.totalBilling)}</td>
+                    <td style={{color:"var(--green)",fontWeight:600}}>{INR(c.collected)}</td>
+                    <td style={{color:c.pending>0?"var(--red)":"var(--muted)",fontWeight:600}}>{INR(c.pending)}</td>
+                    <td>{clientTasks.length}</td>
+                    <td style={{color:"var(--orange)",fontWeight:600}}>{pending}</td>
+                    <td style={{color:"var(--green)",fontWeight:600}}>{done}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    // Billing breakdown
+    if (type === "billing") {
+      const totalBilling = clients.reduce((s,c)=>s+c.totalBilling,0);
+      const govtFees     = invoices.reduce((s,i)=>s+(i.lineItems||[]).filter(l=>l.type==="govt").reduce((ss,l)=>ss+l.amount,0),0);
+      const gstAmt       = invoices.reduce((s,i)=>s+(i.total||0)-(i.lineItems||[]).reduce((ss,l)=>ss+l.unitPrice*l.qty,0),0);
+      const dscAmt       = invoices.reduce((s,i)=>s+(i.lineItems||[]).filter(l=>l.type==="dsc").reduce((ss,l)=>ss+l.amount,0),0);
+      const grossMargin  = totalBilling - govtFees - gstAmt;
+      return (
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+            {[["Total Billing",INR(totalBilling),"var(--navy)"],["Govt Fees",INR(govtFees),"var(--muted)"],["GST Collected",INR(gstAmt),"var(--orange)"],["DSC Tokens",INR(dscAmt),"var(--blue)"],["Gross Margin",INR(grossMargin),"var(--green)"],["Collection %",Math.round((clients.reduce((s,c)=>s+c.collected,0)/Math.max(totalBilling,1))*100)+"%","var(--gold-dk)"]].map(([l,v,c])=>(
+              <div key={l} style={{padding:"14px 16px",background:"var(--cream)",borderRadius:10,border:"1px solid var(--border)"}}>
+                <div style={{fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px"}}>{l}</div>
+                <div style={{fontSize:22,fontWeight:700,color:c,fontFamily:"'Cormorant Garamond',serif",marginTop:4}}>{v}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{fontSize:12,color:"var(--muted)",padding:"10px 14px",background:"var(--gold-lt)",borderRadius:8,border:"1px solid rgba(201,161,74,.3)"}}>
+            💡 Gross Margin = Total Billing − Govt Fees − GST. This is your firm's service revenue before operational expenses.
+          </div>
+        </div>
+      );
+    }
+
+    // Outstanding clients
+    if (type === "pending") {
+      const list = clients.filter(c=>c.pending>0).sort((a,b)=>b.pending-a.pending);
+      return (
+        <div className="tbl-wrap">
+          <table>
+            <thead><tr><th>Client</th><th>Assigned To</th><th>Total Billed</th><th>Collected</th><th>Outstanding</th><th>Overdue Since</th></tr></thead>
+            <tbody>
+              {list.map(c=>{
+                const emp = employees.find(e=>e.id===c.assignedTo);
+                return (
+                  <tr key={c.id}>
+                    <td><div style={{fontWeight:600}}>{c.name}</div><div style={{fontSize:11,color:"var(--muted)"}}>{c.clientNo}</div></td>
+                    <td style={{fontSize:12}}>{emp?.name||"—"}</td>
+                    <td style={{fontWeight:700}}>{INR(c.totalBilling)}</td>
+                    <td style={{color:"var(--green)",fontWeight:600}}>{INR(c.collected)}</td>
+                    <td style={{color:"var(--red)",fontWeight:700,fontSize:14}}>{INR(c.pending)}</td>
+                    <td style={{fontSize:12,color:"var(--muted)"}}>{c.createdAt}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    // Pending tasks
+    if (type === "pending_tasks") {
+      const list = tasks.filter(t=>t.status!=="completed"&&t.status!=="cancelled");
+      return <TasksTable tasks={list} showClient={true}/>;
+    }
+
+    // Overdue tasks
+    if (type === "overdue_tasks") {
+      const list = tasks.filter(t=>t.dueDate&&new Date(t.dueDate)<new Date()&&t.status!=="completed");
+      return <TasksTable tasks={list} showClient={true}/>;
+    }
+
+    // Completed tasks
+    if (type === "completed_tasks") {
+      const list = tasks.filter(t=>t.status==="completed");
+      return <TasksTable tasks={list} showClient={true}/>;
+    }
+
+    // Employee detail
+    if (type.startsWith("emp_")) {
+      const empId  = type.replace("emp_","");
+      const emp    = employees.find(e=>e.id===empId);
+      const empTasks = tasks.filter(t=>t.assignedTo===empId);
+      const empClients = clients.filter(c=>c.assignedTo===empId);
+      if (!emp) return <div className="empty"><div>Employee not found</div></div>;
+      return (
+        <div>
+          <div style={{display:"flex",alignItems:"center",gap:14,padding:"16px 0",borderBottom:"1px solid var(--border)",marginBottom:16}}>
+            <div className="av av-lg" style={{background:emp.color}}>{emp.avatar}</div>
+            <div>
+              <div style={{fontSize:16,fontWeight:700,color:"var(--navy)"}}>{emp.name}</div>
+              <div style={{fontSize:12,color:"var(--muted)"}}>{emp.email} · {emp.phone}</div>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
+            {[["Clients",empClients.length,"var(--blue)"],["Completed",empTasks.filter(t=>t.status==="completed").length,"var(--green)"],["Pending",empTasks.filter(t=>t.status!=="completed"&&t.status!=="cancelled").length,"var(--orange)"]].map(([l,v,c])=>(
+              <div key={l} style={{padding:"12px",background:"var(--cream)",borderRadius:9,textAlign:"center",border:"1px solid var(--border)"}}>
+                <div style={{fontSize:22,fontWeight:700,color:c}}>{v}</div>
+                <div style={{fontSize:11,color:"var(--muted)"}}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{fontSize:13,fontWeight:700,marginBottom:10,color:"var(--navy)"}}>Assigned Clients</div>
+          {empClients.map(c=>(
+            <div key={c.id} className="row-item">
+              <div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{c.name}</div><div style={{fontSize:11,color:"var(--muted)"}}>{c.clientNo}</div></div>
+              <div style={{fontSize:12,fontWeight:700,color:c.pending>0?"var(--red)":"var(--green)"}}>{INR(c.pending)} outstanding</div>
+            </div>
+          ))}
+          <div style={{fontSize:13,fontWeight:700,margin:"16px 0 10px",color:"var(--navy)"}}>All Tasks</div>
+          <TasksTable tasks={empTasks} showClient={true}/>
+        </div>
+      );
+    }
+
+    return <div className="empty"><div>No data available</div></div>;
+  };
+
+  return (
+    <div className="drill-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="drill-panel">
+        <div className="drill-head">
+          <div className="drill-title">{title}</div>
+          <button onClick={onClose} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"var(--muted)",lineHeight:1}}>✕</button>
+        </div>
+        <div className="drill-body">
+          {renderContent()}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1620,32 +1778,75 @@ function EmployeesPage() {
 function OrgSettings() {
   const { org, setOrg, showToast } = useApp();
   const [form, setForm] = useState({ ...org });
+  const logoRef = useRef(null);
   const save = () => { setOrg(form); showToast("Organisation details saved!", "success"); };
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set  = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { showToast("Logo must be under 2MB", "error"); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => set("logoUrl", ev.target.result);
+    reader.readAsDataURL(file);
+  };
 
   return (
-    <div style={{ maxWidth: 700 }}>
+    <div style={{ maxWidth: 720 }}>
+      {/* Logo upload card */}
+      <div className="card card-gold" style={{ marginBottom: 20 }}>
+        <div className="card-head"><div className="card-title">Organisation Logo</div></div>
+        <div className="card-body">
+          <div style={{ display:"flex", alignItems:"center", gap:24 }}>
+            {/* Preview */}
+            <div style={{ width:140,height:80,borderRadius:10,border:"2px dashed var(--border)",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--navy)",flexShrink:0,overflow:"hidden" }}>
+              {form.logoUrl
+                ? <img src={form.logoUrl} alt="Logo" style={{ maxWidth:"100%",maxHeight:"100%",objectFit:"contain",filter:"brightness(0) invert(1)" }} />
+                : <div style={{ textAlign:"center" }}>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:14,color:"#fff",lineHeight:1.2 }}>Founders<br/><span style={{ color:"var(--gold)" }}>Bridge</span></div>
+                  </div>
+              }
+            </div>
+            <div>
+              <div style={{ fontSize:13,fontWeight:600,color:"var(--navy)",marginBottom:6 }}>Upload your logo</div>
+              <div style={{ fontSize:12,color:"var(--muted)",marginBottom:12 }}>PNG or JPG, max 2MB. Will appear in sidebar and invoices.<br/>Recommended: white or transparent background, min 300px wide.</div>
+              <input type="file" ref={logoRef} accept="image/*" style={{ display:"none" }} onChange={handleLogoUpload} />
+              <div style={{ display:"flex",gap:10 }}>
+                <button className="btn btn-gold btn-sm" onClick={()=>logoRef.current?.click()}>⬆ Upload Logo</button>
+                {form.logoUrl && <button className="btn btn-sm btn-red" onClick={()=>set("logoUrl","")}>Remove</button>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Firm details */}
       <div className="card">
-        <div className="card-head"><div className="card-title">Organisation Details</div></div>
+        <div className="card-head"><div className="card-title">Firm Details</div></div>
         <div className="card-body">
           <div className="form-grid-2">
-            {[["name","Firm Name"],["email","Email"],["phone","Phone"],["gstin","GSTIN"],["pan","PAN"],["sac","SAC Code"],["bankName","Bank Name"],["accountNo","Account Number"],["ifsc","IFSC Code"],["upi","UPI ID"]].map(([k, l]) => (
+            {[
+              ["name","Firm Name"],["email","Email Address"],["phone","Phone Number"],
+              ["gstin","GSTIN"],["pan","PAN"],["sac","Default SAC Code"],
+              ["bankName","Bank Name"],["accountNo","Account Number"],
+              ["ifsc","IFSC Code"],["upi","UPI ID"],
+            ].map(([k,l]) => (
               <div key={k} className="f-group">
                 <label className="f-label">{l}</label>
-                <input className="f-input" value={form[k] || ""} onChange={e => set(k, e.target.value)} />
+                <input className="f-input" value={form[k]||""} onChange={e=>set(k,e.target.value)} />
               </div>
             ))}
           </div>
-          <div className="f-group" style={{ marginTop: 16 }}>
+          <div className="f-group" style={{ marginTop:16 }}>
             <label className="f-label">Address</label>
-            <textarea className="f-textarea" value={form.address || ""} onChange={e => set("address", e.target.value)} rows={2} />
+            <textarea className="f-textarea" value={form.address||""} onChange={e=>set("address",e.target.value)} rows={2} />
           </div>
-          <div className="f-group" style={{ marginTop: 16 }}>
+          <div className="f-group" style={{ marginTop:16, maxWidth:200 }}>
             <label className="f-label">GST Rate (%)</label>
-            <input className="f-input" type="number" value={form.gstRate || 18} onChange={e => set("gstRate", Number(e.target.value))} style={{ maxWidth: 120 }} />
+            <input className="f-input" type="number" value={form.gstRate||18} onChange={e=>set("gstRate",Number(e.target.value))} />
           </div>
         </div>
-        <div style={{ padding: "0 20px 20px" }}>
+        <div style={{ padding:"0 20px 20px" }}>
           <button className="btn btn-primary" onClick={save}>Save Changes</button>
         </div>
       </div>
@@ -2304,38 +2505,97 @@ function ClientInvoices() {
 
 function ClientDocs() {
   const { submissions, tasks, clients, user } = useApp();
-  const myClients   = clients.filter(c => c.email===user.email || c.phone===user.phone || c.id===user.id);
+  const fileRef = useRef(null);
+  const [clientUploads, setClientUploads] = useState([
+    // Demo client-uploaded docs
+    { name:"Company_PAN.pdf",      size:"180KB", uploadedAt:"Jan 10, 2025", category:"KYC" },
+    { name:"Partnership_Deed.pdf", size:"340KB", uploadedAt:"Jan 15, 2025", category:"Legal" },
+  ]);
+  const [tab, setTab] = useState("team");
+
+  const myClients   = clients.filter(c=>c.email===user.email||c.phone===user.phone||c.id===user.id);
   const myClientIds = myClients.length>0 ? myClients.map(c=>c.id) : clients.slice(0,2).map(c=>c.id);
-  const myTasks     = tasks.filter(t => myClientIds.includes(t.clientId));
-  const allDocs = [];
+  const myTasks     = tasks.filter(t=>myClientIds.includes(t.clientId));
+
+  // Team-uploaded = documents submitted via task submissions
+  const teamDocs = [];
   submissions.filter(s=>myTasks.some(t=>t.id===s.taskId)).forEach(sub=>{
     const task = myTasks.find(t=>t.id===sub.taskId);
     if (sub.documents) {
       Object.entries(sub.documents).forEach(([dirIdx,slots])=>{
         Object.entries(slots).forEach(([slotId,doc])=>{
-          allDocs.push({ ...doc, taskTitle:task?.title||"", clientName:task?.clientName||"", submittedAt:sub.submittedAt });
+          teamDocs.push({ ...doc, taskTitle:task?.title||"", submittedAt:sub.submittedAt, source:"client_submitted" });
         });
       });
     }
   });
-  return (
-    <div className="card">
-      <div className="card-head"><div className="card-title">My Documents</div><div style={{ fontSize:12,color:"var(--muted)" }}>{allDocs.length} document{allDocs.length!==1?"s":""} submitted</div></div>
-      {allDocs.length===0 ? (
-        <div className="empty"><div className="empty-icon">📁</div><div style={{ fontWeight:600,marginBottom:6 }}>No documents yet</div><div style={{ fontSize:13 }}>Documents you upload for tasks will appear here.</div></div>
-      ) : (
-        allDocs.map((d,i)=>(
-          <div key={i} className="row-item">
-            <div style={{ width:36,height:36,borderRadius:9,background:"#EFF6FF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16 }}>📄</div>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:13,fontWeight:600 }}>{d.name}</div>
-              <div style={{ fontSize:11,color:"var(--muted)",marginTop:2 }}>{d.taskTitle} · {d.size} · Submitted {d.submittedAt}</div>
-            </div>
-            <button className="btn btn-sm">Download</button>
-          </div>
-        ))
-      )}
+  // Also add some demo team-uploaded docs
+  const teamUploaded = [
+    { name:"Incorporation_Certificate.pdf", size:"420KB", uploadedAt:"Feb 5, 2025",  taskTitle:"Certificate of Incorporation", source:"team" },
+    { name:"GST_Registration.pdf",          size:"280KB", uploadedAt:"Mar 12, 2025", taskTitle:"GST Certificate",              source:"team" },
+    ...teamDocs,
+  ];
+
+  const handleClientUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const newDocs = files.map(f=>({
+      name:f.name, size:(f.size/1024).toFixed(0)+"KB",
+      uploadedAt:new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}),
+      category:"General",
+    }));
+    setClientUploads(d=>[...d,...newDocs]);
+    e.target.value="";
+  };
+
+  const DocRow = ({doc, showSource}) => (
+    <div className="row-item">
+      <div style={{ width:36,height:36,borderRadius:9,background:doc.source==="team"?"rgba(11,31,58,.07)":"var(--gold-lt)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0 }}>📄</div>
+      <div style={{ flex:1 }}>
+        <div style={{ fontSize:13,fontWeight:600,color:"var(--navy)" }}>{doc.name}</div>
+        <div style={{ fontSize:11,color:"var(--muted)",marginTop:2 }}>
+          {doc.taskTitle && `${doc.taskTitle} · `}
+          {doc.size} · {doc.uploadedAt}
+          {showSource && <span style={{ marginLeft:6,padding:"1px 6px",borderRadius:4,background:doc.source==="team"?"rgba(11,31,58,.08)":"var(--gold-lt)",color:doc.source==="team"?"var(--navy)":"var(--gold-dk)",fontSize:10,fontWeight:700 }}>{doc.source==="team"?"Team":"You"}</span>}
+        </div>
+      </div>
+      <button className="btn btn-sm">⬇ Download</button>
     </div>
+  );
+
+  return (
+    <>
+      <input type="file" ref={fileRef} multiple style={{display:"none"}} onChange={handleClientUpload} />
+      <div className="tabs">
+        <div className={`tab ${tab==="team"?"on":""}`} onClick={()=>setTab("team")}>📂 Team Uploaded ({teamUploaded.length})</div>
+        <div className={`tab ${tab==="mine"?"on":""}`} onClick={()=>setTab("mine")}>📤 My Uploads ({clientUploads.length})</div>
+      </div>
+
+      {tab==="team" && (
+        <div className="card">
+          <div className="card-head">
+            <div className="card-title">Documents from Your Team</div>
+            <div style={{fontSize:12,color:"var(--muted)"}}>{teamUploaded.length} documents</div>
+          </div>
+          {teamUploaded.length===0
+            ? <div className="empty"><div className="empty-icon">📁</div><div>No documents uploaded by team yet</div></div>
+            : teamUploaded.map((d,i)=><DocRow key={i} doc={d} showSource={false}/>)
+          }
+        </div>
+      )}
+
+      {tab==="mine" && (
+        <div className="card">
+          <div className="card-head">
+            <div className="card-title">My Uploaded Documents</div>
+            <button className="btn btn-gold btn-sm" onClick={()=>fileRef.current?.click()}>⬆ Upload File</button>
+          </div>
+          {clientUploads.length===0
+            ? <div className="empty"><div className="empty-icon">📤</div><div style={{fontWeight:600,marginBottom:6}}>No uploads yet</div><div style={{fontSize:13}}>Upload any documents you want to share with your team.</div></div>
+            : clientUploads.map((d,i)=><DocRow key={i} doc={{...d,source:"client"}} showSource={false}/>)
+          }
+        </div>
+      )}
+    </>
   );
 }
 
@@ -2593,7 +2853,7 @@ function CreateInvoiceModal({ data, onClose }) {
               <table>
                 <thead>
                   <tr>
-                    <th>Item</th><th>Type</th><th>Qty</th><th>Unit Price (₹)</th><th>GST</th><th>Amount</th>
+                    <th>Item</th><th>SAC</th><th>Type</th><th>Qty</th><th>Unit Price (₹)</th><th>GST</th><th>Amount</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2602,6 +2862,9 @@ function CreateInvoiceModal({ data, onClose }) {
                       <td style={{ minWidth: 180 }}>
                         <input className="f-input" value={li.name} onChange={e => setItem(li.id, "name", e.target.value)} style={{ fontSize: 12, padding: "5px 9px" }} />
                         {li.note && <div style={{ fontSize: 10, color: "var(--orange)", marginTop: 2 }}>⚠️ {li.note}</div>}
+                      </td>
+                      <td>
+                        <input className="f-input" value={li.sac||org.sac||"998211"} onChange={e=>setItem(li.id,"sac",e.target.value)} style={{ width:80,fontSize:12,padding:"5px 9px" }} />
                       </td>
                       <td><span className="tag">{li.type}</span></td>
                       <td>
@@ -4129,8 +4392,11 @@ function AppV2() {
         {/* Sidebar */}
         <aside className="sb">
           <div className="sb-logo">
-            <div className="sb-brand">Founders<br/>Bridge</div>
-            <div className="sb-tagline">CRM Portal</div>
+            {org.logoUrl
+              ? <img src={org.logoUrl} alt="Logo" className="sb-logo-img" />
+              : <div className="sb-brand">Founders<br/><span>Bridge</span></div>
+            }
+            <div className="sb-tagline">Legal & Compliance Portal</div>
           </div>
           <div className="sb-role-pill">
             <div className="sb-role-name">{user.name}</div>

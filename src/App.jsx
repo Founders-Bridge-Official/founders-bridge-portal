@@ -2724,7 +2724,7 @@ function CreateClientModal({ data, onClose }) {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const isEmployee = user?.role === "employee";
 
-  const save = () => {
+  const save = async () => {
     if (!form.name)  { showToast("Client name is required", "error"); return; }
     if (!form.phone) { showToast("Mobile number is required", "error"); return; }
     if (!form.email) { showToast("Email is required", "error"); return; }
@@ -4458,30 +4458,42 @@ function KrayaSettings({ showToast }) {
 
 // Extended App with all Session 2 features
 function AppV2() {
-  const [user, setUser]       = useState(null);
-  const [view, setView]       = useState("");
+  // ─── Restore session from localStorage on page load ──────────────
+  const savedUser = (() => {
+    try { return JSON.parse(localStorage.getItem("fb_user") || "null"); } catch { return null; }
+  })();
+  const savedView = localStorage.getItem("fb_view") || "";
+
+  const [user, setUser]       = useState(savedUser);
+  const [view, setView]       = useState(savedView || (savedUser ? { admin:"dashboard", manager:"dashboard", employee:"emp-dashboard", client:"client-home" }[savedUser?.role] || "dashboard" : ""));
   const [toast, setToast]     = useState(null);
   const [modal, setModal]     = useState(null);
   const [showReg, setShowReg] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // ─── Core data — all backed by Supabase ──────────────────────────
-  const [org,         setOrg]       = useState(DEFAULT_ORG);
-  const [bundles,     setBundles]   = useState(DEFAULT_BUNDLES);
-  const [docTpls,     setDocTpls]   = useState(DEFAULT_DOC_TEMPLATES);
-  const [clients,     setClients]   = useState([]);
-  const [employees,   setEmps]      = useState([]);
-  const [invoices,    setInvoices]  = useState([]);
-  const [tasks,       setTasks]     = useState([]);
+  const [org,          setOrg]      = useState(DEFAULT_ORG);
+  const [bundles,      setBundles]  = useState(DEFAULT_BUNDLES);
+  const [docTpls,      setDocTpls]  = useState(DEFAULT_DOC_TEMPLATES);
+  const [clients,      setClients]  = useState([]);
+  const [employees,    setEmps]     = useState([]);
+  const [invoices,     setInvoices] = useState([]);
+  const [tasks,        setTasks]    = useState([]);
   const [notifications,setNotifs]  = useState([]);
-  const [payments,    setPayments]  = useState([]);
-  const [submissions, setSubs]      = useState([]);
-  const [tickets,     setTickets]   = useState([]);
-  const [dbError,     setDbError]   = useState(null);
+  const [payments,     setPayments] = useState([]);
+  const [submissions,  setSubs]     = useState([]);
+  const [tickets,      setTickets]  = useState([]);
+  const [dbError,      setDbError]  = useState(null);
 
   const showToast  = (msg, type="info") => setToast({msg,type});
   const openModal  = (id, data={}) => setModal({id,data});
   const closeModal = () => setModal(null);
+
+  // ─── Persist view to localStorage ────────────────────────────────
+  const setViewPersisted = (v) => {
+    setView(v);
+    localStorage.setItem("fb_view", v);
+  };
 
   // ─── Load all data from Supabase ─────────────────────────────────
   const loadAll = async (currentUser) => {
@@ -4766,14 +4778,30 @@ function AppV2() {
 
   const handleLogin = async (u) => {
     setLoading(true);
+    // Save session to localStorage so it survives refresh
+    localStorage.setItem("fb_user", JSON.stringify(u));
     setUser(u);
     await loadAll(u);
     setLoading(false);
-    const views = { admin:"dashboard", manager:"dashboard", employee:"emp-dashboard", client:"client-home" };
-    setView(views[u.role] || "dashboard");
+    const defaultView = { admin:"dashboard", manager:"dashboard", employee:"emp-dashboard", client:"client-home" }[u.role] || "dashboard";
+    setViewPersisted(defaultView);
   };
 
-  const logout = () => { setUser(null); setView(""); setClients([]); setTasks([]); setInvoices([]); };
+  const logout = () => {
+    localStorage.removeItem("fb_user");
+    localStorage.removeItem("fb_view");
+    setUser(null);
+    setView("");
+    setClients([]); setTasks([]); setInvoices([]);
+    setTickets([]); setPayments([]); setSubs([]);
+  };
+
+  // Load data on mount if session restored from localStorage
+  useEffect(() => {
+    if (savedUser && clients.length === 0) {
+      loadAll(savedUser);
+    }
+  }, []);
 
   const unreadNotifs = notifications.filter(n => n.userId === user?.id && !n.read).length;
 
@@ -4811,7 +4839,7 @@ function AppV2() {
     bundles, setBundles,
     docTpls, setDocTpls,
     clients, setClients: dbSetClients, dbCreateClient,
-    employees: employees,
+    employees,
     setEmps,
     invoices, setInvoices: dbSetInvoices, dbCreateInvoice,
     tasks, setTasks: dbSetTasks,
@@ -4819,8 +4847,10 @@ function AppV2() {
     payments, setPayments: dbSetPayments,
     submissions, setSubs: dbSetSubs,
     tickets, setTickets: dbSetTickets, dbCreateTicket, dbAddTicketResponse,
-    showToast, openModal, closeModal, modal, view, setView,
-    unreadNotifs, loadAll: ()=>loadAll(user),
+    showToast, openModal, closeModal, modal,
+    view, setView: setViewPersisted,
+    unreadNotifs: tickets.filter(t=>t.status==="open").length,
+    loadAll: ()=>loadAll(user),
     dbError,
   };
 

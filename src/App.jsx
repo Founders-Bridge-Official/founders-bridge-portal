@@ -8,92 +8,88 @@ import { useState, useEffect, useRef, createContext, useContext } from "react";
 // Login: Email/Mobile + Password OR OTP (OTP coming soon)
 // ═══════════════════════════════════════════════════════════════════════
 
-// ─── SUPABASE CONFIG + DATA LAYER ────────────────────────────────────
+// ─── SUPABASE CONFIG ─────────────────────────────────────────────────
+// These will be replaced by environment variables in production
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || "https://suodxuignbbsxmqrfagx.supabase.co";
 const SUPABASE_KEY = process.env.REACT_APP_SUPABASE_KEY || "sb_publishable_g53rUECoCXdsfpD_qDUlow_ufks2CFs";
+const POLL_INTERVAL = 5000; // Poll every 5 seconds for real-time sync
 
-const SB_HEADERS = {
-  "apikey":        SUPABASE_KEY,
+const SB_HDRS = {
+  "apikey": SUPABASE_KEY,
   "Authorization": `Bearer ${SUPABASE_KEY}`,
-  "Content-Type":  "application/json",
-  "Prefer":        "return=representation",
+  "Content-Type": "application/json",
+  "Prefer": "return=representation",
 };
 
-// Core REST helper
 const sb = {
   async select(table, filter = "") {
-    const url = `${SUPABASE_URL}/rest/v1/${table}?select=*&order=created_at.desc${filter ? "&" + filter : ""}`;
-    const res = await fetch(url, { headers: SB_HEADERS });
-    if (!res.ok) throw new Error((await res.json()).message || "DB error");
-    return res.json();
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/${table}?select=*&order=created_at.desc${filter ? "&" + filter : ""}`;
+      const res = await fetch(url, { headers: SB_HDRS });
+      if (!res.ok) return [];
+      return res.json();
+    } catch { return []; }
   },
   async insert(table, data) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-      method: "POST", headers: SB_HEADERS,
-      body: JSON.stringify(Array.isArray(data) ? data : [data]),
-    });
-    if (!res.ok) throw new Error((await res.json()).message || "Insert error");
-    return res.json();
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+        method: "POST", headers: SB_HDRS,
+        body: JSON.stringify(Array.isArray(data) ? data : [data]),
+      });
+      if (!res.ok) { const e = await res.json(); console.error("Insert error:", e); return []; }
+      return res.json();
+    } catch(e) { console.error("Insert failed:", e); return []; }
   },
   async update(table, matchKey, matchVal, data) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${matchKey}=eq.${encodeURIComponent(matchVal)}`, {
-      method: "PATCH", headers: SB_HEADERS, body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error((await res.json()).message || "Update error");
-    return res.json();
-  },
-  async delete(table, matchKey, matchVal) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${matchKey}=eq.${encodeURIComponent(matchVal)}`, {
-      method: "DELETE", headers: SB_HEADERS,
-    });
-    if (!res.ok) throw new Error((await res.json()).message || "Delete error");
-    return true;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${matchKey}=eq.${encodeURIComponent(matchVal)}`, {
+        method: "PATCH", headers: SB_HDRS, body: JSON.stringify(data),
+      });
+      if (!res.ok) { const e = await res.json(); console.error("Update error:", e); return []; }
+      return res.json();
+    } catch(e) { console.error("Update failed:", e); return []; }
   },
 };
 
-// ─── AUTH HELPER ─────────────────────────────────────────────────────
+// ─── AUTH ─────────────────────────────────────────────────────────────
 const Auth = {
   async login(identifier, password) {
     const norm = identifier.trim().toLowerCase().replace(/\s/g, "");
     const isPhone = /^\d{10}$/.test(norm);
     try {
-      const rows = isPhone
-        ? await sb.select("users", `phone=eq.${norm}`)
-        : await sb.select("users", `email=eq.${encodeURIComponent(norm)}`);
+      const filter = isPhone ? `phone=eq.${norm}` : `email=eq.${encodeURIComponent(norm)}`;
+      const rows = await sb.select("users", filter);
       const user = rows[0];
-      if (!user) return { error: "No account found for this email/mobile." };
+      if (!user) {
+        // Fallback to demo data
+        const demo = DEMO_USERS[norm] || DEMO_BY_PHONE[norm];
+        if (demo && demo.password === password) return { user: demo };
+        return { error: "No account found. Please check your email/mobile." };
+      }
       if (user.password !== password) return { error: "Incorrect password. Please try again." };
-      return { user: mapUser(user) };
-    } catch (e) {
-      // Fallback to demo data if DB unreachable
-      console.warn("DB login failed, using demo fallback:", e.message);
-      const u = DEMO_USERS[norm] || DEMO_BY_PHONE[norm];
-      if (u && u.password === password) return { user: u };
-      return { error: "Invalid credentials." };
+      return { user: {
+        id: user.id, name: user.name, role: user.role,
+        avatar: user.avatar || initials(user.name),
+        color: user.color || "#0B1F3A",
+        email: user.email, phone: user.phone, password: user.password,
+      }};
+    } catch(e) {
+      // Fallback to demo if DB unreachable
+      const demo = DEMO_USERS[norm] || DEMO_BY_PHONE[norm];
+      if (demo && demo.password === password) return { user: demo };
+      return { error: "Connection error. Please try again." };
     }
   },
 };
 
-// ─── DATA MAPPERS (DB columns → app format) ──────────────────────────
-const mapUser    = u => ({ id:u.id, name:u.name, role:u.role, avatar:u.avatar||initials(u.name), color:u.color||"#0B1F3A", email:u.email, phone:u.phone, password:u.password, clientNo:u.client_no });
-const mapClient  = c => ({ id:c.id, clientNo:c.client_no, name:c.name, contactName:c.contact_name, email:c.email, phone:c.phone, type:c.type, status:c.status, assignedTo:c.assigned_to, totalBilling:Number(c.total_billing)||0, collected:Number(c.collected)||0, pending:Number(c.pending)||0, progress:c.progress||0, createdAt:c.created_at ? new Date(c.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : "—" });
-const mapInvoice = i => ({ id:i.id, invoiceNo:i.invoice_no, clientId:i.company_id, clientName:i.client_name, date:i.date, dueDate:i.due_date, status:i.status, total:Number(i.total)||0, paid:Number(i.paid)||0, pending:Number(i.pending)||0, lineItems:[] });
-const mapTask    = t => ({ id:t.id, title:t.title, clientId:t.company_id, clientName:t.client_name, invoiceId:t.invoice_id, assignedTo:t.assigned_to, status:t.status, sequence:t.sequence||1, requirementType:t.requirement_type||"none", docTemplateId:t.doc_template_id, directorNumber:t.director_number, directorCount:t.director_count||1, dueDate:t.due_date, completedDate:t.completed_date, notes:t.notes||"", category:t.category, isRecurring:t.is_recurring, freq:t.recurring_freq, startDate:t.start_date, endDate:t.end_date });
-const mapTicket  = t => ({ id:t.id, ticketNo:t.ticket_no, clientId:t.company_id, clientName:t.client_name, raisedBy:t.raised_by, assignedTo:t.assigned_to, subject:t.subject, description:t.description, priority:t.priority||"medium", status:t.status||"open", tat:t.tat, createdAt:t.created_at ? new Date(t.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : today(), updatedAt:t.updated_at ? new Date(t.updated_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : today(), responses:[] });
+// ─── DATA MAPPERS ─────────────────────────────────────────────────────
+const mapClient  = c => ({ id:c.id, clientNo:c.client_no, name:c.name, contactName:c.contact_name, email:c.email, phone:c.phone, type:c.type, status:c.status, assignedTo:c.assigned_to, totalBilling:Number(c.total_billing)||0, collected:Number(c.collected)||0, pending:Number(c.pending)||0, progress:c.progress||0, createdAt:c.created_at ? new Date(c.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : today() });
+const mapInvoice = i => ({ id:i.id, invoiceNo:i.invoice_no, clientId:i.company_id, clientName:i.client_name, date:i.date||today(), dueDate:i.due_date, status:i.status||"unpaid", total:Number(i.total)||0, paid:Number(i.paid)||0, pending:Number(i.pending)||0, lineItems:[] });
+const mapTask    = t => ({ id:t.id, title:t.title, clientId:t.company_id, clientName:t.client_name, invoiceId:t.invoice_id, assignedTo:t.assigned_to, status:t.status||"open", sequence:t.sequence||1, requirementType:t.requirement_type||"none", docTemplateId:t.doc_template_id, directorNumber:t.director_number, directorCount:t.director_count||1, dueDate:t.due_date, completedDate:t.completed_date, notes:t.notes||"", category:t.category, isRecurring:t.is_recurring, freq:t.recurring_freq, startDate:t.start_date, endDate:t.end_date });
+const mapTicket  = t => ({ id:t.id, ticketNo:t.ticket_no, clientId:t.company_id, clientName:t.client_name, raisedBy:t.raised_by, assignedTo:t.assigned_to, subject:t.subject, description:t.description||"", priority:t.priority||"medium", status:t.status||"open", tat:t.tat, createdAt:t.created_at ? new Date(t.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : today(), updatedAt:t.updated_at ? new Date(t.updated_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : today(), responses:[] });
 const mapPayment = p => ({ id:p.id, invoiceId:p.invoice_id, clientId:p.company_id, clientName:p.client_name, amount:Number(p.amount)||0, mode:p.mode, reference:p.reference, date:p.date, notes:p.notes, recordedBy:p.recorded_by });
 const mapSub     = s => ({ id:s.id, taskId:s.task_id, clientId:s.company_id, status:s.status, formData:s.form_data||{}, documents:s.documents||{}, note:s.note, reviewNote:s.review_note, submittedAt:s.submitted_at, reviewedAt:s.reviewed_at, locked:s.locked!==false });
 const mapResp    = r => ({ by:r.by_role, byName:r.by_name, text:r.text, date:r.date });
-
-// ─── REVERSE MAPPERS (app format → DB columns) ───────────────────────
-const toDbClient = c => ({ client_no:c.clientNo, name:c.name, contact_name:c.contactName, email:c.email, phone:c.phone, type:c.type, status:c.status||"active", assigned_to:c.assignedTo, total_billing:c.totalBilling||0, collected:c.collected||0, pending:c.pending||0, progress:c.progress||0 });
-const toDbInvoice= i => ({ invoice_no:i.invoiceNo, company_id:i.clientId, client_name:i.clientName, date:i.date, due_date:i.dueDate, status:i.status||"unpaid", total:i.total||0, paid:i.paid||0, pending:i.pending||0 });
-const toDbTask   = t => ({ title:t.title, company_id:t.clientId, client_name:t.clientName, invoice_id:t.invoiceId||null, assigned_to:t.assignedTo||null, status:t.status||"open", sequence:t.sequence||1, requirement_type:t.requirementType||"none", doc_template_id:t.docTemplateId||null, director_number:t.directorNumber||null, director_count:t.directorCount||1, due_date:t.dueDate||null, notes:t.notes||"", category:t.category||null, is_recurring:t.isRecurring||false, recurring_freq:t.freq||null, start_date:t.startDate||null, end_date:t.endDate||null });
-const toDbTicket = t => ({ ticket_no:t.ticketNo, company_id:t.clientId, client_name:t.clientName, raised_by:t.raisedBy||null, assigned_to:t.assignedTo||null, subject:t.subject, description:t.description||"", priority:t.priority||"medium", status:t.status||"open" });
-
-// ─── POLLING INTERVAL (ms) — keeps data fresh across users ───────────
-// Since Supabase realtime requires websocket auth setup,
-// we poll every 5 seconds to sync data between users
-const POLL_INTERVAL = 5000;
 
 // ─── DEMO DATA ────────────────────────────────────────────────────────
 // Used when Supabase is not connected (for testing)
@@ -578,7 +574,7 @@ function LoginPage({ onLogin, showToast }) {
     if (countdown > 0) { const t = setTimeout(() => setCount(c => c - 1), 1000); return () => clearTimeout(t); }
   }, [countdown]);
 
-  const findUser = (id) => {
+  const findUser = async (id) => {
     const norm = id.trim().toLowerCase();
     return DEMO_USERS[norm] || DEMO_BY_PHONE[norm] || null;
   };
@@ -617,7 +613,7 @@ function LoginPage({ onLogin, showToast }) {
     }
   };
 
-  const handleVerifyOtp = async () => {
+  const handleVerifyOtp = () => {
     const phone    = identifier.replace(/\D/g,"").slice(-10);
     const entered  = otp.join("");
     if (entered.length < 6) { setError("Enter all 6 digits"); return; }
@@ -877,36 +873,17 @@ function Sidebar({ user, view, setView, logout }) {
 // TOPBAR
 // ═══════════════════════════════════════════════════════════════════════
 function TopBar() {
-  const { view, org, dbError, loadAll } = useApp();
+  const { view, org } = useApp();
   const titles = {
-    dashboard:"Dashboard", analytics:"Analytics", reports:"Reports",
-    "billing-summary":"Billing Summary",
-    clients:"Clients", invoices:"Invoices", payments:"Payments", tasks:"Tasks",
-    recurring:"Recurring Tasks", tickets:"Tickets / Queries",
-    employees:"Employees",
-    "settings-org":"Organisation Settings", "settings-bundles":"Bundles & Services",
-    "settings-doctpls":"Document Templates",
-    "settings-users":"Users & Roles", "settings-kraya":"WhatsApp Settings",
-    "emp-dashboard":"My Dashboard", "emp-tasks":"My Tasks", "emp-clients":"My Clients",
-    "client-home":"My Companies", "client-tasks":"My Tasks",
-    "client-invoices":"My Billing", "client-docs":"Documents",
-    notifications:"Notifications", policies:"Policies",
+    dashboard: "Dashboard", analytics: "Analytics", clients: "Clients", invoices: "Invoices", tasks: "Tasks", employees: "Employees",
+    "settings-org": "Organisation Settings", "settings-bundles": "Bundles & Services", "settings-users": "Users & Roles",
+    "emp-dashboard": "My Dashboard", "emp-tasks": "My Tasks", "emp-clients": "My Clients",
+    "client-home": "My Companies", "client-tasks": "My Tasks", "client-invoices": "My Billing", "client-docs": "My Documents",
   };
   return (
     <div className="topbar">
       <div className="topbar-title">{titles[view] || "Founders Bridge"}</div>
-      {dbError ? (
-        <div style={{ display:"flex",alignItems:"center",gap:6,padding:"4px 10px",background:"#FFF8EC",border:"1px solid rgba(201,161,74,.4)",borderRadius:6,fontSize:11,color:"var(--gold-dk)",cursor:"pointer" }}
-          onClick={()=>loadAll && loadAll()} title={dbError}>
-          ⚠️ Demo mode · <span style={{ textDecoration:"underline" }}>Retry DB</span>
-        </div>
-      ) : (
-        <div style={{ display:"flex",alignItems:"center",gap:5,fontSize:11,color:"var(--green)",opacity:.8 }}>
-          <span style={{ width:6,height:6,borderRadius:"50%",background:"var(--green)",display:"inline-block" }}/>
-          Live
-        </div>
-      )}
-      <div style={{ fontSize:11,color:"var(--muted)",fontWeight:600 }}>{org.name}</div>
+      <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>{org.name}</div>
     </div>
   );
 }
@@ -2742,10 +2719,7 @@ function CreateClientModal({ data, onClose }) {
       createdAt: today(),
     };
 
-    // Save to Supabase — also creates user login
-    await dbCreateClient(newClient);
-
-    // Also update local demo lookup for immediate login without reload
+    // Update demo lookup for immediate login
     DEMO_USERS[form.email.toLowerCase()] = {
       id: newClient.id, name: form.contactName || form.name,
       role: "client", avatar: initials(form.contactName || form.name),
@@ -2754,6 +2728,9 @@ function CreateClientModal({ data, onClose }) {
     };
     if (form.phone) DEMO_BY_PHONE[form.phone] = DEMO_USERS[form.email.toLowerCase()];
     KRAYA.welcomeClient(form.phone, form.contactName || form.name);
+
+    // Save to DB (also updates state)
+    await dbCreateClient(newClient);
     onClose();
   };
 
@@ -2821,7 +2798,7 @@ function CreateClientModal({ data, onClose }) {
 
 // ─── Create Invoice Modal ─────────────────────────────────────────────
 function CreateInvoiceModal({ data, onClose }) {
-  const { clients, invoices, dbCreateInvoice, tasks, bundles, org, showToast } = useApp();
+  const { clients, invoices, dbCreateInvoice, bundles, org, showToast } = useApp();
   const [clientId, setClientId]   = useState(data?.clientId || "");
   const [bundleId, setBundleId]   = useState("");
   const [lineItems, setLineItems] = useState([]);
@@ -2906,12 +2883,10 @@ function CreateInvoiceModal({ data, onClose }) {
 
     const newTasks = generateTasks(newInvoice.id);
 
-    // Notify client via WhatsApp
     if (selectedClient?.phone) {
       KRAYA.invoiceCreated(selectedClient.phone, selectedClient.contactName || selectedClient.name, INR(total), invoiceNo);
     }
 
-    // Save to Supabase (also saves line items and tasks)
     await dbCreateInvoice(newInvoice, lineItems, newTasks);
     onClose();
   };
@@ -4011,7 +3986,7 @@ function RegistrationPage({ onBack, showToast }) {
   const [loading, setLoading] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const nextStep = async () => {
+  const nextStep = () => {
     if (step === 1) {
       if (!form.name || !form.phone || !form.email) { showToast("All fields required", "error"); return; }
       if (!form.phone.match(/^\d{10}$/)) { showToast("Enter a valid 10-digit mobile number", "error"); return; }
@@ -4458,212 +4433,296 @@ function KrayaSettings({ showToast }) {
 
 // Extended App with all Session 2 features
 function AppV2() {
-  // ─── Restore session from localStorage on page load ──────────────
-  const savedUser = (() => {
+  // ─── Restore session from localStorage ───────────────────────────
+  const getSavedUser = () => {
     try { return JSON.parse(localStorage.getItem("fb_user") || "null"); } catch { return null; }
-  })();
-  const savedView = localStorage.getItem("fb_view") || "";
+  };
+  const getSavedView = (role) => {
+    const saved = localStorage.getItem("fb_view");
+    if (saved) return saved;
+    return { admin:"dashboard", manager:"dashboard", employee:"emp-dashboard", client:"client-home" }[role] || "dashboard";
+  };
 
-  const [user, setUser]       = useState(savedUser);
-  const [view, setView]       = useState(savedView || (savedUser ? { admin:"dashboard", manager:"dashboard", employee:"emp-dashboard", client:"client-home" }[savedUser?.role] || "dashboard" : ""));
-  const [toast, setToast]     = useState(null);
-  const [modal, setModal]     = useState(null);
-  const [showReg, setShowReg] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [user,      setUser]    = useState(getSavedUser);
+  const [view,      setViewRaw] = useState(() => { const u = getSavedUser(); return u ? getSavedView(u.role) : ""; });
+  const [toast,     setToast]   = useState(null);
+  const [modal,     setModal]   = useState(null);
+  const [showReg,   setShowReg] = useState(false);
+  const [dbReady,   setDbReady] = useState(false);
 
-  // ─── Core data — all backed by Supabase ──────────────────────────
+  // ─── Core data ────────────────────────────────────────────────────
   const [org,          setOrg]      = useState(DEFAULT_ORG);
   const [bundles,      setBundles]  = useState(DEFAULT_BUNDLES);
   const [docTpls,      setDocTpls]  = useState(DEFAULT_DOC_TEMPLATES);
-  const [clients,      setClients]  = useState([]);
-  const [employees,    setEmps]     = useState([]);
-  const [invoices,     setInvoices] = useState([]);
-  const [tasks,        setTasks]    = useState([]);
-  const [notifications,setNotifs]  = useState([]);
-  const [payments,     setPayments] = useState([]);
-  const [submissions,  setSubs]     = useState([]);
-  const [tickets,      setTickets]  = useState([]);
-  const [dbError,      setDbError]  = useState(null);
+  const [clients,      setClients]  = useState(DEMO_CLIENTS);
+  const [employees,    setEmps]     = useState(DEMO_EMPLOYEES);
+  const [invoices,     setInvoices] = useState(DEMO_INVOICES);
+  const [tasks,        setTasks]    = useState(DEMO_TASKS);
+  const [notifications,setNotifs]   = useState(DEMO_NOTIFICATIONS);
+  const [payments,     setPayments] = useState(DEMO_PAYMENTS);
+  const [submissions,  setSubs]     = useState(DEMO_SUBMISSIONS);
+  const [tickets,      setTickets]  = useState(DEMO_TICKETS);
 
   const showToast  = (msg, type="info") => setToast({msg,type});
-  const openModal  = (id, data={}) => setModal({id,data});
-  const closeModal = () => setModal(null);
+  const openModal  = (id, data={})     => setModal({id,data});
+  const closeModal = ()                => setModal(null);
 
-  // ─── Persist view to localStorage ────────────────────────────────
-  const setViewPersisted = (v) => {
-    setView(v);
-    localStorage.setItem("fb_view", v);
-  };
+  // Persist view to localStorage
+  const setView = (v) => { setViewRaw(v); localStorage.setItem("fb_view", v); };
 
-  // ─── Load all data from Supabase ─────────────────────────────────
+  // ─── Load data from Supabase ──────────────────────────────────────
   const loadAll = async (currentUser) => {
+    if (!currentUser) return;
     try {
-      // Load users (employees are those with role employee/manager)
-      const [usersRaw, companiesRaw, invoicesRaw, tasksRaw, paymentsRaw, subsRaw, ticketsRaw, ticketRespRaw, orgRaw] = await Promise.all([
-        sb.select("users").catch(()=>[]),
-        sb.select("companies").catch(()=>[]),
-        sb.select("invoices").catch(()=>[]),
-        sb.select("tasks").catch(()=>[]),
-        sb.select("payments").catch(()=>[]),
-        sb.select("submissions").catch(()=>[]),
-        sb.select("tickets").catch(()=>[]),
-        sb.select("ticket_responses").catch(()=>[]),
-        sb.select("org_settings").catch(()=>[]),
+      const [usersRaw, companiesRaw, invoicesRaw, lineItemsRaw, tasksRaw,
+             paymentsRaw, subsRaw, ticketsRaw, ticketRespRaw, orgRaw] = await Promise.all([
+        sb.select("users"),
+        sb.select("companies"),
+        sb.select("invoices"),
+        sb.select("invoice_line_items"),
+        sb.select("tasks"),
+        sb.select("payments"),
+        sb.select("submissions"),
+        sb.select("tickets"),
+        sb.select("ticket_responses"),
+        sb.select("org_settings"),
       ]);
 
-      // Map users → employees list
-      const empList = usersRaw.filter(u=>u.role==="employee"||u.role==="manager").map(mapUser);
-      setEmps(empList);
-
-      // Map companies — filter by assignee for employee role
-      let compList = companiesRaw.map(mapClient);
-      if (currentUser?.role==="employee") {
-        compList = compList.filter(c=>c.assignedTo===currentUser.id);
+      // Only update if we got real data back
+      if (usersRaw.length > 0) {
+        setEmps(usersRaw.filter(u => u.role==="employee"||u.role==="manager").map(u => ({
+          id:u.id, name:u.name, role:u.role, avatar:u.avatar||initials(u.name),
+          color:u.color||"#0B1F3A", email:u.email, phone:u.phone,
+        })));
       }
-      setClients(compList);
 
-      // Map invoices + load line items
-      const invList = invoicesRaw.map(mapInvoice);
-      // Load all line items
-      const lineItemsRaw = await sb.select("invoice_line_items").catch(()=>[]);
-      invList.forEach(inv => {
-        inv.lineItems = lineItemsRaw
-          .filter(l=>l.invoice_id===inv.id)
-          .sort((a,b)=>(a.seq||0)-(b.seq||0))
-          .map(l=>({ id:l.id, name:l.name, type:l.type, sac:l.sac, qty:l.qty||1, unitPrice:Number(l.unit_price)||0, gst:l.gst, amount:Number(l.amount)||0 }));
-      });
-      setInvoices(invList);
-
-      // Map tasks — filter by assignee for employee role
-      let taskList = tasksRaw.map(mapTask);
-      if (currentUser?.role==="employee") {
-        taskList = taskList.filter(t=>t.assignedTo===currentUser.id);
+      if (companiesRaw.length > 0) {
+        let list = companiesRaw.map(mapClient);
+        if (currentUser.role==="employee") list = list.filter(c=>c.assignedTo===currentUser.id);
+        setClients(list);
       }
-      setTasks(taskList);
 
-      setPayments(paymentsRaw.map(mapPayment));
-      setSubs(subsRaw.map(mapSub));
-
-      // Map tickets + attach responses
-      const tktList = ticketsRaw.map(mapTicket);
-      tktList.forEach(t => {
-        t.responses = ticketRespRaw.filter(r=>r.ticket_id===t.id).map(mapResp);
-      });
-      // Filter tickets by role
-      let filteredTkts = tktList;
-      if (currentUser?.role==="employee") {
-        filteredTkts = tktList.filter(t=>t.assignedTo===currentUser.id||t.raisedBy===currentUser.id);
+      if (invoicesRaw.length > 0) {
+        const invList = invoicesRaw.map(mapInvoice);
+        invList.forEach(inv => {
+          inv.lineItems = lineItemsRaw
+            .filter(l=>l.invoice_id===inv.id)
+            .sort((a,b)=>(a.seq||0)-(b.seq||0))
+            .map(l=>({ id:l.id, name:l.name, type:l.type, sac:l.sac, qty:l.qty||1, unitPrice:Number(l.unit_price)||0, gst:l.gst, amount:Number(l.amount)||0 }));
+        });
+        setInvoices(invList);
       }
-      setTickets(filteredTkts);
 
-      // Map org settings
+      if (tasksRaw.length > 0) {
+        let list = tasksRaw.map(mapTask);
+        if (currentUser.role==="employee") list = list.filter(t=>t.assignedTo===currentUser.id);
+        setTasks(list);
+      }
+
+      if (paymentsRaw.length > 0) setPayments(paymentsRaw.map(mapPayment));
+      if (subsRaw.length > 0)     setSubs(subsRaw.map(mapSub));
+
+      if (ticketsRaw.length > 0) {
+        const tktList = ticketsRaw.map(mapTicket);
+        tktList.forEach(t => { t.responses = ticketRespRaw.filter(r=>r.ticket_id===t.id).map(mapResp); });
+        let list = tktList;
+        if (currentUser.role==="employee") list = list.filter(t=>t.assignedTo===currentUser.id||t.raisedBy===currentUser.id);
+        setTickets(list);
+      }
+
       if (orgRaw.length > 0) {
         const orgObj = {};
-        orgRaw.forEach(row=>{ orgObj[row.key] = row.value; });
-        setOrg(prev=>({ ...prev, ...orgObj, gstRate:Number(orgObj.gstRate)||18 }));
+        orgRaw.forEach(r => { orgObj[r.key] = r.value; });
+        setOrg(prev => ({ ...prev, ...orgObj, gstRate:Number(orgObj.gstRate)||18 }));
       }
 
-      setDbError(null);
-    } catch (e) {
-      console.warn("Supabase load error — using demo data:", e.message);
-      setDbError(e.message);
-      // Fall back to demo data so app still works
-      setClients(DEMO_CLIENTS);
-      setEmps(DEMO_EMPLOYEES);
-      setInvoices(DEMO_INVOICES);
-      setTasks(DEMO_TASKS);
-      setPayments(DEMO_PAYMENTS);
-      setSubs(DEMO_SUBMISSIONS);
-      setTickets(DEMO_TICKETS);
+      setDbReady(true);
+    } catch(e) {
+      console.warn("DB load error:", e.message);
+      setDbReady(false);
     }
   };
 
-  // ─── Poll every 5s to sync between users ─────────────────────────
+  // ─── Poll every 5s when logged in ────────────────────────────────
   useEffect(() => {
     if (!user) return;
     loadAll(user);
-    const timer = setInterval(()=>loadAll(user), POLL_INTERVAL);
-    return ()=>clearInterval(timer);
+    const t = setInterval(() => loadAll(user), POLL_INTERVAL);
+    return () => clearInterval(t);
   }, [user?.id]);
 
-  // ─── DB-backed setters (write to DB then reload) ──────────────────
-  const dbSetClients = async (updater) => {
-    setClients(updater); // optimistic update
+  // ─── Login / Logout ───────────────────────────────────────────────
+  const handleLogin = async (u) => {
+    localStorage.setItem("fb_user", JSON.stringify(u));
+    setUser(u);
+    const defaultView = { admin:"dashboard", manager:"dashboard", employee:"emp-dashboard", client:"client-home" }[u.role] || "dashboard";
+    setView(defaultView);
+    await loadAll(u);
+  };
+
+  const logout = () => {
+    localStorage.removeItem("fb_user");
+    localStorage.removeItem("fb_view");
+    setUser(null); setViewRaw("");
+    setClients(DEMO_CLIENTS); setTasks(DEMO_TASKS);
+    setInvoices(DEMO_INVOICES); setTickets(DEMO_TICKETS);
+  };
+
+  // ─── DB write helpers ─────────────────────────────────────────────
+  const persistTaskUpdate = async (task) => {
+    await sb.update("tasks","id",task.id,{
+      status:task.status, notes:task.notes||"", assigned_to:task.assignedTo||null,
+      due_date:task.dueDate||null, completed_date:task.completedDate||null,
+      updated_at:new Date().toISOString(),
+    });
+  };
+
+  const persistTicketUpdate = async (ticket) => {
+    await sb.update("tickets","id",ticket.id,{
+      status:ticket.status, tat:ticket.tat||null, updated_at:new Date().toISOString(),
+    });
+  };
+
+  const dbCreateClient = async (clientData) => {
+    setClients(cs => [...cs, clientData]);
+    await sb.insert("companies",{
+      id:clientData.id, client_no:clientData.clientNo,
+      name:clientData.name, contact_name:clientData.contactName,
+      email:clientData.email, phone:clientData.phone,
+      type:clientData.type, status:"active", assigned_to:clientData.assignedTo,
+      total_billing:0, collected:0, pending:0, progress:0,
+    });
+    await sb.insert("users",{
+      id:clientData.id, email:clientData.email?.toLowerCase(),
+      phone:clientData.phone, name:clientData.contactName||clientData.name,
+      role:"client", avatar:initials(clientData.contactName||clientData.name),
+      color:"#7C3AED", password:clientData.password, client_no:clientData.clientNo,
+    });
+    showToast(`Client ${clientData.name} created! Login: ${clientData.email} / ${clientData.password}`, "success");
+  };
+
+  const dbCreateInvoice = async (invoiceData, lineItems, newTasks) => {
+    setInvoices(is => [...is, invoiceData]);
+    setTasks(ts => [...ts, ...newTasks]);
+    const rows = await sb.insert("invoices",{
+      id:invoiceData.id, invoice_no:invoiceData.invoiceNo,
+      company_id:invoiceData.clientId, client_name:invoiceData.clientName,
+      date:invoiceData.date, due_date:invoiceData.dueDate||null,
+      status:"unpaid", total:invoiceData.total, paid:0, pending:invoiceData.total,
+    });
+    for (let i=0; i<lineItems.length; i++) {
+      const li = lineItems[i];
+      await sb.insert("invoice_line_items",{
+        invoice_id:invoiceData.id, name:li.name, type:li.type,
+        sac:li.sac||"998211", qty:li.qty||1, unit_price:li.unitPrice||0,
+        gst:li.gst, amount:li.amount||0, seq:i,
+      });
+    }
+    for (const t of newTasks) {
+      await sb.insert("tasks",{
+        id:t.id, title:t.title, company_id:t.clientId, client_name:t.clientName,
+        invoice_id:invoiceData.id, assigned_to:t.assignedTo||null,
+        status:"open", sequence:t.sequence||1, requirement_type:t.requirementType||"none",
+        doc_template_id:t.docTemplateId||null, director_number:t.directorNumber||null,
+        director_count:t.directorCount||1, notes:"",
+      });
+    }
+    showToast(`Invoice ${invoiceData.invoiceNo} created with ${newTasks.length} tasks!`, "success");
+  };
+
+  const dbCreateTicket = async (ticketData) => {
+    setTickets(ts => [ticketData, ...ts]);
+    await sb.insert("tickets",{
+      id:ticketData.id, ticket_no:ticketData.ticketNo,
+      company_id:ticketData.clientId||null, client_name:ticketData.clientName,
+      raised_by:ticketData.raisedBy||null, assigned_to:ticketData.assignedTo||null,
+      subject:ticketData.subject, description:ticketData.description||"",
+      priority:ticketData.priority||"medium", status:"open",
+    });
+  };
+
+  const dbAddTicketResponse = async (ticketId, resp) => {
+    setTickets(ts => ts.map(t => t.id===ticketId ? {
+      ...t, responses:[...t.responses, resp],
+      status: resp.by==="team" ? "in_progress" : t.status,
+      updatedAt: today(),
+    } : t));
+    await sb.insert("ticket_responses",{
+      ticket_id:ticketId, by_role:resp.by,
+      by_name:user?.name||"", text:resp.text, date:resp.date,
+    });
+    await sb.update("tickets","id",ticketId,{
+      status: resp.by==="team" ? "in_progress" : "open",
+      updated_at:new Date().toISOString(),
+    });
   };
 
   const dbSetTasks = async (updater) => {
-    const newTasks = typeof updater === "function" ? updater(tasks) : updater;
+    const newTasks = typeof updater==="function" ? updater(tasks) : updater;
     setTasks(newTasks);
-    // Persist changed tasks to DB
     const changed = newTasks.filter(nt => {
       const old = tasks.find(t=>t.id===nt.id);
-      return old && (old.status!==nt.status || old.notes!==nt.notes || old.assignedTo!==nt.assignedTo || old.dueDate!==nt.dueDate);
+      return old && (old.status!==nt.status||old.notes!==nt.notes||old.assignedTo!==nt.assignedTo||old.dueDate!==nt.dueDate);
     });
-    for (const t of changed) {
-      await sb.update("tasks","id",t.id,{
-        status:t.status, notes:t.notes||"", assigned_to:t.assignedTo||null,
-        due_date:t.dueDate||null, completed_date:t.completedDate||null,
-        updated_at:new Date().toISOString(),
-      }).catch(e=>console.warn("Task update failed:",e.message));
-    }
+    for (const t of changed) await persistTaskUpdate(t);
   };
 
   const dbSetTickets = async (updater) => {
-    const newTickets = typeof updater === "function" ? updater(tickets) : updater;
+    const newTickets = typeof updater==="function" ? updater(tickets) : updater;
     setTickets(newTickets);
-    // Persist changed tickets
     const changed = newTickets.filter(nt => {
       const old = tickets.find(t=>t.id===nt.id);
       return old && old.status!==nt.status;
     });
-    for (const t of changed) {
-      await sb.update("tickets","id",t.id,{
-        status:t.status, tat:t.tat||null, updated_at:new Date().toISOString(),
-      }).catch(e=>console.warn("Ticket update failed:",e.message));
-    }
+    for (const t of changed) await persistTicketUpdate(t);
   };
 
   const dbSetInvoices = async (updater) => {
-    const newInvs = typeof updater === "function" ? updater(invoices) : updater;
+    const newInvs = typeof updater==="function" ? updater(invoices) : updater;
     setInvoices(newInvs);
-    const changed = newInvs.filter(ni=>{
+    const changed = newInvs.filter(ni => {
       const old = invoices.find(i=>i.id===ni.id);
       return old && (old.paid!==ni.paid||old.status!==ni.status);
     });
     for (const inv of changed) {
-      await sb.update("invoices","id",inv.id,{
-        paid:inv.paid, pending:inv.pending, status:inv.status,
-      }).catch(e=>console.warn("Invoice update failed:",e.message));
+      await sb.update("invoices","id",inv.id,{ paid:inv.paid, pending:inv.pending, status:inv.status });
     }
   };
 
   const dbSetSubs = async (updater) => {
-    const newSubs = typeof updater === "function" ? updater(submissions) : updater;
-    // Find new submissions (not in current list)
-    const existing = submissions.map(s=>s.id);
-    const added    = newSubs.filter(s=>!existing.includes(s.id));
+    const newSubs = typeof updater==="function" ? updater(submissions) : updater;
+    const added   = newSubs.filter(s=>!submissions.find(x=>x.id===s.id));
     setSubs(newSubs);
     for (const sub of added) {
       await sb.insert("submissions",{
         id:sub.id, task_id:sub.taskId, company_id:sub.clientId,
-        status:sub.status, form_data:sub.formData||{}, documents:sub.documents||{},
-        note:sub.note||"", submitted_at:sub.submittedAt, locked:true,
-      }).catch(e=>console.warn("Submission insert failed:",e.message));
+        status:sub.status, form_data:sub.formData||{},
+        documents:sub.documents||{}, note:sub.note||"",
+        submitted_at:sub.submittedAt, locked:true,
+      });
     }
-    // Persist updates
-    const changedSubs = newSubs.filter(ns=>{
+    const changedSubs = newSubs.filter(ns => {
       const old = submissions.find(s=>s.id===ns.id);
       return old && old.status!==ns.status;
     });
     for (const sub of changedSubs) {
       await sb.update("submissions","id",sub.id,{
         status:sub.status, review_note:sub.reviewNote||"", reviewed_at:sub.reviewedAt||null,
-      }).catch(e=>console.warn("Submission update failed:",e.message));
+      });
+    }
+    // Also update related task status
+    const taskUpdates = newSubs.filter(ns=>{
+      const old = submissions.find(s=>s.id===ns.id);
+      return old && old.status!==ns.status;
+    });
+    for (const sub of taskUpdates) {
+      const taskStatus = sub.status==="approved" ? "completed" : sub.status==="changes_requested" ? "client_action" : "team_approval";
+      await sb.update("tasks","id",sub.taskId,{ status:taskStatus, updated_at:new Date().toISOString() });
     }
   };
 
   const dbSetPayments = async (updater) => {
-    const newPmts = typeof updater === "function" ? updater(payments) : updater;
+    const newPmts = typeof updater==="function" ? updater(payments) : updater;
     const added   = newPmts.filter(p=>!payments.find(x=>x.id===p.id));
     setPayments(newPmts);
     for (const p of added) {
@@ -4671,187 +4730,51 @@ function AppV2() {
         id:p.id, invoice_id:p.invoiceId, company_id:p.clientId,
         client_name:p.clientName, amount:p.amount, mode:p.mode,
         reference:p.reference||"", date:p.date, notes:p.notes||"",
-      }).catch(e=>console.warn("Payment insert failed:",e.message));
-    }
-  };
-
-  // ─── Create client in DB ──────────────────────────────────────────
-  const dbCreateClient = async (clientData) => {
-    try {
-      const rows = await sb.insert("companies", toDbClient(clientData));
-      const saved = rows[0];
-      if (saved) {
-        // Also create user record for client login
-        await sb.insert("users",{
-          id:clientData.id, email:clientData.email?.toLowerCase(),
-          phone:clientData.phone, name:clientData.contactName||clientData.name,
-          role:"client", avatar:initials(clientData.contactName||clientData.name),
-          color:"#7C3AED", password:clientData.password, client_no:clientData.clientNo,
-        }).catch(()=>{});
-        setClients(cs=>[...cs,{...clientData,id:saved.id||clientData.id}]);
-        showToast(`Client created in database!`,"success");
-        return saved;
-      }
-    } catch(e) {
-      console.warn("DB create client failed:", e.message);
-      setClients(cs=>[...cs,clientData]);
-      showToast(`Client created (offline mode)`,"warning");
-    }
-  };
-
-  // ─── Create invoice + line items + tasks in DB ────────────────────
-  const dbCreateInvoice = async (invoiceData, lineItems, newTasks) => {
-    try {
-      const invRows = await sb.insert("invoices", toDbInvoice(invoiceData));
-      const savedInv = invRows[0];
-      if (savedInv) {
-        // Insert line items
-        for (let i=0; i<lineItems.length; i++) {
-          const li = lineItems[i];
-          await sb.insert("invoice_line_items",{
-            invoice_id:savedInv.id, name:li.name, type:li.type,
-            sac:li.sac||"998211", qty:li.qty||1, unit_price:li.unitPrice||0,
-            gst:li.gst, amount:li.amount||0, seq:i,
-          }).catch(()=>{});
-        }
-        // Insert tasks
-        for (const t of newTasks) {
-          await sb.insert("tasks", toDbTask({...t, clientId:invoiceData.clientId, invoiceId:savedInv.id})).catch(()=>{});
-        }
-      }
-      setInvoices(is=>[...is,invoiceData]);
-      setTasks(ts=>[...ts,...newTasks]);
-      showToast(`Invoice created with ${newTasks.length} tasks!`,"success");
-      // Reload to get DB-assigned IDs
-      setTimeout(()=>loadAll(user),1000);
-    } catch(e) {
-      console.warn("DB create invoice failed:", e.message);
-      setInvoices(is=>[...is,invoiceData]);
-      setTasks(ts=>[...ts,...newTasks]);
-      showToast(`Invoice created (offline mode)`,"warning");
-    }
-  };
-
-  // ─── Create ticket in DB ─────────────────────────────────────────
-  const dbCreateTicket = async (ticketData) => {
-    try {
-      await sb.insert("tickets", toDbTicket(ticketData));
-      setTickets(ts=>[ticketData,...ts]);
-      showToast("Ticket raised and visible to all team members!","success");
-      setTimeout(()=>loadAll(user),500);
-    } catch(e) {
-      console.warn("DB create ticket failed:", e.message);
-      setTickets(ts=>[ticketData,...ts]);
-      showToast("Ticket created (offline mode)","warning");
-    }
-  };
-
-  // ─── Add ticket response in DB ────────────────────────────────────
-  const dbAddTicketResponse = async (ticketId, responseData) => {
-    try {
-      await sb.insert("ticket_responses",{
-        ticket_id:ticketId, by_role:responseData.by,
-        by_name:user?.name||"", text:responseData.text, date:responseData.date,
       });
-      await sb.update("tickets","id",ticketId,{
-        status:responseData.newStatus||"in_progress",
-        updated_at:new Date().toISOString(),
-      }).catch(()=>{});
-      // Reload tickets so all users see the new response
-      setTimeout(()=>loadAll(user),300);
-    } catch(e) {
-      console.warn("DB response failed:", e.message);
     }
   };
 
-  // ─── Save org settings to DB ──────────────────────────────────────
   const dbSetOrg = async (newOrg) => {
     setOrg(newOrg);
     const fields = ["name","email","phone","gstin","pan","sac","address","gstRate","bankName","accountNo","ifsc","upi","logoUrl"];
     for (const key of fields) {
-      if (newOrg[key] !== undefined) {
-        await sb.update("org_settings","key",key,{ value:String(newOrg[key]||""), updated_at:new Date().toISOString() })
-          .catch(()=>sb.insert("org_settings",{ key, value:String(newOrg[key]||"") }).catch(()=>{}));
+      if (newOrg[key]!==undefined) {
+        await sb.update("org_settings","key",key,{ value:String(newOrg[key]||"") });
       }
     }
   };
 
-  const handleLogin = async (u) => {
-    setLoading(true);
-    // Save session to localStorage so it survives refresh
-    localStorage.setItem("fb_user", JSON.stringify(u));
-    setUser(u);
-    await loadAll(u);
-    setLoading(false);
-    const defaultView = { admin:"dashboard", manager:"dashboard", employee:"emp-dashboard", client:"client-home" }[u.role] || "dashboard";
-    setViewPersisted(defaultView);
-  };
-
-  const logout = () => {
-    localStorage.removeItem("fb_user");
-    localStorage.removeItem("fb_view");
-    setUser(null);
-    setView("");
-    setClients([]); setTasks([]); setInvoices([]);
-    setTickets([]); setPayments([]); setSubs([]);
-  };
-
-  // Load data on mount if session restored from localStorage
-  useEffect(() => {
-    if (savedUser && clients.length === 0) {
-      loadAll(savedUser);
-    }
-  }, []);
-
-  const unreadNotifs = notifications.filter(n => n.userId === user?.id && !n.read).length;
+  const unreadNotifs = tickets.filter(t=>t.status==="open").length;
 
   if (!user) {
     if (showReg) return (
       <>
         <style>{G}</style>
-        <RegistrationPage onBack={()=>setShowReg(false)} showToast={showToast} />
-        {toast && <Toast msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
+        <RegistrationPage onBack={() => setShowReg(false)} showToast={showToast} />
+        {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
       </>
     );
     return (
       <>
         <style>{G}</style>
-        <LoginPageV2 onLogin={handleLogin} showToast={showToast} onRegister={()=>setShowReg(true)} />
-        {toast && <Toast msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
+        <LoginPageV2 onLogin={handleLogin} showToast={showToast} onRegister={() => setShowReg(true)} />
+        {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
       </>
     );
   }
 
-  if (loading) return (
-    <>
-      <style>{G}</style>
-      <div style={{ minHeight:"100vh",background:"var(--navy)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16 }}>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:28,color:"#fff" }}>Founders <span style={{ color:"#C9A14A" }}>Bridge</span></div>
-        <div style={{ width:40,height:40,border:"3px solid rgba(201,161,74,.3)",borderTopColor:"#C9A14A",borderRadius:"50%",animation:"spin .8s linear infinite" }}/>
-        <div style={{ fontSize:13,color:"rgba(255,255,255,.4)" }}>Loading your portal…</div>
-      </div>
-    </>
-  );
-
   const ctx = {
-    user, org,
-    setOrg: dbSetOrg,
-    bundles, setBundles,
-    docTpls, setDocTpls,
-    clients, setClients: dbSetClients, dbCreateClient,
-    employees,
-    setEmps,
-    invoices, setInvoices: dbSetInvoices, dbCreateInvoice,
-    tasks, setTasks: dbSetTasks,
+    user, org, setOrg:dbSetOrg, bundles, setBundles, docTpls, setDocTpls,
+    clients, setClients, dbCreateClient,
+    employees, setEmps,
+    invoices, setInvoices:dbSetInvoices, dbCreateInvoice,
+    tasks, setTasks:dbSetTasks,
     notifications, setNotifs,
-    payments, setPayments: dbSetPayments,
-    submissions, setSubs: dbSetSubs,
-    tickets, setTickets: dbSetTickets, dbCreateTicket, dbAddTicketResponse,
-    showToast, openModal, closeModal, modal,
-    view, setView: setViewPersisted,
-    unreadNotifs: tickets.filter(t=>t.status==="open").length,
-    loadAll: ()=>loadAll(user),
-    dbError,
+    payments, setPayments:dbSetPayments,
+    submissions, setSubs:dbSetSubs,
+    tickets, setTickets:dbSetTickets, dbCreateTicket, dbAddTicketResponse,
+    showToast, openModal, closeModal, modal, view, setView,
+    unreadNotifs, loadAll:()=>loadAll(user), dbReady,
   };
 
   const NAV_V2 = {
@@ -5059,7 +4982,7 @@ function LoginPageV2({ onLogin, showToast, onRegister }) {
   const [error, setError]       = useState("");
   const [showPolicy, setShowPolicy] = useState(false);
 
-  const findUser = (id) => {
+  const findUser = async (id) => {
     const norm = id.trim().toLowerCase();
     return DEMO_USERS[norm] || DEMO_BY_PHONE[norm.replace(/\D/g,"")] || null;
   };
@@ -5938,14 +5861,13 @@ function TicketsPage() {
 
   const createTicket = async () => {
     if (!form.subject) { showToast("Subject required","error"); return; }
-    // For client, find their company
-    const clientId = form.clientId || clients.find(c=>c.email===user?.email||c.phone===user?.phone)?.id || clients[0]?.id || "";
+    const clientId = form.clientId || clients.find(c=>c.email===user?.email||c.phone===user?.phone)?.id || clients[0]?.id || null;
     const t = {
       id:"tk_"+uuid(),
-      ticketNo:"TK-"+String((tickets.length+1)).padStart(3,"0"),
+      ticketNo:"TK-"+String(tickets.length+1).padStart(3,"0"),
       clientId,
       clientName: clients.find(c=>c.id===clientId)?.name || user?.name || "",
-      raisedBy: user?.id||"",
+      raisedBy: user?.id || "",
       subject:form.subject, description:form.description,
       priority:form.priority, status:"open",
       assignedTo: employees[0]?.id||"",
@@ -5954,31 +5876,21 @@ function TicketsPage() {
     await dbCreateTicket(t);
     setNewTicket(false);
     setForm({subject:"",description:"",priority:"medium",clientId:""});
+    showToast("Ticket raised! Team will see it within seconds.","success");
   };
 
   const addResponse = async (ticketId) => {
     if (!response.trim()) return;
     const resp = { by:isTeam?"team":"client", text:response, date:today() };
-    const newStatus = isTeam ? "in_progress" : tickets.find(t=>t.id===ticketId)?.status||"open";
-    // Optimistic update
-    setTickets(ts=>ts.map(t=>t.id===ticketId?{
-      ...t,
-      responses:[...t.responses, resp],
-      status: newStatus,
-      updatedAt:today(),
-    }:t));
     setResponse("");
-    // Persist to DB
-    await dbAddTicketResponse(ticketId, { ...resp, newStatus });
-    showToast("Response sent — visible to all team members and client!","success");
+    await dbAddTicketResponse(ticketId, resp);
+    showToast("Response sent!","success");
   };
 
   const resolveTicket = async (ticketId) => {
-    const tat = "1 day"; // Could calculate from createdAt
-    setTickets(ts=>ts.map(t=>t.id===ticketId?{...t,status:"resolved",tat,updatedAt:today()}:t));
-    await sb.update("tickets","id",ticketId,{ status:"resolved", tat, updated_at:new Date().toISOString() }).catch(()=>{});
+    await dbSetTickets(ts=>ts.map(t=>t.id===ticketId?{...t,status:"resolved",tat:"1 day",updatedAt:today()}:t));
     setSelTicket(null);
-    showToast("Ticket resolved! All parties have been updated.","success");
+    showToast("Ticket resolved!","success");
   };
 
   if (selTicket) {

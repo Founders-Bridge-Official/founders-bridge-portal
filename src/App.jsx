@@ -1787,8 +1787,20 @@ function OrgSettings() {
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { showToast("Logo must be under 2MB", "error"); return; }
     const reader = new FileReader();
-    reader.onload = (ev) => set("logoUrl", ev.target.result);
+    reader.onload = (ev) => {
+      const url = ev.target.result;
+      set("logoUrl", url);
+      // Auto-save logo to org immediately so sidebar updates right away
+      setOrg(prev => ({ ...prev, logoUrl: url }));
+      showToast("Logo uploaded! Visible in sidebar now.", "success");
+    };
     reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    set("logoUrl", "");
+    setOrg(prev => ({ ...prev, logoUrl: "" }));
+    showToast("Logo removed", "info");
   };
 
   return (
@@ -1813,7 +1825,7 @@ function OrgSettings() {
               <input type="file" ref={logoRef} accept="image/*" style={{ display:"none" }} onChange={handleLogoUpload} />
               <div style={{ display:"flex",gap:10 }}>
                 <button className="btn btn-gold btn-sm" onClick={()=>logoRef.current?.click()}>⬆ Upload Logo</button>
-                {form.logoUrl && <button className="btn btn-sm btn-red" onClick={()=>set("logoUrl","")}>Remove</button>}
+                {form.logoUrl && <button className="btn btn-sm btn-red" onClick={removeLogo}>✕ Remove</button>}
               </div>
             </div>
           </div>
@@ -1897,6 +1909,11 @@ function BundleSettings() {
                     <option value="dsc">DSC (task per qty)</option>
                     <option value="service">Professional Service</option>
                   </select>
+                </div>
+                <div className="f-group">
+                  <label className="f-label">SAC Code</label>
+                  <input className="f-input" value={li.sac||""} onChange={e=>setItem(li.id,"sac",e.target.value)} placeholder={li.type==="govt"?"999799":li.type==="dsc"?"998315":"998211"} />
+                  <div className="f-hint">Govt: 999799 · DSC: 998315 · Professional: 998211</div>
                 </div>
                 <div className="f-group"><label className="f-label">Unit Price (₹)</label><input className="f-input" type="number" value={li.price || ""} onChange={e => setItem(li.id, "price", Number(e.target.value))} placeholder="0 = enter on invoice" /></div>
                 <div className="f-group">
@@ -2538,27 +2555,51 @@ function ClientDocs() {
 
   const handleClientUpload = (e) => {
     const files = Array.from(e.target.files);
-    const newDocs = files.map(f=>({
-      name:f.name, size:(f.size/1024).toFixed(0)+"KB",
-      uploadedAt:new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}),
-      category:"General",
-    }));
-    setClientUploads(d=>[...d,...newDocs]);
-    e.target.value="";
+    files.forEach(f => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setClientUploads(d => [...d, {
+          name:       f.name,
+          size:       (f.size / 1024).toFixed(0) + " KB",
+          type:       f.type,
+          dataUrl:    ev.target.result,   // store full file for download
+          uploadedAt: new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}),
+          category:   "General",
+        }]);
+      };
+      reader.readAsDataURL(f);
+    });
+    e.target.value = "";
   };
 
-  const DocRow = ({doc, showSource}) => (
-    <div className="row-item">
-      <div style={{ width:36,height:36,borderRadius:9,background:doc.source==="team"?"rgba(11,31,58,.07)":"var(--gold-lt)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0 }}>📄</div>
+  const downloadFile = (doc) => {
+    if (doc.dataUrl) {
+      const a = document.createElement("a");
+      a.href = doc.dataUrl;
+      a.download = doc.name;
+      a.click();
+    } else {
+      // For demo docs without real data, show message
+      alert(`Download for "${doc.name}" — In production this will download from secure server storage.`);
+    }
+  };
+
+  const DocRow = ({doc}) => (
+    <div className="row-item" style={{ padding:"12px 20px" }}>
+      <div style={{ width:40,height:40,borderRadius:10,background:doc.source==="team"?"rgba(11,31,58,.07)":"var(--gold-lt)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0 }}>
+        {doc.name?.endsWith(".pdf")?"📕":doc.name?.match(/\.(jpg|jpeg|png)$/i)?"🖼️":"📄"}
+      </div>
       <div style={{ flex:1 }}>
         <div style={{ fontSize:13,fontWeight:600,color:"var(--navy)" }}>{doc.name}</div>
         <div style={{ fontSize:11,color:"var(--muted)",marginTop:2 }}>
-          {doc.taskTitle && `${doc.taskTitle} · `}
+          {doc.taskTitle && <span>{doc.taskTitle} · </span>}
           {doc.size} · {doc.uploadedAt}
-          {showSource && <span style={{ marginLeft:6,padding:"1px 6px",borderRadius:4,background:doc.source==="team"?"rgba(11,31,58,.08)":"var(--gold-lt)",color:doc.source==="team"?"var(--navy)":"var(--gold-dk)",fontSize:10,fontWeight:700 }}>{doc.source==="team"?"Team":"You"}</span>}
+          {doc.category && <span style={{ marginLeft:6,padding:"1px 6px",borderRadius:4,background:"var(--gold-lt)",color:"var(--gold-dk)",fontSize:10,fontWeight:700 }}>{doc.category}</span>}
         </div>
       </div>
-      <button className="btn btn-sm">⬇ Download</button>
+      <button className="btn btn-sm" style={{ background:"var(--navy)",color:"#fff",border:"none" }} onClick={()=>downloadFile(doc)}>
+        ⬇ Download
+      </button>
     </div>
   );
 
@@ -2578,7 +2619,7 @@ function ClientDocs() {
           </div>
           {teamUploaded.length===0
             ? <div className="empty"><div className="empty-icon">📁</div><div>No documents uploaded by team yet</div></div>
-            : teamUploaded.map((d,i)=><DocRow key={i} doc={d} showSource={false}/>)
+            : teamUploaded.map((d,i)=><DocRow key={i} doc={d}/>)
           }
         </div>
       )}
@@ -2591,7 +2632,7 @@ function ClientDocs() {
           </div>
           {clientUploads.length===0
             ? <div className="empty"><div className="empty-icon">📤</div><div style={{fontWeight:600,marginBottom:6}}>No uploads yet</div><div style={{fontSize:13}}>Upload any documents you want to share with your team.</div></div>
-            : clientUploads.map((d,i)=><DocRow key={i} doc={{...d,source:"client"}} showSource={false}/>)
+            : clientUploads.map((d,i)=><DocRow key={i} doc={{...d,source:"client"}}/>)
           }
         </div>
       )}
@@ -2920,91 +2961,186 @@ function CreateInvoiceModal({ data, onClose }) {
 // ─── View Invoice Modal ───────────────────────────────────────────────
 function ViewInvoiceModal({ data, onClose }) {
   const { invoice } = data;
-  const { org } = useApp();
-  const subtotal = invoice.lineItems.reduce((s, li) => s + li.unitPrice * li.qty, 0);
-  const gstAmt   = invoice.total - subtotal;
+  const { org, openModal, user } = useApp();
+
+  const subtotal  = invoice.lineItems.reduce((s,li)=>s+(li.unitPrice||0)*(li.qty||1),0);
+  const gstAmt    = (invoice.total||0) - subtotal;
+  const cgst      = gstAmt / 2;
+  const sgst      = gstAmt / 2;
+  const isPaid    = invoice.status === "paid";
+  const isPartial = invoice.status === "partial";
+  const isClient  = user?.role === "client";
+
+  const printInvoice = () => {
+    const w = window.open("","_blank","width=800,height=900");
+    const content = document.getElementById("invoice-print-area");
+    w.document.write(`<html><head><title>Invoice ${invoice.invoiceNo}</title>
+    <style>
+      body{font-family:Arial,sans-serif;color:#0B1F3A;padding:32px;font-size:12px;}
+      table{width:100%;border-collapse:collapse;}
+      th{background:#0B1F3A;color:#fff;padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;}
+      td{padding:9px 10px;border-bottom:1px solid #eee;}
+      .total-row{font-weight:700;font-size:14px;border-top:2px solid #0B1F3A;}
+      .gold{color:#C9A14A;}
+      .muted{color:#6B7280;font-size:10px;}
+      @media print{body{padding:0;}}
+    </style></head><body>${content?.innerHTML||""}</body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(()=>w.print(),500);
+  };
 
   return (
-    <div className="modal-box" style={{ maxWidth: 620 }}>
+    <div className="modal-box" style={{ maxWidth:700 }}>
       <div className="modal-head">
-        <div className="modal-title">Invoice {invoice.invoiceNo}</div>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <div>
+          <div className="modal-title">Invoice {invoice.invoiceNo}</div>
+          <div style={{ fontSize:12,color:"var(--muted)",marginTop:2 }}>
+            {invoice.date}
+            {invoice.dueDate && ` · Due ${invoice.dueDate}`}
+          </div>
+        </div>
+        <div style={{ display:"flex",gap:8,alignItems:"center" }}>
+          {isPaid && <span className="badge" style={{ background:"#F0FDF4",color:"var(--green)" }}><span className="badge-dot" style={{ background:"var(--green)" }}/>Paid</span>}
+          {isPartial && <span className="badge" style={{ background:"#FFF8EC",color:"var(--orange)" }}><span className="badge-dot" style={{ background:"var(--orange)" }}/>Partial</span>}
+          {!isPaid && !isPartial && <span className="badge" style={{ background:"#FEF2F2",color:"var(--red)" }}><span className="badge-dot" style={{ background:"var(--red)" }}/>Unpaid</span>}
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
       </div>
-      <div className="modal-body">
-        {/* Invoice header */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, padding: 20, background: "linear-gradient(135deg,var(--navy),#1E40AF)", borderRadius: 12, color: "#fff" }}>
-          <div>
-            <div style={{ fontFamily: "'Fraunces',serif", fontSize: 20, marginBottom: 4 }}>{org.name}</div>
-            <div style={{ fontSize: 11, opacity: .7 }}>GSTIN: {org.gstin}</div>
-            <div style={{ fontSize: 11, opacity: .7 }}>{org.address}</div>
+      <div className="modal-body" style={{ padding:0 }}>
+        <div id="invoice-print-area" style={{ padding:"24px 28px" }}>
+
+          {/* Invoice header */}
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,padding:"20px 24px",background:"var(--navy)",borderRadius:12,color:"#fff" }}>
+            <div>
+              {org.logoUrl
+                ? <img src={org.logoUrl} alt="Logo" style={{ maxHeight:44,maxWidth:160,objectFit:"contain",filter:"brightness(0) invert(1)",marginBottom:10 }}/>
+                : <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,marginBottom:4 }}>Founders <span style={{ color:"#C9A14A" }}>Bridge</span></div>
+              }
+              <div style={{ fontSize:11,opacity:.7,marginBottom:2 }}>{org.name}</div>
+              <div style={{ fontSize:11,opacity:.7,marginBottom:2 }}>GSTIN: {org.gstin} · PAN: {org.pan}</div>
+              <div style={{ fontSize:11,opacity:.7 }}>{org.address}</div>
+            </div>
+            <div style={{ textAlign:"right" }}>
+              <div style={{ fontSize:10,opacity:.5,textTransform:"uppercase",letterSpacing:"2px",marginBottom:6 }}>Tax Invoice</div>
+              <div style={{ fontSize:20,fontWeight:700,color:"#C9A14A" }}>{invoice.invoiceNo}</div>
+              <div style={{ fontSize:11,opacity:.7,marginTop:4 }}>Date: {invoice.date}</div>
+              {invoice.dueDate && <div style={{ fontSize:11,opacity:.7 }}>Due: {invoice.dueDate}</div>}
+            </div>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, opacity: .7, textTransform: "uppercase", letterSpacing: "1px" }}>Invoice</div>
-            <div style={{ fontSize: 18, fontWeight: 700 }}>{invoice.invoiceNo}</div>
-            <div style={{ fontSize: 11, opacity: .7 }}>Date: {invoice.date}</div>
-          </div>
-        </div>
 
-        {/* Bill to */}
-        <div style={{ marginBottom: 20, padding: "12px 16px", background: "#F9FAFB", borderRadius: 8 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", marginBottom: 4 }}>Bill To</div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>{invoice.clientName}</div>
-        </div>
-
-        {/* Line items */}
-        <table style={{ marginBottom: 16 }}>
-          <thead>
-            <tr>
-              <th style={{ padding: "8px 12px", background: "#F3F4F6", borderRadius: "6px 0 0 6px" }}>Description</th>
-              <th style={{ padding: "8px 12px", background: "#F3F4F6", textAlign: "center" }}>Qty</th>
-              <th style={{ padding: "8px 12px", background: "#F3F4F6", textAlign: "right" }}>Rate</th>
-              <th style={{ padding: "8px 12px", background: "#F3F4F6", textAlign: "right" }}>GST</th>
-              <th style={{ padding: "8px 12px", background: "#F3F4F6", textAlign: "right", borderRadius: "0 6px 6px 0" }}>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice.lineItems.map(li => (
-              <tr key={li.id}>
-                <td style={{ padding: "10px 12px", borderBottom: "1px solid #F3F4F6" }}>{li.name}</td>
-                <td style={{ padding: "10px 12px", borderBottom: "1px solid #F3F4F6", textAlign: "center" }}>{li.qty}</td>
-                <td style={{ padding: "10px 12px", borderBottom: "1px solid #F3F4F6", textAlign: "right" }}>{INR(li.unitPrice)}</td>
-                <td style={{ padding: "10px 12px", borderBottom: "1px solid #F3F4F6", textAlign: "right", fontSize: 12, color: "var(--muted)" }}>{li.gst ? `${org.gstRate}%` : "Nil"}</td>
-                <td style={{ padding: "10px 12px", borderBottom: "1px solid #F3F4F6", textAlign: "right", fontWeight: 700 }}>{INR(li.amount)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Totals */}
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <div style={{ width: 260 }}>
-            {[["Subtotal", INR(subtotal)], [`CGST (${org.gstRate / 2}%)`, INR(gstAmt / 2)], [`SGST (${org.gstRate / 2}%)`, INR(gstAmt / 2)]].map(([l, v]) => (
-              <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 12, color: "var(--muted)" }}>
-                <span>{l}</span><span>{v}</span>
+          {/* Bill to / From grid */}
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20 }}>
+            <div style={{ padding:"14px 16px",background:"var(--cream)",borderRadius:10,border:"1px solid var(--border)" }}>
+              <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:8 }}>Bill To</div>
+              <div style={{ fontSize:15,fontWeight:700,color:"var(--navy)" }}>{invoice.clientName}</div>
+            </div>
+            <div style={{ padding:"14px 16px",background:"var(--cream)",borderRadius:10,border:"1px solid var(--border)" }}>
+              <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:8 }}>Payment Details</div>
+              <div style={{ fontSize:12,color:"var(--ink2)",lineHeight:1.7 }}>
+                <div><strong>{org.bankName}</strong></div>
+                <div>A/c: {org.accountNo} · IFSC: {org.ifsc}</div>
+                <div style={{ color:"var(--gold-dk)",fontWeight:600 }}>UPI: {org.upi}</div>
               </div>
-            ))}
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", marginTop: 4, borderTop: "2px solid var(--border)", fontWeight: 700, fontSize: 15 }}>
-              <span>Total</span><span style={{ color: "var(--blue)" }}>{INR(invoice.total)}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 12, color: "var(--green)" }}>
-              <span>Paid</span><span style={{ fontWeight: 700 }}>{INR(invoice.paid)}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 12, color: "var(--red)", fontWeight: 700 }}>
-              <span>Balance Due</span><span>{INR(invoice.pending)}</span>
             </div>
           </div>
-        </div>
 
-        {/* Bank details */}
-        <div style={{ marginTop: 20, padding: "12px 16px", background: "#F9FAFB", borderRadius: 8, fontSize: 12 }}>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>Payment Details</div>
-          <div style={{ color: "var(--muted)" }}>Bank: {org.bankName} · A/c: {org.accountNo} · IFSC: {org.ifsc}</div>
-          <div style={{ color: "var(--muted)" }}>UPI: {org.upi}</div>
+          {/* Line items table */}
+          <div style={{ borderRadius:10,overflow:"hidden",border:"1px solid var(--border)",marginBottom:16 }}>
+            <table>
+              <thead>
+                <tr style={{ background:"var(--navy)" }}>
+                  <th style={{ color:"#fff",padding:"10px 14px",textAlign:"left",fontSize:10,textTransform:"uppercase",letterSpacing:"1px" }}>Description</th>
+                  <th style={{ color:"rgba(201,161,74,.8)",padding:"10px 8px",textAlign:"center",fontSize:10,textTransform:"uppercase",letterSpacing:"1px",whiteSpace:"nowrap" }}>SAC</th>
+                  <th style={{ color:"#fff",padding:"10px 8px",textAlign:"center",fontSize:10,textTransform:"uppercase",letterSpacing:"1px" }}>Qty</th>
+                  <th style={{ color:"#fff",padding:"10px 14px",textAlign:"right",fontSize:10,textTransform:"uppercase",letterSpacing:"1px" }}>Rate</th>
+                  <th style={{ color:"#fff",padding:"10px 8px",textAlign:"center",fontSize:10,textTransform:"uppercase",letterSpacing:"1px" }}>Taxable</th>
+                  <th style={{ color:"rgba(201,161,74,.8)",padding:"10px 8px",textAlign:"center",fontSize:10,textTransform:"uppercase",letterSpacing:"1px" }}>GST%</th>
+                  <th style={{ color:"#fff",padding:"10px 14px",textAlign:"right",fontSize:10,textTransform:"uppercase",letterSpacing:"1px" }}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.lineItems.map((li,i)=>{
+                  const base = (li.unitPrice||0)*(li.qty||1);
+                  const amt  = li.gst ? base*(1+(org.gstRate||18)/100) : base;
+                  const sac  = li.sac || org.sac || "998211";
+                  return (
+                    <tr key={li.id} style={{ background:i%2===0?"var(--cream)":"#fff" }}>
+                      <td style={{ padding:"11px 14px" }}>
+                        <div style={{ fontWeight:500,fontSize:13 }}>{li.name}</div>
+                        <div style={{ fontSize:10,color:"var(--muted)",marginTop:2,textTransform:"capitalize" }}>{li.type} service</div>
+                      </td>
+                      <td style={{ padding:"11px 8px",textAlign:"center",fontSize:11,color:"var(--gold-dk)",fontWeight:600,fontFamily:"monospace" }}>{sac}</td>
+                      <td style={{ padding:"11px 8px",textAlign:"center",fontWeight:600 }}>{li.qty||1}</td>
+                      <td style={{ padding:"11px 14px",textAlign:"right" }}>{INR(li.unitPrice||0)}</td>
+                      <td style={{ padding:"11px 8px",textAlign:"center",color:"var(--muted)",fontSize:12 }}>{INR(base)}</td>
+                      <td style={{ padding:"11px 8px",textAlign:"center",fontSize:12 }}>
+                        {li.gst
+                          ? <span style={{ color:"var(--orange)",fontWeight:600 }}>{org.gstRate||18}%</span>
+                          : <span style={{ color:"var(--muted)" }}>Nil</span>
+                        }
+                      </td>
+                      <td style={{ padding:"11px 14px",textAlign:"right",fontWeight:700,fontSize:14,color:"var(--navy)" }}>{INR(amt)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals section */}
+          <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:20 }}>
+            <div style={{ width:300,background:"var(--cream)",borderRadius:10,border:"1px solid var(--border)",overflow:"hidden" }}>
+              {[
+                ["Subtotal (Taxable)",      INR(subtotal),           false],
+                [`CGST @ ${(org.gstRate||18)/2}%`, INR(cgst),      false],
+                [`SGST @ ${(org.gstRate||18)/2}%`, INR(sgst),      false],
+              ].map(([l,v,bold])=>(
+                <div key={l} style={{ display:"flex",justifyContent:"space-between",padding:"8px 16px",borderBottom:"1px solid var(--border)",fontSize:12,color:"var(--muted)" }}>
+                  <span>{l}</span><span style={{ fontWeight:600,color:"var(--ink2)" }}>{v}</span>
+                </div>
+              ))}
+              <div style={{ display:"flex",justifyContent:"space-between",padding:"12px 16px",background:"var(--navy)",fontSize:15,fontWeight:700,color:"#fff" }}>
+                <span>Total</span><span style={{ color:"#C9A14A" }}>{INR(invoice.total||0)}</span>
+              </div>
+              <div style={{ display:"flex",justifyContent:"space-between",padding:"8px 16px",fontSize:12,borderBottom:"1px solid var(--border)" }}>
+                <span style={{ color:"var(--green)",fontWeight:600 }}>Amount Paid</span>
+                <span style={{ color:"var(--green)",fontWeight:700 }}>{INR(invoice.paid||0)}</span>
+              </div>
+              <div style={{ display:"flex",justifyContent:"space-between",padding:"10px 16px",fontSize:13 }}>
+                <span style={{ color:invoice.pending>0?"var(--red)":"var(--muted)",fontWeight:700 }}>Balance Due</span>
+                <span style={{ color:invoice.pending>0?"var(--red)":"var(--green)",fontWeight:700,fontSize:15 }}>{INR(invoice.pending||0)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Status & notes */}
+          {invoice.pending > 0 && (
+            <div style={{ padding:"12px 16px",background:"#FFF8EC",border:"1px solid rgba(201,161,74,.3)",borderRadius:8,fontSize:12,color:"var(--gold-dk)" }}>
+              ⚠️ Please make payment by <strong>{invoice.dueDate||"the due date"}</strong> to avoid late fees.
+            </div>
+          )}
+          {isPaid && (
+            <div style={{ padding:"12px 16px",background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:8,fontSize:12,color:"var(--green)",fontWeight:600 }}>
+              ✅ This invoice has been fully paid. Thank you!
+            </div>
+          )}
         </div>
       </div>
       <div className="modal-foot">
         <button className="btn" onClick={onClose}>Close</button>
-        <button className="btn btn-primary" onClick={() => { window.print(); }}>🖨️ Print / Download PDF</button>
+        {!isPaid && isClient && (
+          <button className="btn btn-green" onClick={()=>{ onClose(); openModal("pay-now",{invoiceId:invoice.id}); }}>
+            💳 Pay {INR(invoice.pending||0)}
+          </button>
+        )}
+        {!isPaid && !isClient && (
+          <button className="btn btn-sm" style={{ background:"var(--green)",color:"#fff",border:"none" }}
+            onClick={()=>{ onClose(); openModal("record-payment",{invoiceId:invoice.id}); }}>
+            💰 Record Payment
+          </button>
+        )}
+        <button className="btn btn-primary" onClick={printInvoice}>🖨️ Print / Download PDF</button>
       </div>
     </div>
   );
@@ -4315,15 +4451,18 @@ function AppV2() {
   const NAV_V2 = {
     admin: [
       { sec:"Overview", items:[
-        { id:"dashboard",    icon:"⬡",  label:"Dashboard"   },
-        { id:"analytics",    icon:"📊", label:"Analytics"   },
-        { id:"reports",      icon:"📈", label:"Reports"     },
+        { id:"dashboard",    icon:"⬡",  label:"Dashboard"        },
+        { id:"analytics",    icon:"📊", label:"Analytics"        },
+        { id:"billing-summary", icon:"💹", label:"Billing Summary" },
+        { id:"reports",      icon:"📈", label:"Reports"          },
       ]},
       { sec:"Clients", items:[
-        { id:"clients",      icon:"🏢", label:"All Clients" },
-        { id:"invoices",     icon:"📄", label:"Invoices"    },
-        { id:"payments",     icon:"💰", label:"Payments"    },
-        { id:"tasks",        icon:"✓",  label:"Tasks"       },
+        { id:"clients",      icon:"🏢", label:"All Clients"      },
+        { id:"invoices",     icon:"📄", label:"Invoices"         },
+        { id:"payments",     icon:"💰", label:"Payments"         },
+        { id:"tasks",        icon:"✓",  label:"Tasks"            },
+        { id:"recurring",    icon:"🔄", label:"Recurring Tasks"  },
+        { id:"tickets",      icon:"🎫", label:"Tickets",         },
       ]},
       { sec:"Team", items:[
         { id:"employees",    icon:"👥", label:"Employees"   },
@@ -4338,14 +4477,17 @@ function AppV2() {
     ],
     manager: [
       { sec:"Overview", items:[
-        { id:"dashboard",    icon:"⬡",  label:"Dashboard"   },
-        { id:"reports",      icon:"📈", label:"Reports"     },
+        { id:"dashboard",    icon:"⬡",  label:"Dashboard"        },
+        { id:"billing-summary",icon:"💹",label:"Billing Summary"  },
+        { id:"reports",      icon:"📈", label:"Reports"          },
       ]},
       { sec:"Clients", items:[
-        { id:"clients",      icon:"🏢", label:"All Clients" },
-        { id:"invoices",     icon:"📄", label:"Invoices"    },
-        { id:"payments",     icon:"💰", label:"Payments"    },
-        { id:"tasks",        icon:"✓",  label:"Tasks"       },
+        { id:"clients",      icon:"🏢", label:"All Clients"      },
+        { id:"invoices",     icon:"📄", label:"Invoices"         },
+        { id:"payments",     icon:"💰", label:"Payments"         },
+        { id:"tasks",        icon:"✓",  label:"Tasks"            },
+        { id:"recurring",    icon:"🔄", label:"Recurring Tasks"  },
+        { id:"tickets",      icon:"🎫", label:"Tickets"          },
       ]},
       { sec:"Team", items:[
         { id:"employees",    icon:"👥", label:"Team"        },
@@ -4353,17 +4495,20 @@ function AppV2() {
     ],
     employee: [
       { sec:"My Work", items:[
-        { id:"emp-dashboard", icon:"⬡",  label:"Dashboard"   },
-        { id:"emp-tasks",     icon:"✓",  label:"My Tasks"    },
-        { id:"emp-clients",   icon:"🏢", label:"My Clients"  },
+        { id:"emp-dashboard", icon:"⬡",  label:"Dashboard"      },
+        { id:"emp-tasks",     icon:"✓",  label:"My Tasks"       },
+        { id:"emp-clients",   icon:"🏢", label:"My Clients"     },
+        { id:"recurring",     icon:"🔄", label:"Recurring Tasks"},
+        { id:"tickets",       icon:"🎫", label:"Tickets"        },
       ]},
     ],
     client: [
       { sec:"My Portal", items:[
-        { id:"client-home",     icon:"🏢", label:"My Companies" },
-        { id:"client-tasks",    icon:"✓",  label:"My Tasks"     },
-        { id:"client-invoices", icon:"💳", label:"My Billing"   },
-        { id:"client-docs",     icon:"📁", label:"Documents"    },
+        { id:"client-home",     icon:"🏢", label:"My Companies"  },
+        { id:"client-tasks",    icon:"✓",  label:"My Tasks"      },
+        { id:"client-invoices", icon:"💳", label:"My Billing"    },
+        { id:"client-docs",     icon:"📁", label:"Documents"     },
+        { id:"tickets",         icon:"🎫", label:"Raise a Query" },
       ]},
     ],
   };
@@ -4374,14 +4519,17 @@ function AppV2() {
 
   const TITLES = {
     dashboard:"Dashboard", analytics:"Analytics", reports:"Reports",
-    clients:"Clients", invoices:"Invoices", payments:"Payments", tasks:"Tasks", employees:"Employees",
+    "billing-summary":"Billing Summary",
+    clients:"Clients", invoices:"Invoices", payments:"Payments", tasks:"Tasks",
+    recurring:"Recurring Tasks", tickets:"Tickets",
+    employees:"Employees",
     "settings-org":"Organisation Settings", "settings-bundles":"Bundles & Services",
     "settings-doctpls":"Document Templates",
     "settings-users":"Users & Roles", "settings-kraya":"WhatsApp Settings",
     "emp-dashboard":"My Dashboard", "emp-tasks":"My Tasks", "emp-clients":"My Clients",
     "client-home":"My Companies", "client-tasks":"My Tasks",
     "client-invoices":"My Billing", "client-docs":"Documents",
-    notifications:"Notifications",
+    notifications:"Notifications", policies:"Policies",
   };
 
   return (
@@ -4452,11 +4600,14 @@ function AppV2() {
             {/* All original views */}
             {view==="dashboard"         && <AdminDashboard />}
             {view==="analytics"         && <AnalyticsPage />}
+            {view==="billing-summary"   && <BillingSummaryPage />}
             {view==="reports"           && <ReportsPage clients={clients} invoices={invoices} tasks={tasks} employees={employees} payments={payments} />}
             {view==="clients"           && <ClientsPage />}
             {view==="invoices"          && <InvoicesPage />}
             {view==="payments"          && <PaymentsPage payments={payments} invoices={invoices} clients={clients} />}
             {view==="tasks"             && <TasksPage />}
+            {view==="recurring"         && <RecurringTasksPage />}
+            {view==="tickets"           && <TicketsPage />}
             {view==="employees"         && <EmployeesPage />}
             {view==="settings-org"      && <OrgSettings />}
             {view==="settings-bundles"  && <BundleSettings />}
@@ -5083,4 +5234,486 @@ function DocTemplatesSettings() {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// BATCH B — BILLING SUMMARY PAGE
+// ═══════════════════════════════════════════════════════════════════════
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function BillingSummaryPage() {
+  const { invoices, clients, payments } = useApp();
+  const [period, setPeriod] = useState("monthly");
+  const now = new Date();
+
+  // Monthly breakdown for current year
+  const monthlyData = MONTHS.map((m, i) => {
+    const monthInvs = invoices.filter(inv => {
+      const d = new Date(inv.date);
+      return d.getMonth() === i && d.getFullYear() === now.getFullYear();
+    });
+    const billing   = monthInvs.reduce((s,inv)=>s+inv.total,0);
+    const collected = monthInvs.reduce((s,inv)=>s+inv.paid,0);
+    // breakdown
+    const govtFees  = monthInvs.reduce((s,inv)=>s+(inv.lineItems||[]).filter(l=>l.type==="govt").reduce((ss,l)=>ss+(l.unitPrice||0)*(l.qty||1),0),0);
+    const gst       = monthInvs.reduce((s,inv)=>s+(inv.total||0)-(inv.lineItems||[]).reduce((ss,l)=>ss+(l.unitPrice||0)*(l.qty||1),0),0);
+    const dsc       = monthInvs.reduce((s,inv)=>s+(inv.lineItems||[]).filter(l=>l.type==="dsc").reduce((ss,l)=>ss+(l.unitPrice||0)*(l.qty||1),0),0);
+    const gross     = billing - govtFees - gst;
+    return { month:m, billing, collected, govtFees, gst, dsc, gross, count:monthInvs.length };
+  });
+
+  const thisMonth = monthlyData[now.getMonth()];
+  const lastMonth = monthlyData[Math.max(0,now.getMonth()-1)];
+  const ytdBilling   = monthlyData.reduce((s,m)=>s+m.billing,0);
+  const ytdCollected = monthlyData.reduce((s,m)=>s+m.collected,0);
+  const ytdGross     = monthlyData.reduce((s,m)=>s+m.gross,0);
+
+  const maxBilling = Math.max(...monthlyData.map(m=>m.billing), 1);
+
+  return (
+    <>
+      <div style={{ display:"flex",gap:10,alignItems:"center",marginBottom:20 }}>
+        <div className="chips" style={{ margin:0 }}>
+          {["monthly","weekly"].map(p=><div key={p} className={`chip ${period===p?"on":""}`} onClick={()=>setPeriod(p)} style={{ textTransform:"capitalize" }}>{p}</div>)}
+        </div>
+      </div>
+
+      {/* YTD Summary */}
+      <div className="stat-grid grid4" style={{ marginBottom:22 }}>
+        {[
+          ["YTD Billing",    INR(ytdBilling),   "var(--navy)",  `${now.getFullYear()} total`],
+          ["YTD Collected",  INR(ytdCollected), "var(--green)", `${Math.round(ytdCollected/Math.max(ytdBilling,1)*100)}% collection`],
+          ["Gross Margin",   INR(ytdGross),     "var(--gold-dk)",`Excl. govt fees & GST`],
+          ["This Month",     INR(thisMonth.billing),"var(--blue)",`${thisMonth.count} invoices`],
+        ].map(([l,v,c,n])=>(
+          <div key={l} className="stat-box" style={{ cursor:"default" }}>
+            <div className="stat-lbl">{l}</div>
+            <div className="stat-val" style={{ color:c,fontSize:22 }}>{v}</div>
+            <div className="stat-note">{n}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Monthly billing chart */}
+      <div className="card card-gold" style={{ marginBottom:20 }}>
+        <div className="card-head"><div className="card-title">Monthly Billing & Collections — {now.getFullYear()}</div></div>
+        <div className="card-body">
+          <div style={{ display:"flex",gap:16,alignItems:"center",marginBottom:16,fontSize:12 }}>
+            {[["Billed","var(--navy)"],["Collected","var(--green)"],["Gross Margin","var(--gold-dk)"]].map(([l,c])=>(
+              <div key={l} style={{ display:"flex",alignItems:"center",gap:5 }}>
+                <div style={{ width:10,height:10,borderRadius:3,background:c }}/>
+                <span style={{ color:"var(--muted)" }}>{l}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display:"flex",gap:6,alignItems:"flex-end",height:180 }}>
+            {monthlyData.map((d,i)=>(
+              <div key={d.month} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3 }}>
+                <div style={{ width:"100%",display:"flex",gap:2,alignItems:"flex-end",height:150 }}>
+                  <div title={`Billed: ${INR(d.billing)}`} style={{ flex:1,background:"var(--navy)",opacity:.8,borderRadius:"3px 3px 0 0",height:maxBilling>0?`${Math.round(d.billing/maxBilling*140)}px`:"2px",minHeight:2,cursor:"pointer",transition:".2s" }}/>
+                  <div title={`Collected: ${INR(d.collected)}`} style={{ flex:1,background:"var(--green)",opacity:.8,borderRadius:"3px 3px 0 0",height:maxBilling>0?`${Math.round(d.collected/maxBilling*140)}px`:"2px",minHeight:2 }}/>
+                  <div title={`Gross: ${INR(d.gross)}`} style={{ flex:1,background:"var(--gold)",opacity:.8,borderRadius:"3px 3px 0 0",height:maxBilling>0?`${Math.round(Math.max(0,d.gross)/maxBilling*140)}px`:"2px",minHeight:2 }}/>
+                </div>
+                <div style={{ fontSize:9,color:i===now.getMonth()?"var(--navy)":"var(--muted)",fontWeight:i===now.getMonth()?700:400 }}>{d.month}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Monthly detail table */}
+      <div className="card">
+        <div className="card-head"><div className="card-title">Monthly Billing Breakdown</div></div>
+        <div className="tbl-wrap">
+          <table>
+            <thead><tr><th>Month</th><th>Invoices</th><th>Total Billed</th><th>Govt Fees</th><th>GST Collected</th><th>DSC Amount</th><th>Gross Margin</th><th>Collected</th><th>Outstanding</th></tr></thead>
+            <tbody>
+              {monthlyData.filter(m=>m.billing>0||m.month===MONTHS[now.getMonth()]).map((m,i)=>(
+                <tr key={m.month} style={{ background:m.month===MONTHS[now.getMonth()]?"var(--gold-lt)":"inherit" }}>
+                  <td style={{ fontWeight:600,color:"var(--navy)" }}>
+                    {m.month} {now.getFullYear()}
+                    {m.month===MONTHS[now.getMonth()]&&<span style={{ marginLeft:6,fontSize:10,background:"var(--gold)",color:"#fff",padding:"1px 6px",borderRadius:4,fontWeight:700 }}>Current</span>}
+                  </td>
+                  <td>{m.count}</td>
+                  <td style={{ fontWeight:700 }}>{INR(m.billing)}</td>
+                  <td style={{ color:"var(--muted)" }}>{INR(m.govtFees)}</td>
+                  <td style={{ color:"var(--orange)" }}>{INR(m.gst)}</td>
+                  <td style={{ color:"var(--blue)" }}>{INR(m.dsc)}</td>
+                  <td style={{ color:"var(--gold-dk)",fontWeight:700 }}>{INR(m.gross)}</td>
+                  <td style={{ color:"var(--green)",fontWeight:600 }}>{INR(m.collected)}</td>
+                  <td style={{ color:m.billing-m.collected>0?"var(--red)":"var(--muted)",fontWeight:600 }}>{INR(m.billing-m.collected)}</td>
+                </tr>
+              ))}
+              <tr style={{ background:"var(--navy)",color:"#fff" }}>
+                <td style={{ fontWeight:700,color:"#fff" }}>YTD Total</td>
+                <td style={{ color:"#fff" }}>{monthlyData.reduce((s,m)=>s+m.count,0)}</td>
+                <td style={{ fontWeight:700,color:"#C9A14A" }}>{INR(ytdBilling)}</td>
+                <td style={{ color:"rgba(255,255,255,.6)" }}>{INR(monthlyData.reduce((s,m)=>s+m.govtFees,0))}</td>
+                <td style={{ color:"rgba(255,255,255,.6)" }}>{INR(monthlyData.reduce((s,m)=>s+m.gst,0))}</td>
+                <td style={{ color:"rgba(255,255,255,.6)" }}>{INR(monthlyData.reduce((s,m)=>s+m.dsc,0))}</td>
+                <td style={{ fontWeight:700,color:"#C9A14A" }}>{INR(ytdGross)}</td>
+                <td style={{ color:"#86EFAC",fontWeight:700 }}>{INR(ytdCollected)}</td>
+                <td style={{ color:"#FCA5A5",fontWeight:700 }}>{INR(ytdBilling-ytdCollected)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// BATCH B — RECURRING TASKS ENGINE
+// ═══════════════════════════════════════════════════════════════════════
+
+const RECURRING_TEMPLATES = [
+  { id:"gst_monthly",    name:"GST Return Filing",           freq:"monthly",  dayOfMonth:20, category:"GST",        icon:"📊" },
+  { id:"tds_quarterly",  name:"TDS Return Filing",           freq:"quarterly",months:[7,10,1,4], dayOfMonth:31, category:"TDS", icon:"💼" },
+  { id:"roc_annual",     name:"Annual ROC Filing",           freq:"yearly",   month:11, dayOfMonth:30, category:"ROC", icon:"🏛️" },
+  { id:"pt_monthly",     name:"Professional Tax",            freq:"monthly",  dayOfMonth:15, category:"PT",         icon:"💰" },
+  { id:"mca_annual",     name:"MCA Annual Return",           freq:"yearly",   month:9,  dayOfMonth:30, category:"MCA", icon:"📋" },
+  { id:"audit_annual",   name:"Annual Audit",                freq:"yearly",   month:9,  dayOfMonth:30, category:"Audit",icon:"🔍" },
+];
+
+function RecurringTasksPage() {
+  const { clients, tasks, setTasks, employees, showToast } = useApp();
+  const [selTemplate, setSelTemplate] = useState("");
+  const [selClients,  setSelClients]  = useState([]);
+  const [assignTo,    setAssignTo]    = useState(employees[0]?.id||"");
+  const [startDate,   setStartDate]   = useState("");
+  const [endDate,     setEndDate]     = useState("");
+  const [creating,    setCreating]    = useState(false);
+
+  const create = () => {
+    if (!selTemplate||!selClients.length||!assignTo) { showToast("Select template, clients and assignee","error"); return; }
+    const tpl = RECURRING_TEMPLATES.find(t=>t.id===selTemplate);
+    if (!tpl) return;
+
+    const newTasks = selClients.map(cId=>{
+      const client = clients.find(c=>c.id===cId);
+      return {
+        id: "rt_"+uuid(), title: tpl.name,
+        clientId: cId, clientName: client?.name||"",
+        invoiceId: null, lineItemId: null,
+        assignedTo: assignTo, status: "open",
+        sequence: 1, requirementType: "none",
+        category: tpl.category,
+        isRecurring: true, recurringTemplate: tpl.id, freq: tpl.freq,
+        startDate, endDate,
+        dueDate: null, completedDate: null, notes: `Recurring: ${tpl.freq} — ${tpl.name}`,
+      };
+    });
+    setTasks(ts=>[...ts,...newTasks]);
+    showToast(`${newTasks.length} recurring task${newTasks.length>1?"s":""} created for ${tpl.name}!`,"success");
+    setSelClients([]); setSelTemplate(""); setCreating(false);
+  };
+
+  const recurringTasks = tasks.filter(t=>t.isRecurring);
+
+  return (
+    <>
+      <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:16 }}>
+        <button className="btn btn-primary" onClick={()=>setCreating(true)}>+ Create Recurring Task</button>
+      </div>
+
+      {creating && (
+        <div className="card card-gold" style={{ marginBottom:20 }}>
+          <div className="card-head"><div className="card-title">Set Up Recurring Task</div></div>
+          <div className="card-body">
+            <div className="form-grid-2" style={{ marginBottom:16 }}>
+              <div className="f-group">
+                <label className="f-label">Task Template <span className="f-req">*</span></label>
+                <select className="f-select" value={selTemplate} onChange={e=>setSelTemplate(e.target.value)}>
+                  <option value="">Select template…</option>
+                  {RECURRING_TEMPLATES.map(t=><option key={t.id} value={t.id}>{t.icon} {t.name} ({t.freq})</option>)}
+                </select>
+              </div>
+              <div className="f-group">
+                <label className="f-label">Assign To <span className="f-req">*</span></label>
+                <select className="f-select" value={assignTo} onChange={e=>setAssignTo(e.target.value)}>
+                  {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+                </select>
+              </div>
+              <div className="f-group">
+                <label className="f-label">Start Date</label>
+                <input type="date" className="f-input" value={startDate} onChange={e=>setStartDate(e.target.value)} />
+              </div>
+              <div className="f-group">
+                <label className="f-label">End Date (Annual Compliance)</label>
+                <input type="date" className="f-input" value={endDate} onChange={e=>setEndDate(e.target.value)} />
+                <div className="f-hint">For annual packages — set package end date</div>
+              </div>
+            </div>
+            <div className="f-group" style={{ marginBottom:16 }}>
+              <label className="f-label">Select Clients <span className="f-req">*</span></label>
+              <div style={{ display:"flex",flexWrap:"wrap",gap:8,padding:"10px",background:"var(--cream)",borderRadius:8,border:"1px solid var(--border)" }}>
+                {clients.map(c=>(
+                  <div key={c.id} onClick={()=>setSelClients(s=>s.includes(c.id)?s.filter(x=>x!==c.id):[...s,c.id])}
+                    style={{ padding:"5px 12px",borderRadius:20,fontSize:12,fontWeight:500,cursor:"pointer",border:`1.5px solid ${selClients.includes(c.id)?"var(--gold)":"var(--border)"}`,background:selClients.includes(c.id)?"var(--gold-lt)":"#fff",color:selClients.includes(c.id)?"var(--gold-dk)":"var(--muted)" }}>
+                    {selClients.includes(c.id)?"✓ ":""}{c.name}
+                  </div>
+                ))}
+              </div>
+              <div className="f-hint">{selClients.length} client{selClients.length!==1?"s":""} selected</div>
+            </div>
+            <div style={{ display:"flex",gap:10 }}>
+              <button className="btn" onClick={()=>setCreating(false)}>Cancel</button>
+              <button className="btn btn-gold" onClick={create}>Create Tasks →</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recurring task list */}
+      <div className="card">
+        <div className="card-head">
+          <div className="card-title">Active Recurring Tasks</div>
+          <div style={{ fontSize:12,color:"var(--muted)" }}>{recurringTasks.length} tasks</div>
+        </div>
+        {recurringTasks.length===0 ? (
+          <div className="empty">
+            <div className="empty-icon">🔄</div>
+            <div style={{ fontWeight:600,marginBottom:6 }}>No recurring tasks yet</div>
+            <div style={{ fontSize:13 }}>Create recurring tasks for GST, annual compliance, TDS, etc.</div>
+          </div>
+        ) : (
+          <div className="tbl-wrap">
+            <table>
+              <thead><tr><th>Task</th><th>Client</th><th>Category</th><th>Frequency</th><th>Status</th><th>Start</th><th>End</th></tr></thead>
+              <tbody>
+                {recurringTasks.map(t=>{
+                  const tpl = RECURRING_TEMPLATES.find(r=>r.id===t.recurringTemplate);
+                  return (
+                    <tr key={t.id}>
+                      <td><div style={{ fontWeight:500 }}>{t.title}</div>{tpl&&<div style={{ fontSize:11,color:"var(--gold-dk)" }}>{tpl.icon} {tpl.freq}</div>}</td>
+                      <td style={{ fontSize:12,color:"var(--muted)" }}>{t.clientName}</td>
+                      <td><span className="tag tag-gold">{t.category}</span></td>
+                      <td style={{ fontSize:12,textTransform:"capitalize" }}>{t.freq||"—"}</td>
+                      <td><Badge status={t.status}/></td>
+                      <td style={{ fontSize:12,color:"var(--muted)" }}>{t.startDate||"—"}</td>
+                      <td style={{ fontSize:12,color:t.endDate&&new Date(t.endDate)<new Date()?"var(--red)":"var(--muted)" }}>{t.endDate||"Ongoing"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// BATCH B — TICKET / QUERY SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+
+const DEMO_TICKETS = [
+  { id:"tk1", ticketNo:"TK-001", clientId:"c1", clientName:"TechSpark Solutions Pvt Ltd", subject:"DSC not working on MCA portal", description:"Our DSC is showing error when logging into MCA portal. Getting error code 2304.", priority:"high", status:"open", assignedTo:"e1", createdAt:"Jun 1, 2025", updatedAt:"Jun 1, 2025", responses:[], tat:null },
+  { id:"tk2", ticketNo:"TK-002", clientId:"c2", clientName:"GreenLeaf Ventures LLP",      subject:"Need GST registration certificate copy", description:"Please share a copy of our GST registration certificate for bank records.",    priority:"low",  status:"resolved", assignedTo:"e1", createdAt:"May 28, 2025", updatedAt:"May 29, 2025", responses:[{by:"team",text:"Certificate attached via email. Please check.",date:"May 29, 2025"}], tat:"1 day" },
+  { id:"tk3", ticketNo:"TK-003", clientId:"c3", clientName:"BlueSky Innovations Pvt Ltd", subject:"When will incorporation be complete?",   description:"It has been 3 weeks since we submitted all documents. Please give update.", priority:"medium",status:"in_progress", assignedTo:"e2", createdAt:"May 25, 2025", updatedAt:"Jun 2, 2025", responses:[{by:"team",text:"Application filed with MCA. Awaiting government approval. Usually 5-7 working days.",date:"Jun 2, 2025"}], tat:null },
+];
+
+function TicketsPage() {
+  const { user, clients, employees, showToast } = useApp();
+  const [tickets, setTickets] = useState(DEMO_TICKETS);
+  const [selTicket, setSelTicket] = useState(null);
+  const [newTicket, setNewTicket] = useState(false);
+  const [filter, setFilter] = useState("all");
+  const [form, setForm] = useState({ subject:"", description:"", priority:"medium", clientId:"" });
+  const [response, setResponse] = useState("");
+
+  const isTeam   = user?.role==="admin"||user?.role==="manager"||user?.role==="employee";
+  const isClient = user?.role==="client";
+
+  const visible = tickets.filter(t=>{
+    if (user?.role==="employee" && t.assignedTo!==user.id) return false;
+    if (filter==="all") return true;
+    return t.status===filter;
+  });
+
+  const PRIORITY_COLORS = { high:"var(--red)", medium:"var(--gold-dk)", low:"var(--green)" };
+  const STATUS_COLORS   = { open:"var(--orange)", in_progress:"var(--blue)", resolved:"var(--green)", closed:"var(--muted)" };
+
+  const createTicket = () => {
+    if (!form.subject) { showToast("Subject required","error"); return; }
+    const t = {
+      id:"tk_"+uuid(), ticketNo:"TK-"+String(tickets.length+4).padStart(3,"0"),
+      clientId: form.clientId||"c1",
+      clientName: clients.find(c=>c.id===form.clientId)?.name||user?.name||"",
+      subject:form.subject, description:form.description,
+      priority:form.priority, status:"open",
+      assignedTo: employees[0]?.id||"",
+      createdAt:today(), updatedAt:today(), responses:[], tat:null,
+    };
+    setTickets(ts=>[t,...ts]);
+    setNewTicket(false);
+    setForm({subject:"",description:"",priority:"medium",clientId:""});
+    showToast("Ticket raised! Our team will respond within 24 hours.","success");
+  };
+
+  const addResponse = (ticketId) => {
+    if (!response.trim()) return;
+    setTickets(ts=>ts.map(t=>t.id===ticketId?{
+      ...t,
+      responses:[...t.responses,{by:isTeam?"team":"client",text:response,date:today()}],
+      status:isTeam?"in_progress":t.status,
+      updatedAt:today(),
+    }:t));
+    setResponse("");
+    showToast("Response added!","success");
+  };
+
+  const resolveTicket = (ticketId) => {
+    setTickets(ts=>ts.map(t=>t.id===ticketId?{...t,status:"resolved",tat:t.tat||"1 day",updatedAt:today()}:t));
+    setSelTicket(null);
+    showToast("Ticket marked as resolved!","success");
+  };
+
+  if (selTicket) {
+    const t = tickets.find(tk=>tk.id===selTicket);
+    if (!t) return null;
+    return (
+      <>
+        <button className="btn" style={{ marginBottom:16 }} onClick={()=>setSelTicket(null)}>← All Tickets</button>
+        <div className="card">
+          <div className="card-head">
+            <div>
+              <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+                <div className="card-title">{t.subject}</div>
+                <span className="tag" style={{ background:PRIORITY_COLORS[t.priority]+"20",color:PRIORITY_COLORS[t.priority] }}>{t.priority}</span>
+              </div>
+              <div style={{ fontSize:12,color:"var(--muted)",marginTop:3 }}>{t.ticketNo} · {t.clientName} · Opened {t.createdAt}</div>
+            </div>
+            <div style={{ display:"flex",gap:10,alignItems:"center" }}>
+              <span style={{ fontSize:12,fontWeight:700,color:STATUS_COLORS[t.status],background:STATUS_COLORS[t.status]+"18",padding:"4px 10px",borderRadius:20 }}>{t.status.replace("_"," ")}</span>
+              {isTeam && t.status!=="resolved" && <button className="btn btn-green btn-sm" onClick={()=>resolveTicket(t.id)}>✓ Resolve</button>}
+            </div>
+          </div>
+          <div className="card-body">
+            <div style={{ padding:"14px 16px",background:"var(--cream)",borderRadius:10,marginBottom:20,fontSize:13,color:"var(--ink2)",lineHeight:1.7 }}>
+              {t.description}
+            </div>
+            {/* Responses */}
+            <div style={{ fontSize:13,fontWeight:700,color:"var(--navy)",marginBottom:12 }}>Conversation</div>
+            {t.responses.length===0 && <div style={{ fontSize:12,color:"var(--muted)",marginBottom:16 }}>No responses yet.</div>}
+            {t.responses.map((r,i)=>(
+              <div key={i} style={{ display:"flex",gap:12,marginBottom:14,justifyContent:r.by==="team"?"flex-start":"flex-end" }}>
+                <div style={{ maxWidth:"80%",padding:"10px 14px",borderRadius:10,background:r.by==="team"?"var(--navy)":"var(--gold-lt)",color:r.by==="team"?"#fff":"var(--ink)" }}>
+                  <div style={{ fontSize:10,opacity:.7,marginBottom:4,textTransform:"uppercase",letterSpacing:"1px" }}>{r.by==="team"?"Founders Bridge Team":"You"} · {r.date}</div>
+                  <div style={{ fontSize:13 }}>{r.text}</div>
+                </div>
+              </div>
+            ))}
+            {t.status!=="resolved" && (
+              <div>
+                <textarea className="f-textarea" rows={3} placeholder="Type your response…" value={response} onChange={e=>setResponse(e.target.value)} style={{ marginBottom:10 }}/>
+                <button className="btn btn-primary" onClick={()=>addResponse(t.id)}>Send Response →</button>
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div style={{ display:"flex",gap:10,alignItems:"center",marginBottom:20 }}>
+        <div className="chips" style={{ margin:0 }}>
+          {["all","open","in_progress","resolved"].map(s=>(
+            <div key={s} className={`chip ${filter===s?"on":""}`} onClick={()=>setFilter(s)} style={{ textTransform:"capitalize" }}>
+              {s.replace("_"," ")} ({tickets.filter(t=>s==="all"?true:t.status===s).length})
+            </div>
+          ))}
+        </div>
+        <button className="btn btn-primary" style={{ marginLeft:"auto" }} onClick={()=>setNewTicket(true)}>
+          {isClient?"+ Raise Ticket":"+ New Ticket"}
+        </button>
+      </div>
+
+      {newTicket && (
+        <div className="card card-gold" style={{ marginBottom:20 }}>
+          <div className="card-head"><div className="card-title">Raise a Ticket</div></div>
+          <div className="card-body">
+            <div className="form-grid">
+              {isTeam && (
+                <div className="f-group">
+                  <label className="f-label">Client</label>
+                  <select className="f-select" value={form.clientId} onChange={e=>setForm(f=>({...f,clientId:e.target.value}))}>
+                    <option value="">Select client…</option>
+                    {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="f-group">
+                <label className="f-label">Subject <span className="f-req">*</span></label>
+                <input className="f-input" placeholder="Brief description of your query" value={form.subject} onChange={e=>setForm(f=>({...f,subject:e.target.value}))} />
+              </div>
+              <div className="f-group">
+                <label className="f-label">Priority</label>
+                <select className="f-select" value={form.priority} onChange={e=>setForm(f=>({...f,priority:e.target.value}))}>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High — Urgent</option>
+                </select>
+              </div>
+              <div className="f-group">
+                <label className="f-label">Description</label>
+                <textarea className="f-textarea" rows={4} placeholder="Describe your query in detail…" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} />
+              </div>
+              <div style={{ display:"flex",gap:10 }}>
+                <button className="btn" onClick={()=>setNewTicket(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={createTicket}>Submit Ticket →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="card">
+        <div className="card-head">
+          <div className="card-title">Tickets</div>
+          {isTeam && (
+            <div style={{ fontSize:12,color:"var(--muted)" }}>
+              {tickets.filter(t=>t.status==="open").length} open ·{" "}
+              {tickets.filter(t=>t.status==="in_progress").length} in progress ·{" "}
+              Avg TAT: {tickets.filter(t=>t.tat).length>0 ? tickets.filter(t=>t.tat).map(t=>t.tat)[0] : "—"}
+            </div>
+          )}
+        </div>
+        {visible.length===0 ? (
+          <div className="empty"><div className="empty-icon">🎫</div><div>No tickets found</div></div>
+        ) : (
+          visible.map(t=>(
+            <div key={t.id} className={`ticket-row ticket-priority-${t.priority}`} onClick={()=>setSelTicket(t.id)}>
+              <div style={{ width:40,height:40,borderRadius:10,background:STATUS_COLORS[t.status]+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0 }}>
+                {t.status==="resolved"?"✅":t.priority==="high"?"🔴":t.priority==="medium"?"🟡":"🟢"}
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                  <div style={{ fontSize:13,fontWeight:600,color:"var(--navy)" }}>{t.subject}</div>
+                  <span style={{ fontSize:10,background:PRIORITY_COLORS[t.priority]+"20",color:PRIORITY_COLORS[t.priority],padding:"1px 6px",borderRadius:4,fontWeight:700 }}>{t.priority}</span>
+                </div>
+                <div style={{ fontSize:11,color:"var(--muted)",marginTop:2 }}>
+                  {t.ticketNo} · {t.clientName} · {t.createdAt}
+                  {t.responses.length>0&&<span style={{ marginLeft:8 }}>💬 {t.responses.length} response{t.responses.length!==1?"s":""}</span>}
+                  {t.tat&&<span style={{ marginLeft:8,color:"var(--green)" }}>✓ Resolved in {t.tat}</span>}
+                </div>
+              </div>
+              <div style={{ display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4 }}>
+                <span style={{ fontSize:11,fontWeight:700,color:STATUS_COLORS[t.status],background:STATUS_COLORS[t.status]+"18",padding:"3px 9px",borderRadius:20,textTransform:"capitalize" }}>
+                  {t.status.replace("_"," ")}
+                </span>
+                <span style={{ fontSize:11,color:"var(--muted)" }}>Updated {t.updatedAt}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
 export { AppV2 as default };
+

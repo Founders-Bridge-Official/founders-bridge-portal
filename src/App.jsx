@@ -1389,6 +1389,14 @@ function ClientsPage() {
   const [filter, setFilter] = useState("all");
   const [selectedClient, setSelectedClient] = useState(null);
 
+  // Manager can only edit their OWN assigned clients, not other employees' clients
+  const canEdit = (c) => {
+    if (user.role === "admin") return true;
+    if (user.role === "manager") return c.assignedTo === user.id;
+    if (user.role === "employee") return c.assignedTo === user.id;
+    return false;
+  };
+
   const visible = clients.filter(c => {
     if (user.role === "employee" && c.assignedTo !== user.id) return false;
     if (filter !== "all" && c.status !== filter) return false;
@@ -1396,7 +1404,7 @@ function ClientsPage() {
     return true;
   });
 
-  if (selectedClient) return <ClientDetail client={selectedClient} onBack={() => setSelectedClient(null)} />;
+  if (selectedClient) return <ClientDetail client={selectedClient} onBack={() => setSelectedClient(null)} canEdit={canEdit(selectedClient)} />;
 
   return (
     <>
@@ -1455,7 +1463,7 @@ function ClientsPage() {
 }
 
 // ─── Client Detail ────────────────────────────────────────────────────
-function ClientDetail({ client, onBack }) {
+function ClientDetail({ client, onBack, canEdit = true }) {
   const { tasks, invoices, employees, openModal, showToast } = useApp();
   const [tab, setTab] = useState("overview");
   const clientTasks    = tasks.filter(t => t.clientId === client.id);
@@ -1464,7 +1472,14 @@ function ClientDetail({ client, onBack }) {
 
   return (
     <>
-      <button className="btn" style={{ marginBottom: 16 }} onClick={onBack}>← All Clients</button>
+      <div style={{ display:"flex",alignItems:"center",gap:12,marginBottom:16 }}>
+        <button className="btn" onClick={onBack}>← All Clients</button>
+        {!canEdit && (
+          <div style={{ padding:"5px 12px",background:"#FFF8EC",border:"1px solid rgba(201,161,74,.4)",borderRadius:6,fontSize:12,color:"var(--gold-dk)",fontWeight:600 }}>
+            👁 View Only — Assigned to another team member
+          </div>
+        )}
+      </div>
 
       {/* Client hero */}
       <div className="card" style={{ padding: "20px 24px", marginBottom: 20 }}>
@@ -4780,10 +4795,11 @@ function AppV2() {
   const NAV_V2 = {
     admin: [
       { sec:"Overview", items:[
-        { id:"dashboard",    icon:"⬡",  label:"Dashboard"        },
-        { id:"analytics",    icon:"📊", label:"Analytics"        },
-        { id:"billing-summary", icon:"💹", label:"Billing Summary" },
-        { id:"reports",      icon:"📈", label:"Reports"          },
+        { id:"dashboard",      icon:"⬡",  label:"Dashboard"         },
+        { id:"analytics",      icon:"📊", label:"Analytics"         },
+        { id:"emp-analytics",  icon:"👤", label:"Employee Analytics" },
+        { id:"billing-summary",icon:"💹", label:"Billing Summary"   },
+        { id:"reports",        icon:"📈", label:"Reports"           },
       ]},
       { sec:"Clients", items:[
         { id:"clients",      icon:"🏢", label:"All Clients"      },
@@ -4791,7 +4807,8 @@ function AppV2() {
         { id:"payments",     icon:"💰", label:"Payments"         },
         { id:"tasks",        icon:"✓",  label:"Tasks"            },
         { id:"recurring",    icon:"🔄", label:"Recurring Tasks"  },
-        { id:"tickets",      icon:"🎫", label:"Tickets",         },
+        { id:"tickets",      icon:"🎫", label:"Tickets"          },
+        { id:"marketplace",  icon:"🛒", label:"Marketplace"      },
       ]},
       { sec:"Team", items:[
         { id:"employees",    icon:"👥", label:"Employees"   },
@@ -4806,9 +4823,10 @@ function AppV2() {
     ],
     manager: [
       { sec:"Overview", items:[
-        { id:"dashboard",    icon:"⬡",  label:"Dashboard"        },
-        { id:"billing-summary",icon:"💹",label:"Billing Summary"  },
-        { id:"reports",      icon:"📈", label:"Reports"          },
+        { id:"dashboard",      icon:"⬡",  label:"Dashboard"         },
+        { id:"emp-analytics",  icon:"👤", label:"Employee Analytics" },
+        { id:"billing-summary",icon:"💹", label:"Billing Summary"   },
+        { id:"reports",        icon:"📈", label:"Reports"           },
       ]},
       { sec:"Clients", items:[
         { id:"clients",      icon:"🏢", label:"All Clients"      },
@@ -4817,6 +4835,7 @@ function AppV2() {
         { id:"tasks",        icon:"✓",  label:"Tasks"            },
         { id:"recurring",    icon:"🔄", label:"Recurring Tasks"  },
         { id:"tickets",      icon:"🎫", label:"Tickets"          },
+        { id:"marketplace",  icon:"🛒", label:"Marketplace"      },
       ]},
       { sec:"Team", items:[
         { id:"employees",    icon:"👥", label:"Team"        },
@@ -4833,11 +4852,12 @@ function AppV2() {
     ],
     client: [
       { sec:"My Portal", items:[
-        { id:"client-home",     icon:"🏢", label:"My Companies"  },
-        { id:"client-tasks",    icon:"✓",  label:"My Tasks"      },
-        { id:"client-invoices", icon:"💳", label:"My Billing"    },
-        { id:"client-docs",     icon:"📁", label:"Documents"     },
-        { id:"tickets",         icon:"🎫", label:"Raise a Query" },
+        { id:"client-home",     icon:"🏢", label:"My Companies"   },
+        { id:"client-tasks",    icon:"✓",  label:"My Tasks"       },
+        { id:"client-invoices", icon:"💳", label:"My Billing"     },
+        { id:"client-docs",     icon:"📁", label:"Documents"      },
+        { id:"free-gifts",      icon:"🎁", label:"Free Resources" },
+        { id:"tickets",         icon:"🎫", label:"Raise a Query"  },
       ]},
     ],
   };
@@ -4849,8 +4869,11 @@ function AppV2() {
   const TITLES = {
     dashboard:"Dashboard", analytics:"Analytics", reports:"Reports",
     "billing-summary":"Billing Summary",
+    "emp-analytics":"Employee Analytics",
     clients:"Clients", invoices:"Invoices", payments:"Payments", tasks:"Tasks",
-    recurring:"Recurring Tasks", tickets:"Tickets",
+    recurring:"Recurring Tasks", tickets:"Tickets / Queries",
+    marketplace:"Service Marketplace",
+    "free-gifts":"Free Resources",
     employees:"Employees",
     "settings-org":"Organisation Settings", "settings-bundles":"Bundles & Services",
     "settings-doctpls":"Document Templates",
@@ -4926,9 +4949,14 @@ function AppV2() {
           </div>
 
           <div className="page">
-            {/* All original views */}
-            {view==="dashboard"         && <AdminDashboard />}
+            {/* Cross-sell alerts for admin/manager */}
+            {(user.role==="admin"||user.role==="manager") && view==="dashboard" &&
+              clients.map(c=><CrossSellAlert key={c.id} client={c} tasks={tasks}/>)
+            }
+            {view==="dashboard"         && user.role==="manager" && <ManagerDashboard />}
+            {view==="dashboard"         && user.role!=="manager" && <AdminDashboard />}
             {view==="analytics"         && <AnalyticsPage />}
+            {view==="emp-analytics"     && <EmployeeAnalyticsPage />}
             {view==="billing-summary"   && <BillingSummaryPage />}
             {view==="reports"           && <ReportsPage clients={clients} invoices={invoices} tasks={tasks} employees={employees} payments={payments} />}
             {view==="clients"           && <ClientsPage />}
@@ -4937,6 +4965,7 @@ function AppV2() {
             {view==="tasks"             && <TasksPage />}
             {view==="recurring"         && <RecurringTasksPage />}
             {view==="tickets"           && <TicketsPage />}
+            {view==="marketplace"       && <MarketplacePage />}
             {view==="employees"         && <EmployeesPage />}
             {view==="settings-org"      && <OrgSettings />}
             {view==="settings-bundles"  && <BundleSettings />}
@@ -4944,12 +4973,13 @@ function AppV2() {
             {view==="settings-users"    && <UserSettings />}
             {view==="settings-kraya"    && <KrayaSettings showToast={showToast} />}
             {view==="emp-dashboard"     && <EmpDashboard />}
-            {view==="emp-tasks"         && <TasksPage />}
-            {view==="emp-clients"       && <ClientsPage />}
+            {view==="emp-tasks"         && <EmpTasks />}
+            {view==="emp-clients"       && <EmpClients />}
             {view==="client-home"       && <ClientHome />}
             {view==="client-tasks"      && <ClientTasksV2 submissions={submissions} setSubs={setSubs} />}
             {view==="client-invoices"   && <ClientInvoices />}
             {view==="client-docs"       && <ClientDocs />}
+            {view==="free-gifts"        && <FreeGiftsPage />}
             {view==="notifications"     && <NotificationsPage notifications={notifications} setNotifications={setNotifs} userId={user.id} />}
             {view==="policies"          && <PolicyPage onBack={()=>setView(user.role==="client"?"client-home":"dashboard")} />}
           </div>
@@ -5708,32 +5738,258 @@ function RecurringTasksPage() {
   const [startDate,   setStartDate]   = useState("");
   const [endDate,     setEndDate]     = useState("");
   const [creating,    setCreating]    = useState(false);
+  const [preview,     setPreview]     = useState([]);
 
-  const create = () => {
-    if (!selTemplate||!selClients.length||!assignTo) { showToast("Select template, clients and assignee","error"); return; }
+  // Generate due dates based on template frequency
+  const generateDueDates = (tpl, start, end) => {
+    if (!start) return [];
+    const dates = [];
+    const s = new Date(start);
+    const e = end ? new Date(end) : new Date(s.getFullYear()+1, s.getMonth(), s.getDate());
+    let cur = new Date(s);
+
+    if (tpl.freq === "monthly") {
+      while (cur <= e) {
+        const due = new Date(cur.getFullYear(), cur.getMonth(), tpl.dayOfMonth||20);
+        if (due >= s && due <= e) dates.push(due.toISOString().split("T")[0]);
+        cur.setMonth(cur.getMonth()+1);
+      }
+    } else if (tpl.freq === "quarterly") {
+      const qMonths = tpl.months || [4,7,10,1];
+      while (cur.getFullYear() <= e.getFullYear()+1) {
+        qMonths.forEach(m => {
+          const due = new Date(cur.getFullYear(), m-1, tpl.dayOfMonth||31);
+          if (due >= s && due <= e) dates.push(due.toISOString().split("T")[0]);
+        });
+        cur.setFullYear(cur.getFullYear()+1);
+        if (cur > e) break;
+      }
+    } else if (tpl.freq === "yearly") {
+      const due = new Date(s.getFullYear(), (tpl.month||9)-1, tpl.dayOfMonth||30);
+      if (due >= s && due <= e) dates.push(due.toISOString().split("T")[0]);
+      const due2 = new Date(s.getFullYear()+1, (tpl.month||9)-1, tpl.dayOfMonth||30);
+      if (due2 >= s && due2 <= e) dates.push(due2.toISOString().split("T")[0]);
+    }
+    return [...new Set(dates)].sort();
+  };
+
+  // Preview tasks before creating
+  const previewTasks = () => {
+    if (!selTemplate||!selClients.length||!startDate) { showToast("Select template, clients and start date","error"); return; }
     const tpl = RECURRING_TEMPLATES.find(t=>t.id===selTemplate);
     if (!tpl) return;
-
-    const newTasks = selClients.map(cId=>{
+    const dates = generateDueDates(tpl, startDate, endDate);
+    const prev = [];
+    selClients.forEach(cId => {
       const client = clients.find(c=>c.id===cId);
-      return {
-        id: "rt_"+uuid(), title: tpl.name,
-        clientId: cId, clientName: client?.name||"",
-        invoiceId: null, lineItemId: null,
-        assignedTo: assignTo, status: "open",
-        sequence: 1, requirementType: "none",
-        category: tpl.category,
-        isRecurring: true, recurringTemplate: tpl.id, freq: tpl.freq,
-        startDate, endDate,
-        dueDate: null, completedDate: null, notes: `Recurring: ${tpl.freq} — ${tpl.name}`,
-      };
+      dates.forEach(d => {
+        prev.push({ client: client?.name, date: d, title: tpl.name });
+      });
     });
+    setPreview(prev);
+  };
+
+  const create = () => {
+    if (!selTemplate||!selClients.length||!assignTo||!startDate) { showToast("Fill all required fields","error"); return; }
+    const tpl = RECURRING_TEMPLATES.find(t=>t.id===selTemplate);
+    if (!tpl) return;
+    const dates = generateDueDates(tpl, startDate, endDate);
+
+    const newTasks = [];
+    selClients.forEach(cId => {
+      const client = clients.find(c=>c.id===cId);
+      dates.forEach((d, idx) => {
+        newTasks.push({
+          id: "rt_"+uuid(),
+          title: `${tpl.name} — ${new Date(d).toLocaleDateString("en-IN",{month:"short",year:"numeric"})}`,
+          clientId: cId, clientName: client?.name||"",
+          invoiceId: null, assignedTo: assignTo, status: "open",
+          sequence: idx+1, requirementType: "none",
+          category: tpl.category, icon: tpl.icon,
+          isRecurring: true, recurringTemplate: tpl.id, freq: tpl.freq,
+          startDate, endDate, dueDate: d,
+          completedDate: null,
+          notes: `Recurring ${tpl.freq} task. Package: ${startDate} to ${endDate||"ongoing"}`,
+        });
+      });
+    });
+
     setTasks(ts=>[...ts,...newTasks]);
-    showToast(`${newTasks.length} recurring task${newTasks.length>1?"s":""} created for ${tpl.name}!`,"success");
-    setSelClients([]); setSelTemplate(""); setCreating(false);
+    showToast(`✅ ${newTasks.length} tasks created across ${dates.length} periods for ${selClients.length} client${selClients.length>1?"s":""}!`,"success");
+    setSelClients([]); setSelTemplate(""); setCreating(false); setPreview([]);
   };
 
   const recurringTasks = tasks.filter(t=>t.isRecurring);
+
+  // Group by template
+  const grouped = {};
+  recurringTasks.forEach(t => {
+    const key = t.recurringTemplate||"other";
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(t);
+  });
+
+  return (
+    <>
+      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+        <div style={{ fontSize:13,color:"var(--muted)" }}>
+          Tasks are auto-created for each period (monthly/quarterly/yearly) with correct due dates.
+        </div>
+        <button className="btn btn-primary" onClick={()=>setCreating(true)}>+ Set Up Recurring Tasks</button>
+      </div>
+
+      {creating && (
+        <div className="card card-gold" style={{ marginBottom:20 }}>
+          <div className="card-head"><div className="card-title">Configure Recurring Tasks</div></div>
+          <div className="card-body">
+            <div className="form-grid-2" style={{ marginBottom:16 }}>
+              <div className="f-group">
+                <label className="f-label">Service Template <span className="f-req">*</span></label>
+                <select className="f-select" value={selTemplate} onChange={e=>{setSelTemplate(e.target.value);setPreview([]);}}>
+                  <option value="">Select template…</option>
+                  {RECURRING_TEMPLATES.map(t=><option key={t.id} value={t.id}>{t.icon} {t.name} ({t.freq})</option>)}
+                </select>
+                {selTemplate && (
+                  <div className="f-hint">
+                    {(() => {
+                      const tpl = RECURRING_TEMPLATES.find(t=>t.id===selTemplate);
+                      if (!tpl) return "";
+                      if (tpl.freq==="monthly") return `Due on ${tpl.dayOfMonth}th of every month`;
+                      if (tpl.freq==="quarterly") return `Due quarterly — ${tpl.months?.map(m=>["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m]).join(", ")} ${tpl.dayOfMonth}`;
+                      if (tpl.freq==="yearly") return `Due annually — ${["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][tpl.month]} ${tpl.dayOfMonth}`;
+                      return "";
+                    })()}
+                  </div>
+                )}
+              </div>
+              <div className="f-group">
+                <label className="f-label">Assign To <span className="f-req">*</span></label>
+                <select className="f-select" value={assignTo} onChange={e=>setAssignTo(e.target.value)}>
+                  {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+                </select>
+              </div>
+              <div className="f-group">
+                <label className="f-label">Package Start Date <span className="f-req">*</span></label>
+                <input type="date" className="f-input" value={startDate} onChange={e=>{setStartDate(e.target.value);setPreview([]);}} />
+              </div>
+              <div className="f-group">
+                <label className="f-label">Package End Date</label>
+                <input type="date" className="f-input" value={endDate} onChange={e=>{setEndDate(e.target.value);setPreview([]);}} />
+                <div className="f-hint">Leave blank for 1 year from start date</div>
+              </div>
+            </div>
+
+            <div className="f-group" style={{ marginBottom:16 }}>
+              <label className="f-label">Select Clients <span className="f-req">*</span></label>
+              <div style={{ display:"flex",flexWrap:"wrap",gap:8,padding:12,background:"var(--cream)",borderRadius:8,border:"1px solid var(--border)" }}>
+                {clients.map(c=>(
+                  <div key={c.id} onClick={()=>{setSelClients(s=>s.includes(c.id)?s.filter(x=>x!==c.id):[...s,c.id]);setPreview([]);}}
+                    style={{ padding:"5px 14px",borderRadius:20,fontSize:12,fontWeight:600,cursor:"pointer",border:`1.5px solid ${selClients.includes(c.id)?"var(--gold)":"var(--border)"}`,background:selClients.includes(c.id)?"var(--gold-lt)":"#fff",color:selClients.includes(c.id)?"var(--gold-dk)":"var(--muted)",transition:".15s" }}>
+                    {selClients.includes(c.id)?"✓ ":""}{c.name}
+                  </div>
+                ))}
+              </div>
+              <div className="f-hint">{selClients.length} client{selClients.length!==1?"s":""} selected</div>
+            </div>
+
+            {/* Preview */}
+            <button className="btn btn-sm" style={{ marginBottom:12 }} onClick={previewTasks}>👁 Preview Tasks to be Created</button>
+            {preview.length > 0 && (
+              <div style={{ maxHeight:200,overflowY:"auto",border:"1px solid var(--border)",borderRadius:8,marginBottom:16 }}>
+                <div style={{ padding:"8px 14px",background:"var(--gold-lt)",borderBottom:"1px solid var(--border)",fontSize:12,fontWeight:700,color:"var(--gold-dk)" }}>
+                  {preview.length} tasks will be created
+                </div>
+                {preview.slice(0,20).map((p,i)=>(
+                  <div key={i} style={{ display:"flex",gap:12,padding:"7px 14px",borderBottom:"1px solid #F0EEE9",fontSize:12 }}>
+                    <span style={{ color:"var(--muted)",minWidth:120 }}>{p.client}</span>
+                    <span style={{ fontWeight:500 }}>{p.title}</span>
+                    <span style={{ marginLeft:"auto",color:"var(--navy)",fontWeight:600 }}>Due: {new Date(p.date).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</span>
+                  </div>
+                ))}
+                {preview.length > 20 && <div style={{ padding:"7px 14px",fontSize:11,color:"var(--muted)" }}>+{preview.length-20} more…</div>}
+              </div>
+            )}
+
+            <div style={{ display:"flex",gap:10 }}>
+              <button className="btn" onClick={()=>{setCreating(false);setPreview([]);}}>Cancel</button>
+              <button className="btn btn-gold" onClick={create}>
+                ✅ Create {preview.length > 0 ? `${preview.length} Tasks` : "Tasks"} →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Summary stats */}
+      <div className="stat-grid grid4" style={{ marginBottom:20 }}>
+        {[
+          ["Total Recurring", recurringTasks.length, "var(--navy)"],
+          ["Pending", recurringTasks.filter(t=>t.status!=="completed"&&t.status!=="cancelled").length, "var(--orange)"],
+          ["Completed", recurringTasks.filter(t=>t.status==="completed").length, "var(--green)"],
+          ["Overdue", recurringTasks.filter(t=>t.dueDate&&new Date(t.dueDate)<new Date()&&t.status!=="completed").length, "var(--red)"],
+        ].map(([l,v,c])=>(
+          <div key={l} className="stat-box" style={{ cursor:"default" }}>
+            <div className="stat-lbl">{l}</div>
+            <div className="stat-val" style={{ color:c,fontSize:22 }}>{v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Grouped by template */}
+      {Object.entries(grouped).map(([tplId, taskList]) => {
+        const tpl = RECURRING_TEMPLATES.find(t=>t.id===tplId);
+        return (
+          <div key={tplId} className="card" style={{ marginBottom:16 }}>
+            <div className="card-head">
+              <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+                <span style={{ fontSize:20 }}>{tpl?.icon||"🔄"}</span>
+                <div>
+                  <div className="card-title">{tpl?.name||tplId}</div>
+                  <div style={{ fontSize:11,color:"var(--muted)" }}>{taskList.length} tasks · {tpl?.freq}</div>
+                </div>
+              </div>
+              <span className="tag tag-gold">{tpl?.category}</span>
+            </div>
+            <div className="tbl-wrap">
+              <table>
+                <thead><tr><th>Task</th><th>Client</th><th>Due Date</th><th>Status</th><th>Package Period</th></tr></thead>
+                <tbody>
+                  {taskList.map(t=>{
+                    const isOverdue = t.dueDate&&new Date(t.dueDate)<new Date()&&t.status!=="completed";
+                    return (
+                      <tr key={t.id}>
+                        <td style={{ fontWeight:500,fontSize:13 }}>{t.title}</td>
+                        <td style={{ fontSize:12,color:"var(--muted)" }}>{t.clientName}</td>
+                        <td>
+                          <span style={{ fontSize:12,fontWeight:600,color:isOverdue?"var(--red)":"var(--ink)" }}>
+                            {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : "—"}
+                            {isOverdue&&" ⚠️"}
+                          </span>
+                        </td>
+                        <td><Badge status={t.status}/></td>
+                        <td style={{ fontSize:11,color:"var(--muted)" }}>{t.startDate||"—"} → {t.endDate||"Ongoing"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+
+      {recurringTasks.length===0 && (
+        <div className="card">
+          <div className="empty">
+            <div className="empty-icon">🔄</div>
+            <div style={{ fontWeight:600,marginBottom:6 }}>No recurring tasks yet</div>
+            <div style={{ fontSize:13 }}>Set up GST filing, annual ROC compliance, TDS returns etc.</div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
   return (
     <>
@@ -6038,5 +6294,537 @@ function TicketsPage() {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// EMPLOYEE EFFICIENCY ANALYTICS
+// ═══════════════════════════════════════════════════════════════════════
+function EmployeeAnalyticsPage() {
+  const { employees, tasks, clients } = useApp();
+  const [period, setPeriod] = useState("monthly");
+  const [selEmp, setSelEmp] = useState("all");
+  const now = new Date();
+
+  const getRange = () => {
+    if (period==="daily")   return { start: new Date(now.getFullYear(),now.getMonth(),now.getDate()), label:"Today" };
+    if (period==="weekly")  return { start: new Date(now.getTime()-7*24*60*60*1000), label:"This Week" };
+    if (period==="monthly") return { start: new Date(now.getFullYear(),now.getMonth(),1), label:"This Month" };
+    return { start: new Date(0), label:"All Time" };
+  };
+  const range = getRange();
+
+  const empStats = employees.map(emp => {
+    const allTasks     = tasks.filter(t=>t.assignedTo===emp.id);
+    const periodTasks  = allTasks.filter(t=>t.completedDate&&new Date(t.completedDate)>=range.start);
+    const overdue      = allTasks.filter(t=>t.dueDate&&new Date(t.dueDate)<now&&t.status!=="completed");
+    const pending      = allTasks.filter(t=>t.status!=="completed"&&t.status!=="cancelled");
+    const empClients   = clients.filter(c=>c.assignedTo===emp.id);
+    // Overdue ageing
+    const aged12  = overdue.filter(t=>{ const d=new Date(t.dueDate); return (now-d)/(1000*3600)>=12 && (now-d)/(1000*3600)<24; });
+    const aged24  = overdue.filter(t=>{ const d=new Date(t.dueDate); return (now-d)/(1000*3600)>=24 && (now-d)/(1000*3600)<48; });
+    const aged48  = overdue.filter(t=>{ const d=new Date(t.dueDate); return (now-d)/(1000*3600)>=48 && (now-d)/(1000*3600)<72; });
+    const aged72p = overdue.filter(t=>{ const d=new Date(t.dueDate); return (now-d)/(1000*3600)>=72; });
+    const pct = allTasks.length ? Math.round(allTasks.filter(t=>t.status==="completed").length/allTasks.length*100) : 0;
+    return { ...emp, allTasks:allTasks.length, periodCompleted:periodTasks.length, overdue:overdue.length, pending:pending.length, clients:empClients.length, pct, aged12:aged12.length, aged24:aged24.length, aged48:aged48.length, aged72p:aged72p.length };
+  });
+
+  const filtered = selEmp==="all" ? empStats : empStats.filter(e=>e.id===selEmp);
+
+  return (
+    <>
+      <div style={{ display:"flex",gap:12,marginBottom:20,alignItems:"center",flexWrap:"wrap" }}>
+        <div className="chips" style={{ margin:0 }}>
+          {["daily","weekly","monthly","all"].map(p=>(
+            <div key={p} className={`chip ${period===p?"on":""}`} onClick={()=>setPeriod(p)} style={{ textTransform:"capitalize" }}>{p==="all"?"All Time":p}</div>
+          ))}
+        </div>
+        <select className="f-select" style={{ width:200,marginLeft:"auto" }} value={selEmp} onChange={e=>setSelEmp(e.target.value)}>
+          <option value="all">All Employees</option>
+          {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+        </select>
+      </div>
+
+      {/* Summary cards */}
+      <div className="stat-grid grid4" style={{ marginBottom:20 }}>
+        {[
+          ["Completed "+range.label, empStats.reduce((s,e)=>s+e.periodCompleted,0), "var(--green)"],
+          ["Total Pending",          empStats.reduce((s,e)=>s+e.pending,0),        "var(--orange)"],
+          ["Overdue Tasks",          empStats.reduce((s,e)=>s+e.overdue,0),        "var(--red)"],
+          ["72hr+ Overdue",          empStats.reduce((s,e)=>s+e.aged72p,0),        "#7C3AED"],
+        ].map(([l,v,c])=>(
+          <div key={l} className="stat-box" style={{ cursor:"default" }}>
+            <div className="stat-lbl">{l}</div>
+            <div className="stat-val" style={{ color:c,fontSize:22 }}>{v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Per employee breakdown */}
+      {filtered.map(emp=>(
+        <div key={emp.id} className="card" style={{ marginBottom:16 }}>
+          <div className="card-head">
+            <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+              <div className="av av-lg" style={{ background:emp.color }}>{emp.avatar}</div>
+              <div>
+                <div className="card-title">{emp.name}</div>
+                <div style={{ fontSize:12,color:"var(--muted)" }}>{emp.role} · {emp.clients} clients · {emp.allTasks} total tasks</div>
+              </div>
+            </div>
+            <div style={{ textAlign:"right" }}>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:28,fontWeight:700,color:emp.pct>=80?"var(--green)":emp.pct>=50?"var(--gold-dk)":"var(--red)" }}>{emp.pct}%</div>
+              <div style={{ fontSize:11,color:"var(--muted)" }}>completion rate</div>
+            </div>
+          </div>
+          <div className="card-body">
+            {/* Stats row */}
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:16 }}>
+              {[
+                ["Completed "+range.label, emp.periodCompleted, "var(--green)",  "#F0FDF4"],
+                ["Pending",                emp.pending,         "var(--orange)", "#FFF8EC"],
+                ["Overdue",                emp.overdue,         "var(--red)",    "#FEF2F2"],
+                ["Avg per day",            Math.round(emp.allTasks/30)||0, "var(--blue)", "#EEF3FB"],
+              ].map(([l,v,c,bg])=>(
+                <div key={l} style={{ textAlign:"center",padding:"12px 8px",borderRadius:10,background:bg }}>
+                  <div style={{ fontSize:20,fontWeight:700,color:c }}>{v}</div>
+                  <div style={{ fontSize:11,color:"var(--muted)",marginTop:2 }}>{l}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Overdue ageing breakdown */}
+            {emp.overdue > 0 && (
+              <div>
+                <div style={{ fontSize:12,fontWeight:700,marginBottom:8,color:"var(--navy)" }}>Overdue Ageing</div>
+                <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8 }}>
+                  {[
+                    ["12–24 hrs", emp.aged12, "#FFF8EC","#B45309"],
+                    ["24–48 hrs", emp.aged24, "#FEF2F2","#DC2626"],
+                    ["48–72 hrs", emp.aged48, "#FFF1F2","#BE123C"],
+                    ["72 hrs+",   emp.aged72p,"#FDF2F8","#9D174D"],
+                  ].map(([l,v,bg,c])=>(
+                    <div key={l} style={{ padding:"10px",borderRadius:8,background:bg,textAlign:"center",border:`1px solid ${c}30` }}>
+                      <div style={{ fontSize:18,fontWeight:700,color:c }}>{v}</div>
+                      <div style={{ fontSize:10,color:c,fontWeight:600,marginTop:2 }}>{l}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Progress bar */}
+            <div style={{ marginTop:12 }}>
+              <div style={{ display:"flex",justifyContent:"space-between",marginBottom:5,fontSize:11 }}>
+                <span style={{ color:"var(--muted)" }}>Overall completion</span>
+                <span style={{ fontWeight:700 }}>{emp.pct}%</span>
+              </div>
+              <div className="prog-bg">
+                <div className="prog-fill" style={{ width:emp.pct+"%",background:emp.pct>=80?"var(--green)":emp.pct>=50?"var(--gold)":"var(--red)" }}/>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MANAGER DASHBOARD — with overdue ageing focus
+// ═══════════════════════════════════════════════════════════════════════
+function ManagerDashboard() {
+  const { clients, tasks, employees, invoices, user, setView } = useApp();
+  const [drill, setDrill] = useState(null);
+  const now = new Date();
+
+  // Manager sees their own team's clients
+  const myEmps     = employees.filter(e=>e.id===user.id || true); // manager sees all
+  const myClients  = clients;
+  const myTasks    = tasks;
+
+  const overdue    = myTasks.filter(t=>t.dueDate&&new Date(t.dueDate)<now&&t.status!=="completed");
+  const aged12     = overdue.filter(t=>(now-new Date(t.dueDate))/(1000*3600)<24);
+  const aged24     = overdue.filter(t=>{const h=(now-new Date(t.dueDate))/(1000*3600); return h>=24&&h<48;});
+  const aged48     = overdue.filter(t=>{const h=(now-new Date(t.dueDate))/(1000*3600); return h>=48&&h<72;});
+  const aged72p    = overdue.filter(t=>(now-new Date(t.dueDate))/(1000*3600)>=72);
+
+  const pendingReview = tasks.filter(t=>t.status==="team_approval");
+  const clientAction  = tasks.filter(t=>t.status==="client_action");
+
+  return (
+    <>
+      {/* Overdue ageing — main focus for manager */}
+      <div className="card card-gold" style={{ marginBottom:20 }}>
+        <div className="card-head">
+          <div className="card-title">⚠️ Overdue Tasks — Ageing Analysis</div>
+          <div style={{ fontSize:12,color:"var(--muted)" }}>{overdue.length} total overdue</div>
+        </div>
+        <div className="card-body">
+          <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16 }}>
+            {[
+              ["< 24 Hours",  aged12.length,  "#FFF8EC","#B45309","Low Risk"],
+              ["24–48 Hours", aged24.length,  "#FEF2F2","#DC2626","Needs Action"],
+              ["48–72 Hours", aged48.length,  "#FFF1F2","#BE123C","Urgent"],
+              ["72 Hours +",  aged72p.length, "#FDF2F8","#9D174D","Critical"],
+            ].map(([l,v,bg,c,tag])=>(
+              <div key={l} style={{ padding:"16px",borderRadius:12,background:bg,border:`1.5px solid ${c}30`,cursor:"pointer",transition:".2s" }}
+                onClick={()=>setDrill({list: overdue.filter(t=>{
+                  const h=(now-new Date(t.dueDate))/(1000*3600);
+                  if(l==="< 24 Hours") return h<24;
+                  if(l==="24–48 Hours") return h>=24&&h<48;
+                  if(l==="48–72 Hours") return h>=48&&h<72;
+                  return h>=72;
+                }), title:l+" Overdue"})}>
+                <div style={{ fontSize:28,fontWeight:700,color:c,fontFamily:"'Cormorant Garamond',serif" }}>{v}</div>
+                <div style={{ fontSize:12,fontWeight:600,color:c,marginTop:2 }}>{l}</div>
+                <div style={{ fontSize:10,color:c,opacity:.7,marginTop:2 }}>{tag}</div>
+              </div>
+            ))}
+          </div>
+          {overdue.length===0 && (
+            <div style={{ textAlign:"center",padding:"20px",color:"var(--green)",fontWeight:600 }}>✅ No overdue tasks! Great work by the team.</div>
+          )}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="stat-grid grid4" style={{ marginBottom:20 }}>
+        {[
+          { id:"clients",  icon:"🏢", label:"Active Clients",   val:myClients.filter(c=>c.status==="active").length, color:"var(--blue)",  note:`${myClients.length} total` },
+          { id:"review",   icon:"📥", label:"Pending Review",   val:pendingReview.length,                            color:"#7C3AED",     note:"Submissions awaiting review" },
+          { id:"client_a", icon:"⚠️", label:"Client Action Due",val:clientAction.length,                             color:"var(--orange)",note:"Waiting for client" },
+          { id:"overdue",  icon:"🔴", label:"Overdue",          val:overdue.length,                                  color:"var(--red)",  note:`${aged72p.length} critical (72hr+)` },
+        ].map(s=>(
+          <div key={s.id} className="stat-box" onClick={()=>setDrill({list:s.id==="review"?pendingReview:s.id==="client_a"?clientAction:s.id==="overdue"?overdue:null, title:s.label})}>
+            <div className="stat-icon">{s.icon}</div>
+            <div className="stat-lbl">{s.label}</div>
+            <div className="stat-val" style={{ color:s.color,fontSize:22 }}>{s.val}</div>
+            <div className="stat-note">{s.note}</div>
+            <div className="stat-drill">Click to expand →</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Team performance */}
+      <div className="grid2">
+        <div className="card">
+          <div className="card-head">
+            <div className="card-title">Team Performance</div>
+            <button className="btn btn-sm" onClick={()=>setView("analytics")}>Full Analytics →</button>
+          </div>
+          {employees.map(emp=>{
+            const empTasks    = tasks.filter(t=>t.assignedTo===emp.id);
+            const empOverdue  = empTasks.filter(t=>t.dueDate&&new Date(t.dueDate)<now&&t.status!=="completed");
+            const empCompleted= empTasks.filter(t=>t.status==="completed").length;
+            const pct         = empTasks.length ? Math.round(empCompleted/empTasks.length*100) : 0;
+            return (
+              <div key={emp.id} className="row-item">
+                <div className="av av-md" style={{ background:emp.color }}>{emp.avatar}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13,fontWeight:600 }}>{emp.name}</div>
+                  <div style={{ fontSize:11,color:"var(--muted)" }}>{empCompleted}/{empTasks.length} done · {empOverdue.length} overdue</div>
+                  <div className="prog-bg" style={{ marginTop:5,maxWidth:160 }}>
+                    <div className="prog-fill" style={{ width:pct+"%",background:pct>=80?"var(--green)":pct>=50?"var(--gold)":"var(--red)" }}/>
+                  </div>
+                </div>
+                <div style={{ fontSize:13,fontWeight:700,color:pct>=80?"var(--green)":pct>=50?"var(--gold-dk)":"var(--red)" }}>{pct}%</div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="card">
+          <div className="card-head">
+            <div className="card-title">Recent Activity</div>
+          </div>
+          {tasks.filter(t=>t.status==="team_approval").slice(0,5).map(t=>(
+            <div key={t.id} className="row-item">
+              <span style={{ fontSize:18 }}>📥</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13,fontWeight:500 }}>{t.title}</div>
+                <div style={{ fontSize:11,color:"var(--muted)" }}>{t.clientName}</div>
+              </div>
+              <span className="badge" style={{ background:"#F5F3FF",color:"#7C3AED" }}>Review</span>
+            </div>
+          ))}
+          {tasks.filter(t=>t.status==="team_approval").length===0 && (
+            <div style={{ padding:"20px",textAlign:"center",color:"var(--muted)",fontSize:13 }}>No pending reviews</div>
+          )}
+        </div>
+      </div>
+
+      {/* Drill-down panel */}
+      {drill?.list && (
+        <div className="drill-overlay" onClick={e=>e.target===e.currentTarget&&setDrill(null)}>
+          <div className="drill-panel">
+            <div className="drill-head">
+              <div className="drill-title">{drill.title}</div>
+              <button onClick={()=>setDrill(null)} style={{ background:"none",border:"none",fontSize:22,cursor:"pointer",color:"var(--muted)" }}>✕</button>
+            </div>
+            <div className="drill-body">
+              <TasksTable tasks={drill.list} showClient={true}/>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CROSS-SELL TRIGGER + FREE GIFTS + MARKETPLACE
+// ═══════════════════════════════════════════════════════════════════════
+
+// Free gifts/resources available for download
+const FREE_GIFTS = [
+  {
+    id:"g1", name:"Startup Kit 2025",
+    desc:"Complete startup guide — legal checklist, tax calendar, compliance tracker",
+    icon:"🎁", format:"PDF", pages:24, triggerOn:"registration_complete",
+    downloadUrl:"#", color:"var(--gold)",
+  },
+  {
+    id:"g2", name:"GST Compliance Calendar",
+    desc:"Month-by-month GST filing calendar with due dates and penalties",
+    icon:"📅", format:"PDF", pages:8, triggerOn:"gst_registered",
+    downloadUrl:"#", color:"var(--blue)",
+  },
+  {
+    id:"g3", name:"Director KYC Checklist",
+    desc:"Complete KYC document checklist for all directors",
+    icon:"📋", format:"PDF", pages:4, triggerOn:"always",
+    downloadUrl:"#", color:"var(--green)",
+  },
+  {
+    id:"g4", name:"Startup India Guide",
+    desc:"Step-by-step guide to Startup India recognition and benefits",
+    icon:"🚀", format:"PDF", pages:16, triggerOn:"registration_complete",
+    downloadUrl:"#", color:"#7C3AED",
+  },
+];
+
+// Marketplace services
+const MARKETPLACE_SERVICES = [
+  { id:"ms1", category:"GST",          icon:"📊", name:"GST Registration",          price:2500,  desc:"GSTIN registration for your business" },
+  { id:"ms2", category:"GST",          icon:"📊", name:"GST Return Filing (Annual)",price:12000, desc:"All GST returns for 12 months" },
+  { id:"ms3", category:"Compliance",   icon:"🏛️", name:"Annual ROC Compliance",     price:8000,  desc:"Annual return filing with MCA" },
+  { id:"ms4", category:"Compliance",   icon:"🏛️", name:"Annual Audit",              price:15000, desc:"Statutory audit by CA" },
+  { id:"ms5", category:"Tax",          icon:"💼", name:"Income Tax Return (Co)",     price:6000,  desc:"Corporate ITR filing" },
+  { id:"ms6", category:"Tax",          icon:"💼", name:"TDS Returns (Quarterly)",   price:4000,  desc:"4 quarters TDS filing" },
+  { id:"ms7", category:"Trademark",    icon:"™️",  name:"Trademark Registration",    price:8500,  desc:"Class 1 trademark application" },
+  { id:"ms8", category:"Startup India",icon:"🚀", name:"Startup India Recognition", price:5000,  desc:"DPIIT recognition certificate" },
+  { id:"ms9", category:"MSME",         icon:"🏭", name:"MSME/Udyam Registration",   price:1500,  desc:"Udyam certificate" },
+  { id:"ms10",category:"Payroll",      icon:"👥", name:"Payroll Processing (Monthly)",price:2000,desc:"Monthly payroll & compliance" },
+];
+
+function MarketplacePage() {
+  const { clients, employees, showToast } = useApp();
+  const [cart,    setCart]    = useState([]);
+  const [selCat,  setSelCat]  = useState("All");
+  const [selClient,setSelCli] = useState("");
+  const [submitted,setSubmitted] = useState(false);
+
+  const categories = ["All", ...new Set(MARKETPLACE_SERVICES.map(s=>s.category))];
+  const visible    = selCat==="All" ? MARKETPLACE_SERVICES : MARKETPLACE_SERVICES.filter(s=>s.category===selCat);
+
+  const addToCart = (svc) => {
+    if (cart.find(c=>c.id===svc.id)) { setCart(c=>c.filter(x=>x.id!==svc.id)); return; }
+    setCart(c=>[...c,svc]);
+  };
+
+  const submitCart = () => {
+    if (!selClient) { showToast("Select a client first","error"); return; }
+    if (cart.length===0) { showToast("Add at least one service to cart","error"); return; }
+    const client = clients.find(c=>c.id===selClient);
+    showToast(`✅ ${cart.length} services submitted to sales team for ${client?.name}!`,"success");
+    setSubmitted(true);
+    setCart([]);
+  };
+
+  if (submitted) return (
+    <div className="card" style={{ maxWidth:500,margin:"40px auto" }}>
+      <div className="card-body" style={{ textAlign:"center",padding:"40px 30px" }}>
+        <div style={{ fontSize:52,marginBottom:16 }}>🎉</div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:24,marginBottom:8 }}>Submitted to Sales Team!</div>
+        <div style={{ fontSize:13,color:"var(--muted)",marginBottom:20 }}>The sales team will reach out to the client within 24 hours.</div>
+        <button className="btn btn-primary" onClick={()=>setSubmitted(false)}>Browse More Services</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Cart summary */}
+      {cart.length > 0 && (
+        <div style={{ position:"sticky",top:58,zIndex:40,marginBottom:16 }}>
+          <div style={{ background:"linear-gradient(135deg,var(--navy),#1E3A5F)",borderRadius:10,padding:"14px 20px",display:"flex",alignItems:"center",gap:16,boxShadow:"0 4px 20px rgba(11,31,58,.3)" }}>
+            <div style={{ fontSize:13,color:"#fff",flex:1 }}>
+              🛒 <strong>{cart.length} service{cart.length>1?"s":""}</strong> in cart · Total: <strong style={{ color:"#C9A14A" }}>₹{cart.reduce((s,c)=>s+c.price,0).toLocaleString("en-IN")}</strong>
+            </div>
+            <select className="f-select" style={{ width:220,background:"rgba(255,255,255,.1)",color:"#fff",border:"1px solid rgba(255,255,255,.2)" }}
+              value={selClient} onChange={e=>setSelCli(e.target.value)}>
+              <option value="">Select client for pitch…</option>
+              {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <button className="btn btn-gold" onClick={submitCart}>Submit to Sales →</button>
+          </div>
+        </div>
+      )}
+
+      {/* Category filter */}
+      <div className="chips">
+        {categories.map(c=>(
+          <div key={c} className={`chip ${selCat===c?"on":""}`} onClick={()=>setSelCat(c)}>{c}</div>
+        ))}
+      </div>
+
+      {/* Service grid */}
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:16 }}>
+        {visible.map(svc=>{
+          const inCart = cart.find(c=>c.id===svc.id);
+          return (
+            <div key={svc.id} className="card" style={{ border:inCart?"2px solid var(--gold)":"1px solid var(--border)",transition:".2s" }}>
+              <div className="card-body">
+                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10 }}>
+                  <span style={{ fontSize:28 }}>{svc.icon}</span>
+                  <span className="tag tag-gold">{svc.category}</span>
+                </div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:"var(--navy)",marginBottom:6 }}>{svc.name}</div>
+                <div style={{ fontSize:12,color:"var(--muted)",marginBottom:14 }}>{svc.desc}</div>
+                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:"var(--navy)" }}>
+                    ₹{svc.price.toLocaleString("en-IN")}
+                  </div>
+                  <button
+                    className={`btn btn-sm ${inCart?"btn-gold":"btn-primary"}`}
+                    onClick={()=>addToCart(svc)}>
+                    {inCart ? "✓ In Cart" : "+ Add"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+// Free Gifts Page (Client portal)
+function FreeGiftsPage() {
+  const { tasks, clients, user } = useApp();
+
+  // Check if registration is complete (all tasks for this client are done)
+  const myClients    = clients.filter(c=>c.email===user?.email||c.phone===user?.phone||c.id===user?.id);
+  const myClientIds  = myClients.length>0 ? myClients.map(c=>c.id) : clients.slice(0,2).map(c=>c.id);
+  const myTasks      = tasks.filter(t=>myClientIds.includes(t.clientId));
+  const totalTasks   = myTasks.length;
+  const doneTasks    = myTasks.filter(t=>t.status==="completed").length;
+  const regComplete  = totalTasks > 0 && doneTasks === totalTasks;
+  const progress     = totalTasks > 0 ? Math.round(doneTasks/totalTasks*100) : 0;
+
+  const isUnlocked = (gift) => {
+    if (gift.triggerOn === "always") return true;
+    if (gift.triggerOn === "registration_complete") return regComplete;
+    return false;
+  };
+
+  const download = (gift) => {
+    // In production this would download a real file from Supabase Storage
+    const a = document.createElement("a");
+    a.href = gift.downloadUrl;
+    a.download = gift.name + ".pdf";
+    // For demo, show a message
+    alert(`📥 Downloading "${gift.name}".\n\nIn production, this downloads from secure server storage.`);
+  };
+
+  return (
+    <>
+      {/* Progress banner */}
+      {!regComplete && (
+        <div style={{ padding:"16px 20px",background:"linear-gradient(135deg,var(--navy),#1E3A5F)",borderRadius:12,marginBottom:20,color:"#fff" }}>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+            <div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,marginBottom:3 }}>Complete your registration to unlock all gifts 🎁</div>
+              <div style={{ fontSize:12,opacity:.7 }}>{doneTasks} of {totalTasks} tasks completed</div>
+            </div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:32,color:"#C9A14A",fontWeight:700 }}>{progress}%</div>
+          </div>
+          <div style={{ height:8,background:"rgba(255,255,255,.15)",borderRadius:8,overflow:"hidden" }}>
+            <div style={{ height:"100%",width:progress+"%",background:"linear-gradient(90deg,#C9A14A,#F5D98A)",borderRadius:8,transition:".6s" }}/>
+          </div>
+        </div>
+      )}
+
+      {regComplete && (
+        <div style={{ padding:"16px 20px",background:"linear-gradient(135deg,var(--green),#15803D)",borderRadius:12,marginBottom:20,color:"#fff",display:"flex",alignItems:"center",gap:14 }}>
+          <span style={{ fontSize:32 }}>🎉</span>
+          <div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18 }}>Registration Complete! All gifts unlocked.</div>
+            <div style={{ fontSize:12,opacity:.8 }}>Thank you for choosing Founders Bridge. Download your free resources below.</div>
+          </div>
+        </div>
+      )}
+
+      {/* Gift cards */}
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:16 }}>
+        {FREE_GIFTS.map(gift=>{
+          const unlocked = isUnlocked(gift);
+          return (
+            <div key={gift.id} className="card" style={{ opacity:unlocked?1:.6,position:"relative",overflow:"hidden" }}>
+              {!unlocked && (
+                <div style={{ position:"absolute",inset:0,background:"rgba(247,246,242,.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2,backdropFilter:"blur(2px)" }}>
+                  <div style={{ textAlign:"center" }}>
+                    <div style={{ fontSize:32 }}>🔒</div>
+                    <div style={{ fontSize:12,color:"var(--navy)",fontWeight:700,marginTop:6 }}>Complete registration to unlock</div>
+                  </div>
+                </div>
+              )}
+              <div className="card-body">
+                <div style={{ width:48,height:48,borderRadius:12,background:`${gift.color}18`,border:`1.5px solid ${gift.color}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,marginBottom:12 }}>
+                  {gift.icon}
+                </div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:"var(--navy)",marginBottom:6 }}>{gift.name}</div>
+                <div style={{ fontSize:12,color:"var(--muted)",marginBottom:4 }}>{gift.desc}</div>
+                <div style={{ fontSize:11,color:"var(--faint)",marginBottom:14 }}>{gift.format} · {gift.pages} pages</div>
+                <button
+                  className="btn btn-primary btn-sm"
+                  style={{ width:"100%",background:unlocked?"var(--navy)":"var(--muted)" }}
+                  disabled={!unlocked}
+                  onClick={()=>download(gift)}>
+                  {unlocked ? "⬇ Download Free" : "🔒 Locked"}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+// Cross-sell alert component (shown to admin/manager when registration completes)
+function CrossSellAlert({ client, tasks }) {
+  const { setView } = useApp();
+  const [dismissed, setDismissed] = useState(false);
+
+  const clientTasks  = tasks.filter(t=>t.clientId===client.id&&!t.isRecurring);
+  const allDone      = clientTasks.length>0 && clientTasks.every(t=>t.status==="completed");
+
+  if (!allDone || dismissed) return null;
+
+  return (
+    <div style={{ padding:"14px 18px",background:"linear-gradient(135deg,var(--navy),#1E3A5F)",borderRadius:12,marginBottom:16,color:"#fff",display:"flex",alignItems:"center",gap:14,animation:"fadeUp .3s ease" }}>
+      <span style={{ fontSize:28 }}>🎯</span>
+      <div style={{ flex:1 }}>
+        <div style={{ fontSize:14,fontWeight:700,marginBottom:3 }}>Registration Complete — Cross-sell Opportunity!</div>
+        <div style={{ fontSize:12,opacity:.8 }}><strong style={{ color:"#C9A14A" }}>{client.name}</strong> has completed all registration tasks. Time to pitch annual compliance, GST filing, or Startup India!</div>
+      </div>
+      <div style={{ display:"flex",gap:8,flexShrink:0 }}>
+        <button className="btn btn-gold btn-sm" onClick={()=>setView("marketplace")}>Pitch Services →</button>
+        <button onClick={()=>setDismissed(true)} style={{ background:"rgba(255,255,255,.1)",border:"none",color:"rgba(255,255,255,.5)",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:11 }}>Dismiss</button>
+      </div>
+    </div>
+  );
+}
+
 export { AppV2 as default };
+
 

@@ -617,7 +617,7 @@ function LoginPage({ onLogin, showToast }) {
     }
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     const phone    = identifier.replace(/\D/g,"").slice(-10);
     const entered  = otp.join("");
     if (entered.length < 6) { setError("Enter all 6 digits"); return; }
@@ -3776,7 +3776,7 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
     setPendingUpload({ dirIdx, slotId });
     fileRef.current?.click();
   };
-  const onFile = (e) => {
+  const onFile = async (e) => {
     if (e.target.files[0] && pendingUpload) {
       const f = e.target.files[0];
       const { dirIdx, slotId } = pendingUpload;
@@ -4011,7 +4011,7 @@ function RegistrationPage({ onBack, showToast }) {
   const [loading, setLoading] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (step === 1) {
       if (!form.name || !form.phone || !form.email) { showToast("All fields required", "error"); return; }
       if (!form.phone.match(/^\d{10}$/)) { showToast("Enter a valid 10-digit mobile number", "error"); return; }

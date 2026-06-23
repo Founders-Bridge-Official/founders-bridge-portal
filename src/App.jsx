@@ -1,14 +1,14 @@
 /* eslint-disable */
 import { useState, useEffect, useRef, createContext, useContext } from "react";
 
-// ═══════════════════════════════════════════════════════════════════════
-// FOUNDERS BRIDGE CRM — SESSION 1
-// Auth · Roles · Navigation · App Shell
-// 4 Roles: Admin · Manager · Employee · Client
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// FOUNDERS BRIDGE CRM â SESSION 1
+// Auth Â· Roles Â· Navigation Â· App Shell
+// 4 Roles: Admin Â· Manager Â· Employee Â· Client
 // Login: Email/Mobile + Password OR OTP (OTP coming soon)
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-// ─── SUPABASE CONFIG ─────────────────────────────────────────────────
+// âââ SUPABASE CONFIG âââââââââââââââââââââââââââââââââââââââââââââââââ
 // These will be replaced by environment variables in production
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || "https://suodxuignbbsxmqrfagx.supabase.co";
 const SUPABASE_KEY = process.env.REACT_APP_SUPABASE_KEY || "sb_publishable_g53rUECoCXdsfpD_qDUlow_ufks2CFs";
@@ -51,7 +51,7 @@ const sb = {
   },
 };
 
-// ─── AUTH ─────────────────────────────────────────────────────────────
+// âââ AUTH âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const Auth = {
   async login(identifier, password) {
     const norm = identifier.trim().toLowerCase().replace(/\s/g, "");
@@ -82,7 +82,7 @@ const Auth = {
   },
 };
 
-// ─── DATA MAPPERS ─────────────────────────────────────────────────────
+// âââ DATA MAPPERS âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const mapClient  = c => ({ id:c.id, clientNo:c.client_no, name:c.name, contactName:c.contact_name, email:c.email, phone:c.phone, type:c.type, status:c.status, assignedTo:c.assigned_to, totalBilling:Number(c.total_billing)||0, collected:Number(c.collected)||0, pending:Number(c.pending)||0, progress:c.progress||0, createdAt:c.created_at ? new Date(c.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : today() });
 const mapInvoice = i => ({ id:i.id, invoiceNo:i.invoice_no, clientId:i.company_id, clientName:i.client_name, date:i.date||today(), dueDate:i.due_date, status:i.status||"unpaid", total:Number(i.total)||0, paid:Number(i.paid)||0, pending:Number(i.pending)||0, lineItems:[] });
 const mapTask    = t => ({ id:t.id, title:t.title, clientId:t.company_id, clientName:t.client_name, invoiceId:t.invoice_id, assignedTo:t.assigned_to, status:t.status||"open", sequence:t.sequence||1, requirementType:t.requirement_type||"none", docTemplateId:t.doc_template_id, directorNumber:t.director_number, directorCount:t.director_count||1, dueDate:t.due_date, completedDate:t.completed_date, notes:t.notes||"", category:t.category, isRecurring:t.is_recurring, freq:t.recurring_freq, startDate:t.start_date, endDate:t.end_date });
@@ -91,7 +91,7 @@ const mapPayment = p => ({ id:p.id, invoiceId:p.invoice_id, clientId:p.company_i
 const mapSub     = s => ({ id:s.id, taskId:s.task_id, clientId:s.company_id, status:s.status, formData:s.form_data||{}, documents:s.documents||{}, note:s.note, reviewNote:s.review_note, submittedAt:s.submitted_at, reviewedAt:s.reviewed_at, locked:s.locked!==false });
 const mapResp    = r => ({ by:r.by_role, byName:r.by_name, text:r.text, date:r.date });
 
-// ─── DEMO DATA ────────────────────────────────────────────────────────
+// âââ DEMO DATA ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // Used when Supabase is not connected (for testing)
 const DEMO_USERS = {
   "admin@foundersbridge.in":    { id:"u1", name:"Founders Bridge",  role:"admin",    avatar:"FB", email:"admin@foundersbridge.in",    phone:"9800000001", password:"admin123",   color:"#7C3AED" },
@@ -104,7 +104,7 @@ const DEMO_USERS = {
 // By phone number too
 const DEMO_BY_PHONE = Object.fromEntries(Object.values(DEMO_USERS).map(u => [u.phone, u]));
 
-// ─── ORG SETTINGS (Admin configures these) ───────────────────────────
+// âââ ORG SETTINGS (Admin configures these) âââââââââââââââââââââââââââ
 const DEFAULT_ORG = {
   name: "Founders Bridge LLP",
   email: "info@foundersbridge.in",
@@ -122,7 +122,7 @@ const DEFAULT_ORG = {
   upi: "foundersbridge@hdfc",
 };
 
-// ─── DOCUMENT FIELD TYPES ─────────────────────────────────────────────
+// âââ DOCUMENT FIELD TYPES âââââââââââââââââââââââââââââââââââââââââââââ
 const FIELD_TYPES = [
   { id: "text",     label: "Text"         },
   { id: "number",   label: "Number"       },
@@ -133,7 +133,7 @@ const FIELD_TYPES = [
   { id: "textarea", label: "Long Text"    },
 ];
 
-// ─── MASTER DOCUMENT TEMPLATES (Admin edits these in Settings) ────────
+// âââ MASTER DOCUMENT TEMPLATES (Admin edits these in Settings) ââââââââ
 // These are reusable templates that get attached to task types.
 // collectionType: "common" = once per company, "director" = once per director
 const DEFAULT_DOC_TEMPLATES = {
@@ -182,8 +182,8 @@ const DEFAULT_DOC_TEMPLATES = {
       { id: "if1", label: "Registered Office Address (Full)",  type: "textarea", required: true  },
       { id: "if2", label: "Pincode",                           type: "number",   required: true  },
       { id: "if3", label: "State",                             type: "select",   required: true,  options: ["Maharashtra","Karnataka","Delhi","Tamil Nadu","Gujarat","Telangana","West Bengal","Rajasthan","Other"] },
-      { id: "if4", label: "Authorised Share Capital (₹)",     type: "number",   required: true  },
-      { id: "if5", label: "Paid-up Share Capital (₹)",        type: "number",   required: true  },
+      { id: "if4", label: "Authorised Share Capital (â¹)",     type: "number",   required: true  },
+      { id: "if5", label: "Paid-up Share Capital (â¹)",        type: "number",   required: true  },
     ],
     docSlots: [
       { id: "ds1", label: "Proof of Registered Office (Rent Agreement / Sale Deed)", required: true  },
@@ -197,7 +197,7 @@ const DEFAULT_DOC_TEMPLATES = {
     collectionType: "common",
     infoFields: [
       { id: "if1", label: "Nature of Business",     type: "select",   required: true, options: ["Manufacturer","Trader","Service Provider","Both Goods & Services"] },
-      { id: "if2", label: "Annual Turnover (approx ₹)", type: "number", required: true },
+      { id: "if2", label: "Annual Turnover (approx â¹)", type: "number", required: true },
       { id: "if3", label: "Business Commencement Date", type: "date",  required: true },
       { id: "if4", label: "Bank Account Number",    type: "text",     required: true  },
       { id: "if5", label: "Bank IFSC Code",         type: "text",     required: true  },
@@ -211,13 +211,13 @@ const DEFAULT_DOC_TEMPLATES = {
   },
   "form_8_llp": {
     id: "form_8_llp",
-    name: "Form 8 — LLP Statement of Accounts",
+    name: "Form 8 â LLP Statement of Accounts",
     collectionType: "common",
     infoFields: [
       { id: "if1", label: "Financial Year",        type: "select",   required: true, options: ["2024-25","2025-26","2026-27"] },
-      { id: "if2", label: "Total Revenue (₹)",     type: "number",   required: true  },
-      { id: "if3", label: "Total Expenses (₹)",    type: "number",   required: true  },
-      { id: "if4", label: "Net Profit/Loss (₹)",   type: "number",   required: true  },
+      { id: "if2", label: "Total Revenue (â¹)",     type: "number",   required: true  },
+      { id: "if3", label: "Total Expenses (â¹)",    type: "number",   required: true  },
+      { id: "if4", label: "Net Profit/Loss (â¹)",   type: "number",   required: true  },
     ],
     docSlots: [
       { id: "ds1", label: "Audited Financials / P&L Statement",  required: true  },
@@ -226,13 +226,13 @@ const DEFAULT_DOC_TEMPLATES = {
   },
 };
 
-// ─── SERVICE BUNDLES (Admin configures these) ─────────────────────────
+// âââ SERVICE BUNDLES (Admin configures these) âââââââââââââââââââââââââ
 // Each task now references a docTemplateId from DEFAULT_DOC_TEMPLATES
 const DEFAULT_BUNDLES = [
   {
     id: "b1",
     name: "LLP Registration",
-    icon: "🤝",
+    icon: "ð¤",
     description: "Complete LLP incorporation service",
     lineItems: [
       { id: "li1", name: "Name Application Govt Fees",  type: "govt",    price: 200,  gst: false, unit: "fixed",    sac: "999799", tasks: [] },
@@ -242,7 +242,7 @@ const DEFAULT_BUNDLES = [
           name: "DSC Creation for Director {n}",
           autoFromQty: true,
           requirementType: "form_docs",
-          docTemplateId: "dsc_creation",   // ← references master template
+          docTemplateId: "dsc_creation",   // â references master template
         }]
       },
       { id: "li4", name: "DSC Association Charges",     type: "service", price: 1271, gst: true,  unit: "per_unit", sac: "998211", tasks: [] },
@@ -258,11 +258,11 @@ const DEFAULT_BUNDLES = [
   {
     id: "b2",
     name: "Private Limited Registration",
-    icon: "🏢",
+    icon: "ð¢",
     description: "Complete Pvt Ltd company incorporation",
     lineItems: [
       { id: "li6",  name: "Name Application Govt Fees",  type: "govt",    price: 200,  gst: false, unit: "fixed",    tasks: [] },
-      { id: "li7",  name: "Main Application Govt Fees",  type: "govt",    price: null, gst: false, unit: "fixed",    tasks: [], note: "State-wise — enter manually" },
+      { id: "li7",  name: "Main Application Govt Fees",  type: "govt",    price: null, gst: false, unit: "fixed",    tasks: [], note: "State-wise â enter manually" },
       { id: "li8",  name: "DSC Token",                   type: "dsc",     price: 850,  gst: true,  unit: "per_unit",
         tasks: [{
           name: "DSC Creation for Director {n}",
@@ -283,7 +283,7 @@ const DEFAULT_BUNDLES = [
   },
 ];
 
-// ─── TASK STATUSES ────────────────────────────────────────────────────
+// âââ TASK STATUSES ââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const TASK_STATUSES = [
   { id: "open",              label: "Open",                    color: "#6B7280", bg: "#F9FAFB" },
   { id: "team_action",       label: "Team Action Pending",     color: "#D97706", bg: "#FFFBEB" },
@@ -302,19 +302,19 @@ const TASK_REQUIREMENT_TYPES = [
   { id: "form_docs",label: "Form + Documents" },
 ];
 
-// ─── HELPERS ─────────────────────────────────────────────────────────
-const INR = n => "₹" + Number(n || 0).toLocaleString("en-IN");
+// âââ HELPERS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+const INR = n => "â¹" + Number(n || 0).toLocaleString("en-IN");
 const initials = name => (name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 const today = () => new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 const uuid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-// ─── CONTEXT ─────────────────────────────────────────────────────────
+// âââ CONTEXT âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const AppCtx = createContext(null);
 const useApp = () => useContext(AppCtx);
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // STYLES
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const G = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -531,9 +531,9 @@ tr:hover td { background:#FAFAF8; }
 `;
 
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // BADGE COMPONENT
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function Badge({ status, label, style }) {
   const s = TASK_STATUSES.find(x => x.id === status);
   const bg = s?.bg || "#F9FAFB";
@@ -546,19 +546,19 @@ function Badge({ status, label, style }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // TOAST
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function Toast({ msg, type, onDone }) {
   useEffect(() => { const t = setTimeout(onDone, 3500); return () => clearTimeout(t); }, []);
-  const C = { success: { bg: "#F0FDF4", border: "#BBF7D0", color: "#15803D", icon: "✅" }, error: { bg: "#FFF1F2", border: "#FECACA", color: "#BE123C", icon: "❌" }, info: { bg: "#EFF6FF", border: "#BFDBFE", color: "#1D4ED8", icon: "ℹ️" }, warning: { bg: "#FFFBEB", border: "#FDE68A", color: "#B45309", icon: "⚠️" } };
+  const C = { success: { bg: "#F0FDF4", border: "#BBF7D0", color: "#15803D", icon: "â" }, error: { bg: "#FFF1F2", border: "#FECACA", color: "#BE123C", icon: "â" }, info: { bg: "#EFF6FF", border: "#BFDBFE", color: "#1D4ED8", icon: "â¹ï¸" }, warning: { bg: "#FFFBEB", border: "#FDE68A", color: "#B45309", icon: "â ï¸" } };
   const c = C[type] || C.info;
   return <div className="toast" style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color }}><span style={{ fontSize: 18 }}>{c.icon}</span>{msg}</div>;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// AUTH — LOGIN PAGE
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// AUTH â LOGIN PAGE
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function LoginPage({ onLogin, showToast }) {
   const [mode, setMode]         = useState("password"); // password | otp
   const [identifier, setId]     = useState("");         // email or phone
@@ -604,7 +604,7 @@ function LoginPage({ onLogin, showToast }) {
       setCount(30);
       if (result.demo) {
         showToast(`Demo OTP: ${result.otp} (check browser console)`, "info");
-        console.log(`🔐 DEMO OTP for ${phone}: ${result.otp}`);
+        console.log(`ð DEMO OTP for ${phone}: ${result.otp}`);
       } else {
         showToast(`OTP sent to +91 ${phone}`, "success");
       }
@@ -643,8 +643,8 @@ function LoginPage({ onLogin, showToast }) {
 
         {/* Login mode tabs */}
         <div className="auth-tabs" style={{ marginBottom: 20 }}>
-          <div className={`auth-tab ${mode === "password" ? "on" : ""}`} onClick={() => { setMode("password"); setError(""); }}>🔑 Password</div>
-          <div className={`auth-tab ${mode === "otp" ? "on" : ""}`} onClick={() => { setMode("otp"); setError(""); }}>📱 OTP</div>
+          <div className={`auth-tab ${mode === "password" ? "on" : ""}`} onClick={() => { setMode("password"); setError(""); }}>ð Password</div>
+          <div className={`auth-tab ${mode === "otp" ? "on" : ""}`} onClick={() => { setMode("otp"); setError(""); }}>ð± OTP</div>
         </div>
 
         {/* Identifier field */}
@@ -662,7 +662,7 @@ function LoginPage({ onLogin, showToast }) {
             </div>
             {error && <div style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
             <button className="btn btn-primary btn-lg" style={{ width: "100%" }} onClick={handlePasswordLogin} disabled={loading}>
-              {loading ? <span className="spinner" /> : "Sign In →"}
+              {loading ? <span className="spinner" /> : "Sign In â"}
             </button>
           </>
         )}
@@ -674,10 +674,10 @@ function LoginPage({ onLogin, showToast }) {
               <>
                 {error && <div style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
                 <button className="btn btn-primary btn-lg" style={{ width: "100%" }} onClick={handleSendOtp} disabled={loading}>
-                  {loading ? <span className="spinner" /> : "Send OTP →"}
+                  {loading ? <span className="spinner" /> : "Send OTP â"}
                 </button>
                 <div style={{ marginTop: 12, padding: "10px 14px", background: MSG91_CONFIG.AUTH_KEY ? "#F0FDF4" : "#FFFBEB", border: `1px solid ${MSG91_CONFIG.AUTH_KEY ? "#BBF7D0" : "#FDE68A"}`, borderRadius: 8, fontSize: 12, color: MSG91_CONFIG.AUTH_KEY ? "#15803D" : "#B45309" }}>
-                  {MSG91_CONFIG.AUTH_KEY ? "✅ MSG91 connected — real OTP SMS will be sent" : "⚠️ Demo mode — OTP shown in browser console (F12 → Console). Add REACT_APP_MSG91_AUTH_KEY in Vercel to go live."}
+                  {MSG91_CONFIG.AUTH_KEY ? "â MSG91 connected â real OTP SMS will be sent" : "â ï¸ Demo mode â OTP shown in browser console (F12 â Console). Add REACT_APP_MSG91_AUTH_KEY in Vercel to go live."}
                 </div>
               </>
             ) : (
@@ -688,7 +688,7 @@ function LoginPage({ onLogin, showToast }) {
                     <input key={i} ref={otpRefs[i]} className="otp-box" type="tel" maxLength={1} value={d} onChange={e => handleOtpChange(i, e.target.value)} autoFocus={i === 0} />
                   ))}
                 </div>
-                <button className="btn btn-primary btn-lg" style={{ width: "100%", marginBottom: 12 }} onClick={handleVerifyOtp}>Verify & Sign In →</button>
+                <button className="btn btn-primary btn-lg" style={{ width: "100%", marginBottom: 12 }} onClick={handleVerifyOtp}>Verify & Sign In â</button>
                 <div style={{ textAlign: "center", fontSize: 12, color: "var(--muted)" }}>
                   {countdown > 0 ? `Resend in ${countdown}s` : <span style={{ color: "var(--blue)", cursor: "pointer" }} onClick={handleSendOtp}>Resend OTP</span>}
                 </div>
@@ -710,9 +710,9 @@ function LoginPage({ onLogin, showToast }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // MAIN APP SHELL
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function _AppV1Unused() {
   const [user, setUser]         = useState(null);
   const [view, setView]         = useState("");
@@ -772,9 +772,9 @@ function _AppV1Unused() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // SIDEBAR
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function Sidebar({ user, view, setView, logout }) {
   const roleColor = { admin: "#7C3AED", manager: "#0369A1", employee: "#0F766E", client: "#2563EB" };
   const roleLabel = { admin: "Administrator", manager: "Manager", employee: "Employee", client: "Client" };
@@ -782,49 +782,49 @@ function Sidebar({ user, view, setView, logout }) {
   const NAV = {
     admin: [
       { sec: "Overview", items: [
-        { id: "dashboard",    icon: "⬡",  label: "Dashboard" },
-        { id: "analytics",    icon: "📊", label: "Analytics" },
+        { id: "dashboard",    icon: "â¬¡",  label: "Dashboard" },
+        { id: "analytics",    icon: "ð", label: "Analytics" },
       ]},
       { sec: "Clients", items: [
-        { id: "clients",      icon: "🏢", label: "All Clients" },
-        { id: "invoices",     icon: "📄", label: "Invoices" },
-        { id: "tasks",        icon: "✓",  label: "Tasks" },
+        { id: "clients",      icon: "ð¢", label: "All Clients" },
+        { id: "invoices",     icon: "ð", label: "Invoices" },
+        { id: "tasks",        icon: "â",  label: "Tasks" },
       ]},
       { sec: "Team", items: [
-        { id: "employees",    icon: "👥", label: "Employees" },
+        { id: "employees",    icon: "ð¥", label: "Employees" },
       ]},
       { sec: "Settings", items: [
-        { id: "settings-org",     icon: "🏛️", label: "Organisation" },
-        { id: "settings-bundles", icon: "📦", label: "Bundles & Services" },
-        { id: "settings-users",   icon: "🔐", label: "Users & Roles" },
+        { id: "settings-org",     icon: "ðï¸", label: "Organisation" },
+        { id: "settings-bundles", icon: "ð¦", label: "Bundles & Services" },
+        { id: "settings-users",   icon: "ð", label: "Users & Roles" },
       ]},
     ],
     manager: [
       { sec: "Overview", items: [
-        { id: "dashboard",    icon: "⬡",  label: "Dashboard" },
+        { id: "dashboard",    icon: "â¬¡",  label: "Dashboard" },
       ]},
       { sec: "Clients", items: [
-        { id: "clients",      icon: "🏢", label: "All Clients" },
-        { id: "invoices",     icon: "📄", label: "Invoices" },
-        { id: "tasks",        icon: "✓",  label: "Tasks" },
+        { id: "clients",      icon: "ð¢", label: "All Clients" },
+        { id: "invoices",     icon: "ð", label: "Invoices" },
+        { id: "tasks",        icon: "â",  label: "Tasks" },
       ]},
       { sec: "Team", items: [
-        { id: "employees",    icon: "👥", label: "Team" },
+        { id: "employees",    icon: "ð¥", label: "Team" },
       ]},
     ],
     employee: [
       { sec: "My Work", items: [
-        { id: "emp-dashboard", icon: "⬡",  label: "Dashboard" },
-        { id: "emp-tasks",     icon: "✓",  label: "My Tasks" },
-        { id: "emp-clients",   icon: "🏢", label: "My Clients" },
+        { id: "emp-dashboard", icon: "â¬¡",  label: "Dashboard" },
+        { id: "emp-tasks",     icon: "â",  label: "My Tasks" },
+        { id: "emp-clients",   icon: "ð¢", label: "My Clients" },
       ]},
     ],
     client: [
       { sec: "My Companies", items: [
-        { id: "client-home",     icon: "🏢", label: "Companies" },
-        { id: "client-tasks",    icon: "✓",  label: "Tasks" },
-        { id: "client-invoices", icon: "💳", label: "Billing" },
-        { id: "client-docs",     icon: "📁", label: "Documents" },
+        { id: "client-home",     icon: "ð¢", label: "Companies" },
+        { id: "client-tasks",    icon: "â",  label: "Tasks" },
+        { id: "client-invoices", icon: "ð³", label: "Billing" },
+        { id: "client-docs",     icon: "ð", label: "Documents" },
       ]},
     ],
   };
@@ -869,9 +869,9 @@ function Sidebar({ user, view, setView, logout }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // TOPBAR
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function TopBar() {
   const { view, org } = useApp();
   const titles = {
@@ -888,9 +888,9 @@ function TopBar() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // PAGE ROUTER
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function PageRouter() {
   const { view, user } = useApp();
 
@@ -916,12 +916,12 @@ function PageRouter() {
   if (view === "client-invoices")   return <ClientInvoices />;
   if (view === "client-docs")       return <ClientDocs />;
 
-  return <div className="empty"><div className="empty-icon">🏗️</div><div>Select a section from the sidebar</div></div>;
+  return <div className="empty"><div className="empty-icon">ðï¸</div><div>Select a section from the sidebar</div></div>;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // MODAL ROUTER
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ModalRouter() {
   const { modal, closeModal } = useApp();
   if (!modal) return null;
@@ -941,9 +941,9 @@ function ModalRouter() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // DEMO DATA
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const DEMO_EMPLOYEES = [
   { id: "e1", name: "Arun Kumar",  email: "emp1@foundersbridge.in", phone: "9800000003", role: "employee", avatar: "AK", color: "#0F766E", clientCount: 3, tasksCompleted: 12, tasksPending: 5 },
   { id: "e2", name: "Neha Joshi",  email: "emp2@foundersbridge.in", phone: "9800000004", role: "employee", avatar: "NJ", color: "#B45309", clientCount: 2, tasksCompleted: 8,  tasksPending: 3 },
@@ -987,9 +987,9 @@ const DEMO_TASKS = [
   { id: "t8", title: "Name Approval",               clientId: "c4", clientName: "SunRise Trading LLP",        invoiceId: null,   lineItemId: null,  assignedTo: "e2", status: "open",         sequence: 1, requirementType: "none",  dueDate: "2025-05-10", completedDate: null,          notes: "" },
 ];
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // ADMIN DASHBOARD
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function AdminDashboard() {
   const { clients, invoices, tasks, employees, setView } = useApp();
   const [drill, setDrill] = useState(null);
@@ -1003,14 +1003,14 @@ function AdminDashboard() {
   const activeClients  = clients.filter(c=>c.status==="active").length;
 
   const STATS = [
-    { id:"clients",   icon:"🏢", label:"Active Clients",  val:activeClients,       note:`${clients.length} total`,       color:"var(--blue)"   },
-    { id:"billing",   icon:"💰", label:"Total Billing",   val:INR(totalBilling),   note:"All time",                      color:"var(--navy)"   },
-    { id:"collected", icon:"✅", label:"Collected",       val:INR(totalCollected), note:`${Math.round(totalCollected/Math.max(totalBilling,1)*100)}% rate`, color:"var(--green)" },
-    { id:"pending",   icon:"⏳", label:"Outstanding",     val:INR(totalPending),   note:`${clients.filter(c=>c.pending>0).length} clients`,  color:"var(--red)"    },
-    { id:"pending_tasks",  icon:"📋", label:"Pending Tasks",   val:pendingTasks,   note:"Needs action",                  color:"var(--orange)" },
-    { id:"overdue_tasks",  icon:"⚠️",  label:"Overdue Tasks",  val:overdueTasks,   note:"Past due date",                 color:"var(--red)"    },
-    { id:"completed_tasks",icon:"🎯", label:"Completed Tasks", val:completedTasks, note:"All time",                      color:"var(--green)"  },
-    { id:"employees", icon:"👥", label:"Team Members",    val:employees.length,    note:"Active team",                   color:"var(--navy)"   },
+    { id:"clients",   icon:"ð¢", label:"Active Clients",  val:activeClients,       note:`${clients.length} total`,       color:"var(--blue)"   },
+    { id:"billing",   icon:"ð°", label:"Total Billing",   val:INR(totalBilling),   note:"All time",                      color:"var(--navy)"   },
+    { id:"collected", icon:"â", label:"Collected",       val:INR(totalCollected), note:`${Math.round(totalCollected/Math.max(totalBilling,1)*100)}% rate`, color:"var(--green)" },
+    { id:"pending",   icon:"â³", label:"Outstanding",     val:INR(totalPending),   note:`${clients.filter(c=>c.pending>0).length} clients`,  color:"var(--red)"    },
+    { id:"pending_tasks",  icon:"ð", label:"Pending Tasks",   val:pendingTasks,   note:"Needs action",                  color:"var(--orange)" },
+    { id:"overdue_tasks",  icon:"â ï¸",  label:"Overdue Tasks",  val:overdueTasks,   note:"Past due date",                 color:"var(--red)"    },
+    { id:"completed_tasks",icon:"ð¯", label:"Completed Tasks", val:completedTasks, note:"All time",                      color:"var(--green)"  },
+    { id:"employees", icon:"ð¥", label:"Team Members",    val:employees.length,    note:"Active team",                   color:"var(--navy)"   },
   ];
 
   return (
@@ -1022,7 +1022,7 @@ function AdminDashboard() {
             <div className="stat-lbl">{s.label}</div>
             <div className="stat-val" style={{color:s.color,fontSize:22}}>{s.val}</div>
             <div className="stat-note">{s.note}</div>
-            <div className="stat-drill">Click to expand →</div>
+            <div className="stat-drill">Click to expand â</div>
           </div>
         ))}
       </div>
@@ -1031,7 +1031,7 @@ function AdminDashboard() {
         <div className="card">
           <div className="card-head">
             <div className="card-title">Recent Pending Tasks</div>
-            <button className="btn btn-sm" onClick={()=>setView("tasks")}>View All →</button>
+            <button className="btn btn-sm" onClick={()=>setView("tasks")}>View All â</button>
           </div>
           <div style={{padding:"12px 16px",display:"flex",gap:10,borderBottom:"1px solid var(--border)"}}>
             {[["Pending",pendingTasks,"var(--orange)","#FFF8EC"],["Completed",completedTasks,"var(--green)","#F0FDF4"],["Overdue",overdueTasks,"var(--red)","#FEF2F2"]].map(([l,n,c,bg])=>(
@@ -1055,7 +1055,7 @@ function AdminDashboard() {
         <div className="card">
           <div className="card-head">
             <div className="card-title">Team Performance</div>
-            <button className="btn btn-sm" onClick={()=>setView("employees")}>View All →</button>
+            <button className="btn btn-sm" onClick={()=>setView("employees")}>View All â</button>
           </div>
           {employees.map(emp=>{
             const empTasks    = tasks.filter(t=>t.assignedTo===emp.id);
@@ -1067,7 +1067,7 @@ function AdminDashboard() {
                 <div className="av av-md" style={{background:emp.color}}>{emp.avatar}</div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:13,fontWeight:600}}>{emp.name}</div>
-                  <div style={{fontSize:11,color:"var(--muted)"}}>{empClients} clients · {empCompleted}/{empTasks.length} tasks</div>
+                  <div style={{fontSize:11,color:"var(--muted)"}}>{empClients} clients Â· {empCompleted}/{empTasks.length} tasks</div>
                   <div className="prog-bg" style={{marginTop:5,maxWidth:160}}>
                     <div className="prog-fill" style={{width:pct+"%",background:pct===100?"var(--green)":pct>60?"var(--gold)":"var(--blue)"}}/>
                   </div>
@@ -1082,7 +1082,7 @@ function AdminDashboard() {
       <div className="card">
         <div className="card-head">
           <div className="card-title">Client Overview</div>
-          <button className="btn btn-sm" onClick={()=>setView("clients")}>View All →</button>
+          <button className="btn btn-sm" onClick={()=>setView("clients")}>View All â</button>
         </div>
         <div className="tbl-wrap">
           <table>
@@ -1121,7 +1121,7 @@ function AdminDashboard() {
   );
 }
 
-// ─── DRILL DOWN PANEL ────────────────────────────────────────────────
+// âââ DRILL DOWN PANEL ââââââââââââââââââââââââââââââââââââââââââââââââ
 function DrillPanel({ type, title, onClose }) {
   const { clients, tasks, employees, invoices, payments } = useApp();
 
@@ -1144,7 +1144,7 @@ function DrillPanel({ type, title, onClose }) {
                     <td><div style={{fontWeight:600,fontSize:13}}>{c.name}</div><div style={{fontSize:11,color:"var(--muted)"}}>{c.clientNo}</div></td>
                     <td style={{fontSize:12,color:"var(--muted)"}}>{c.createdAt}</td>
                     <td><span className="tag">{c.type}</span></td>
-                    <td style={{fontSize:12}}>{emp?.name||"—"}</td>
+                    <td style={{fontSize:12}}>{emp?.name||"â"}</td>
                     <td style={{fontWeight:700}}>{INR(c.totalBilling)}</td>
                     <td style={{color:"var(--green)",fontWeight:600}}>{INR(c.collected)}</td>
                     <td style={{color:c.pending>0?"var(--red)":"var(--muted)",fontWeight:600}}>{INR(c.pending)}</td>
@@ -1178,7 +1178,7 @@ function DrillPanel({ type, title, onClose }) {
             ))}
           </div>
           <div style={{fontSize:12,color:"var(--muted)",padding:"10px 14px",background:"var(--gold-lt)",borderRadius:8,border:"1px solid rgba(201,161,74,.3)"}}>
-            💡 Gross Margin = Total Billing − Govt Fees − GST. This is your firm's service revenue before operational expenses.
+            ð¡ Gross Margin = Total Billing â Govt Fees â GST. This is your firm's service revenue before operational expenses.
           </div>
         </div>
       );
@@ -1197,7 +1197,7 @@ function DrillPanel({ type, title, onClose }) {
                 return (
                   <tr key={c.id}>
                     <td><div style={{fontWeight:600}}>{c.name}</div><div style={{fontSize:11,color:"var(--muted)"}}>{c.clientNo}</div></td>
-                    <td style={{fontSize:12}}>{emp?.name||"—"}</td>
+                    <td style={{fontSize:12}}>{emp?.name||"â"}</td>
                     <td style={{fontWeight:700}}>{INR(c.totalBilling)}</td>
                     <td style={{color:"var(--green)",fontWeight:600}}>{INR(c.collected)}</td>
                     <td style={{color:"var(--red)",fontWeight:700,fontSize:14}}>{INR(c.pending)}</td>
@@ -1242,7 +1242,7 @@ function DrillPanel({ type, title, onClose }) {
             <div className="av av-lg" style={{background:emp.color}}>{emp.avatar}</div>
             <div>
               <div style={{fontSize:16,fontWeight:700,color:"var(--navy)"}}>{emp.name}</div>
-              <div style={{fontSize:12,color:"var(--muted)"}}>{emp.email} · {emp.phone}</div>
+              <div style={{fontSize:12,color:"var(--muted)"}}>{emp.email} Â· {emp.phone}</div>
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
@@ -1274,7 +1274,7 @@ function DrillPanel({ type, title, onClose }) {
       <div className="drill-panel">
         <div className="drill-head">
           <div className="drill-title">{title}</div>
-          <button onClick={onClose} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"var(--muted)",lineHeight:1}}>✕</button>
+          <button onClick={onClose} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"var(--muted)",lineHeight:1}}>â</button>
         </div>
         <div className="drill-body">
           {renderContent()}
@@ -1284,9 +1284,9 @@ function DrillPanel({ type, title, onClose }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // ANALYTICS PAGE
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function AnalyticsPage() {
   const { clients, invoices, tasks, employees } = useApp();
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
@@ -1380,9 +1380,9 @@ function AnalyticsPage() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // CLIENTS PAGE
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ClientsPage() {
   const { clients, employees, tasks, openModal, user } = useApp();
   const [search, setSearch] = useState("");
@@ -1409,7 +1409,7 @@ function ClientsPage() {
   return (
     <>
       <div style={{ display: "flex", gap: 10, marginBottom: 20, alignItems: "center" }}>
-        <input className="f-input" placeholder="Search client name or ID…" value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 280 }} />
+        <input className="f-input" placeholder="Search client name or IDâ¦" value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 280 }} />
         <div className="chips" style={{ margin: 0 }}>
           {["all", "active", "pending"].map(f => <div key={f} className={`chip ${filter === f ? "on" : ""}`} onClick={() => setFilter(f)} style={{ textTransform: "capitalize" }}>{f}</div>)}
         </div>
@@ -1433,7 +1433,7 @@ function ClientsPage() {
                   <tr key={c.id} style={{ cursor: "pointer" }} onClick={() => setSelectedClient(c)}>
                     <td>
                       <div style={{ fontWeight: 600 }}>{c.name}</div>
-                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{c.clientNo} · {c.createdAt}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{c.clientNo} Â· {c.createdAt}</div>
                     </td>
                     <td><span className="tag">{c.type}</span></td>
                     <td>
@@ -1450,7 +1450,7 @@ function ClientsPage() {
                         <span style={{ fontSize: 12, fontWeight: 700 }}>{c.progress}%</span>
                       </div>
                     </td>
-                    <td><button className="btn btn-sm" onClick={e => { e.stopPropagation(); setSelectedClient(c); }}>View →</button></td>
+                    <td><button className="btn btn-sm" onClick={e => { e.stopPropagation(); setSelectedClient(c); }}>View â</button></td>
                   </tr>
                 );
               })}
@@ -1462,7 +1462,7 @@ function ClientsPage() {
   );
 }
 
-// ─── Client Detail ────────────────────────────────────────────────────
+// âââ Client Detail ââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ClientDetail({ client, onBack, canEdit = true }) {
   const { tasks, invoices, employees, openModal, showToast } = useApp();
   const [tab, setTab] = useState("overview");
@@ -1473,10 +1473,10 @@ function ClientDetail({ client, onBack, canEdit = true }) {
   return (
     <>
       <div style={{ display:"flex",alignItems:"center",gap:12,marginBottom:16 }}>
-        <button className="btn" onClick={onBack}>← All Clients</button>
+        <button className="btn" onClick={onBack}>â All Clients</button>
         {!canEdit && (
           <div style={{ padding:"5px 12px",background:"#FFF8EC",border:"1px solid rgba(201,161,74,.4)",borderRadius:6,fontSize:12,color:"var(--gold-dk)",fontWeight:600 }}>
-            👁 View Only — Assigned to another team member
+            ð View Only â Assigned to another team member
           </div>
         )}
       </div>
@@ -1484,7 +1484,7 @@ function ClientDetail({ client, onBack, canEdit = true }) {
       {/* Client hero */}
       <div className="card" style={{ padding: "20px 24px", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 13, background: "linear-gradient(135deg,var(--navy),var(--blue))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>🏢</div>
+          <div style={{ width: 52, height: 52, borderRadius: 13, background: "linear-gradient(135deg,var(--navy),var(--blue))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>ð¢</div>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <span className="sr" style={{ fontSize: 20 }}>{client.name}</span>
@@ -1492,11 +1492,11 @@ function ClientDetail({ client, onBack, canEdit = true }) {
               <Badge status={client.status === "active" ? "completed" : "open"} label={client.status === "active" ? "Active" : "Pending"} />
             </div>
             <div style={{ display: "flex", gap: 20, marginTop: 8, flexWrap: "wrap", fontSize: 12, color: "var(--muted)" }}>
-              <span>📋 {client.clientNo}</span>
-              <span>📞 {client.phone}</span>
-              <span>✉️ {client.email}</span>
-              <span>📅 Since {client.createdAt}</span>
-              {emp && <span>👤 {emp.name}</span>}
+              <span>ð {client.clientNo}</span>
+              <span>ð {client.phone}</span>
+              <span>âï¸ {client.email}</span>
+              <span>ð Since {client.createdAt}</span>
+              {emp && <span>ð¤ {emp.name}</span>}
             </div>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
@@ -1549,19 +1549,19 @@ function ClientDetail({ client, onBack, canEdit = true }) {
   );
 }
 
-// ─── Audit Trail ─────────────────────────────────────────────────────
+// âââ Audit Trail âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function AuditTrail({ clientId, tasks, invoices }) {
   const events = [
-    ...tasks.filter(t => t.completedDate).map(t => ({ date: t.completedDate, icon: "✅", text: `Task completed: ${t.title}`, type: "task" })),
-    ...invoices.map(i => ({ date: i.date, icon: "📄", text: `Invoice created: ${i.invoiceNo} — ${INR(i.total)}`, type: "invoice" })),
-    ...invoices.filter(i => i.paid > 0).map(i => ({ date: i.date, icon: "💰", text: `Payment received: ${INR(i.paid)} against ${i.invoiceNo}`, type: "payment" })),
+    ...tasks.filter(t => t.completedDate).map(t => ({ date: t.completedDate, icon: "â", text: `Task completed: ${t.title}`, type: "task" })),
+    ...invoices.map(i => ({ date: i.date, icon: "ð", text: `Invoice created: ${i.invoiceNo} â ${INR(i.total)}`, type: "invoice" })),
+    ...invoices.filter(i => i.paid > 0).map(i => ({ date: i.date, icon: "ð°", text: `Payment received: ${INR(i.paid)} against ${i.invoiceNo}`, type: "payment" })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
     <div className="card">
       <div className="card-head"><div className="card-title">Audit Trail</div></div>
       <div>
-        {events.length === 0 && <div className="empty"><div className="empty-icon">📋</div><div>No activity yet</div></div>}
+        {events.length === 0 && <div className="empty"><div className="empty-icon">ð</div><div>No activity yet</div></div>}
         {events.map((e, i) => (
           <div key={i} className="row-item">
             <div style={{ width: 32, height: 32, borderRadius: 8, background: e.type === "task" ? "#F0FDF4" : e.type === "payment" ? "#F0FDF4" : "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{e.icon}</div>
@@ -1574,9 +1574,9 @@ function AuditTrail({ clientId, tasks, invoices }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // INVOICES PAGE
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function InvoicesPage() {
   const { invoices, openModal } = useApp();
   const [filter, setFilter] = useState("all");
@@ -1632,7 +1632,7 @@ function InvoicesTable({ invoices, onPayNow }) {
                     )}
                     {isClient && i.status!=="paid" && (
                       <button className="btn btn-sm" style={{ background:"linear-gradient(135deg,#16A34A,#15803D)",color:"#fff",border:"none" }}
-                        onClick={()=>openModal("pay-now",{invoiceId:i.id})}>💳 Pay Now</button>
+                        onClick={()=>openModal("pay-now",{invoiceId:i.id})}>ð³ Pay Now</button>
                     )}
                   </td>
                 </tr>
@@ -1645,9 +1645,9 @@ function InvoicesTable({ invoices, onPayNow }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // TASKS PAGE
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function TasksPage() {
   const { tasks, user } = useApp();
   const [filter, setFilter] = useState("all");
@@ -1716,7 +1716,7 @@ function TasksTable({ tasks, showClient = true }) {
           </thead>
           <tbody>
             {tasks.length === 0 && (
-              <tr><td colSpan={8}><div className="empty"><div className="empty-icon">✅</div><div>No tasks found</div></div></td></tr>
+              <tr><td colSpan={8}><div className="empty"><div className="empty-icon">â</div><div>No tasks found</div></div></td></tr>
             )}
             {tasks.map(t => {
               const isOverdue = t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "completed";
@@ -1729,8 +1729,8 @@ function TasksTable({ tasks, showClient = true }) {
                     <div style={{ fontWeight:500, fontSize:13 }}>{t.title}</div>
                     {t.docTemplateId && (
                       <div style={{ fontSize:10, color:"var(--blue)", marginTop:2 }}>
-                        📋 {(DEFAULT_DOC_TEMPLATES[t.docTemplateId]||{}).name || t.docTemplateId}
-                        {" · "}{(DEFAULT_DOC_TEMPLATES[t.docTemplateId]||{}).collectionType==="director" ? "Per Director":"Company"}
+                        ð {(DEFAULT_DOC_TEMPLATES[t.docTemplateId]||{}).name || t.docTemplateId}
+                        {" Â· "}{(DEFAULT_DOC_TEMPLATES[t.docTemplateId]||{}).collectionType==="director" ? "Per Director":"Company"}
                       </div>
                     )}
                     {t.notes && <div style={{ fontSize:11, color:"var(--muted)" }}>{t.notes}</div>}
@@ -1738,8 +1738,8 @@ function TasksTable({ tasks, showClient = true }) {
                   {showClient && <td style={{ fontSize:12, color:"var(--muted)", maxWidth:140 }}>{t.clientName}</td>}
                   <td>
                     <span style={{ fontSize:12, fontWeight:600, color:isOverdue?"var(--red)":"var(--ink)", background:isOverdue?"#FEF2F2":"transparent", padding:isOverdue?"2px 7px":0, borderRadius:5 }}>
-                      {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short"}) : "—"}
-                      {isOverdue && " ⚠"}
+                      {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short"}) : "â"}
+                      {isOverdue && " â "}
                     </span>
                   </td>
                   <td>
@@ -1757,16 +1757,16 @@ function TasksTable({ tasks, showClient = true }) {
                       {hasPendingReview ? (
                         <button className="btn btn-sm" style={{ background:"#7C3AED",color:"#fff",border:"none" }}
                           onClick={()=>openModal("review-submission",{submissionId:sub.id})}>
-                          📥 Review
+                          ð¥ Review
                         </button>
                       ) : sub?.status === "approved" ? (
-                        <span style={{ fontSize:11,color:"var(--green)",fontWeight:600 }}>✓ Approved</span>
+                        <span style={{ fontSize:11,color:"var(--green)",fontWeight:600 }}>â Approved</span>
                       ) : sub?.status === "changes_requested" ? (
-                        <span style={{ fontSize:11,color:"var(--red)",fontWeight:600 }}>↩ Changes sent</span>
+                        <span style={{ fontSize:11,color:"var(--red)",fontWeight:600 }}>â© Changes sent</span>
                       ) : t.requirementType !== "none" && t.docTemplateId ? (
                         <span style={{ fontSize:11,color:"var(--muted)" }}>Awaiting client</span>
                       ) : (
-                        <span style={{ fontSize:11,color:"var(--faint)" }}>—</span>
+                        <span style={{ fontSize:11,color:"var(--faint)" }}>â</span>
                       )}
                     </td>
                   )}
@@ -1781,9 +1781,9 @@ function TasksTable({ tasks, showClient = true }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // EMPLOYEES PAGE
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function EmployeesPage() {
   const { employees, clients, tasks, openModal } = useApp();
   return (
@@ -1832,11 +1832,11 @@ function EmployeesPage() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // SETTINGS PAGES
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function OrgSettings() {
-  const { org, setOrg, showToast } = useApp();
+  const { org, setOrg, showToast, clients, employees, invoices, tasks, bundles } = useApp();
   const [form, setForm] = useState({ ...org });
   const logoRef = useRef(null);
   const save = () => { setOrg(form); showToast("Organisation details saved!", "success"); };
@@ -1884,8 +1884,8 @@ function OrgSettings() {
               <div style={{ fontSize:12,color:"var(--muted)",marginBottom:12 }}>PNG or JPG, max 2MB. Will appear in sidebar and invoices.<br/>Recommended: white or transparent background, min 300px wide.</div>
               <input type="file" ref={logoRef} accept="image/*" style={{ display:"none" }} onChange={handleLogoUpload} />
               <div style={{ display:"flex",gap:10 }}>
-                <button className="btn btn-gold btn-sm" onClick={()=>logoRef.current?.click()}>⬆ Upload Logo</button>
-                {form.logoUrl && <button className="btn btn-sm btn-red" onClick={removeLogo}>✕ Remove</button>}
+                <button className="btn btn-gold btn-sm" onClick={()=>logoRef.current?.click()}>â¬ Upload Logo</button>
+                {form.logoUrl && <button className="btn btn-sm btn-red" onClick={removeLogo}>â Remove</button>}
               </div>
             </div>
           </div>
@@ -1922,6 +1922,51 @@ function OrgSettings() {
           <button className="btn btn-primary" onClick={save}>Save Changes</button>
         </div>
       </div>
+
+      <div className="card" style={{ marginTop: 20 }}>
+        <div className="card-head">
+          <div className="card-title">💾 Backup & Reports</div>
+          <div style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 'auto' }}>v-BACKUP-2026</div>
+        </div>
+        <div style={{ padding: '4px 20px 20px' }}>
+          <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16, lineHeight: 1.6 }}>
+            Download a full backup of all your data. Includes clients, employees, invoices, tasks,
+            bundles and organisation settings. We recommend downloading a backup regularly (e.g. end of each day).
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                const backupData = {
+                  backupDate: new Date().toISOString(),
+                  _note: 'Full raw backup from Founders Bridge. Restore in case of data loss.',
+                  org: org || {},
+                  clients: clients || [],
+                  employees: employees || [],
+                  invoices: invoices || [],
+                  tasks: tasks || [],
+                  bundles: bundles || [],
+                };
+                const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'founders-bridge-backup-' + new Date().toISOString().split('T')[0] + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('Full backup downloaded ✅', 'success');
+              }}
+            >
+              💾 Download Full Backup (JSON)
+            </button>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 14 }}>
+            💡 Tip: Store backups somewhere safe (Google Drive, email to yourself, etc.).
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1943,7 +1988,7 @@ function BundleSettings() {
 
   if (editing && form) return (
     <div style={{ maxWidth: 800 }}>
-      <button className="btn" style={{ marginBottom: 16 }} onClick={() => setEditing(null)}>← Back</button>
+      <button className="btn" style={{ marginBottom: 16 }} onClick={() => setEditing(null)}>â Back</button>
       <div className="card">
         <div className="card-head"><div className="card-title">Edit Bundle: {form.name}</div></div>
         <div className="card-body">
@@ -1973,9 +2018,9 @@ function BundleSettings() {
                 <div className="f-group">
                   <label className="f-label">SAC Code</label>
                   <input className="f-input" value={li.sac||""} onChange={e=>setItem(li.id,"sac",e.target.value)} placeholder={li.type==="govt"?"999799":li.type==="dsc"?"998315":"998211"} />
-                  <div className="f-hint">Govt: 999799 · DSC: 998315 · Professional: 998211</div>
+                  <div className="f-hint">Govt: 999799 Â· DSC: 998315 Â· Professional: 998211</div>
                 </div>
-                <div className="f-group"><label className="f-label">Unit Price (₹)</label><input className="f-input" type="number" value={li.price || ""} onChange={e => setItem(li.id, "price", Number(e.target.value))} placeholder="0 = enter on invoice" /></div>
+                <div className="f-group"><label className="f-label">Unit Price (â¹)</label><input className="f-input" type="number" value={li.price || ""} onChange={e => setItem(li.id, "price", Number(e.target.value))} placeholder="0 = enter on invoice" /></div>
                 <div className="f-group">
                   <label className="f-label">Pricing</label>
                   <select className="f-select" value={li.unit} onChange={e => setItem(li.id, "unit", e.target.value)}>
@@ -2012,7 +2057,7 @@ function BundleSettings() {
                             setItem(li.id, "tasks", t);
                           }}
                         />
-                        <button className="btn btn-sm btn-red" onClick={() => setItem(li.id, "tasks", (li.tasks||[]).filter((_,i)=>i!==ti))}>✕</button>
+                        <button className="btn btn-sm btn-red" onClick={() => setItem(li.id, "tasks", (li.tasks||[]).filter((_,i)=>i!==ti))}>â</button>
                       </div>
                       <div className="form-grid-2">
                         <div className="f-group">
@@ -2024,8 +2069,8 @@ function BundleSettings() {
                               t[ti] = { ...t[ti], autoFromQty: e.target.value === "director" };
                               setItem(li.id, "tasks", t);
                             }}>
-                            <option value="common">Common — once per company</option>
-                            <option value="director">Director-level — once per director</option>
+                            <option value="common">Common â once per company</option>
+                            <option value="director">Director-level â once per director</option>
                           </select>
                         </div>
                         <div className="f-group">
@@ -2051,11 +2096,11 @@ function BundleSettings() {
                       </div>
                       {task.docTemplateId && DEFAULT_DOC_TEMPLATES[task.docTemplateId] && (
                         <div style={{ marginTop: 8, padding: "8px 12px", background: "#F0F9FF", borderRadius: 6, fontSize: 11, color: "#0369A1" }}>
-                          📋 <strong>{DEFAULT_DOC_TEMPLATES[task.docTemplateId].name}</strong>:
+                          ð <strong>{DEFAULT_DOC_TEMPLATES[task.docTemplateId].name}</strong>:
                           {" "}{DEFAULT_DOC_TEMPLATES[task.docTemplateId].infoFields.length} info fields
-                          {" · "}{DEFAULT_DOC_TEMPLATES[task.docTemplateId].docSlots.length} document slots
-                          {" · "}<strong>{DEFAULT_DOC_TEMPLATES[task.docTemplateId].collectionType === "director" ? "Per Director" : "Per Company"}</strong>
-                          <br/><span style={{ color: "#6B7280" }}>Edit fields in Settings → Document Templates</span>
+                          {" Â· "}{DEFAULT_DOC_TEMPLATES[task.docTemplateId].docSlots.length} document slots
+                          {" Â· "}<strong>{DEFAULT_DOC_TEMPLATES[task.docTemplateId].collectionType === "director" ? "Per Director" : "Per Company"}</strong>
+                          <br/><span style={{ color: "#6B7280" }}>Edit fields in Settings â Document Templates</span>
                         </div>
                       )}
                     </div>
@@ -2080,7 +2125,7 @@ function BundleSettings() {
     <>
       <div style={{ marginBottom: 16, display: "flex", justifyContent: "flex-end" }}>
         <button className="btn btn-primary" onClick={() => {
-          const newBundle = { id: "b_" + uuid(), name: "New Bundle", icon: "📦", description: "", lineItems: [], totalApprox: null };
+          const newBundle = { id: "b_" + uuid(), name: "New Bundle", icon: "ð¦", description: "", lineItems: [], totalApprox: null };
           setBundles(bs => [...bs, newBundle]);
           startEdit(newBundle);
         }}>+ New Bundle</button>
@@ -2103,7 +2148,7 @@ function BundleSettings() {
                 <div key={li.id} className="row-item">
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{li.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--muted)" }}>{li.type} · {li.gst ? "+GST" : "no GST"} · {li.unit}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)" }}>{li.type} Â· {li.gst ? "+GST" : "no GST"} Â· {li.unit}</div>
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: li.price ? "var(--ink)" : "var(--muted)" }}>
                     {li.price ? INR(li.price) : "Variable"}
@@ -2151,9 +2196,9 @@ function UserSettings() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // EMPLOYEE VIEWS
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function EmpDashboard() {
   const { user, tasks, clients, invoices } = useApp();
   const myTasks   = tasks.filter(t => t.assignedTo === user.id);
@@ -2168,10 +2213,10 @@ function EmpDashboard() {
     <>
       <div className="stat-grid grid4" style={{ marginBottom: 22 }}>
         {[
-          { icon: "🏢", label: "My Clients",  val: myClients.length,   color: "var(--blue)"   },
-          { icon: "⏳", label: "Pending",     val: pending,            color: "var(--orange)" },
-          { icon: "✅", label: "Completed",   val: completed,          color: "var(--green)"  },
-          { icon: "⚠️", label: "Overdue",     val: overdue,            color: "var(--red)"    },
+          { icon: "ð¢", label: "My Clients",  val: myClients.length,   color: "var(--blue)"   },
+          { icon: "â³", label: "Pending",     val: pending,            color: "var(--orange)" },
+          { icon: "â", label: "Completed",   val: completed,          color: "var(--green)"  },
+          { icon: "â ï¸", label: "Overdue",     val: overdue,            color: "var(--red)"    },
         ].map(s => (
           <div key={s.label} className="stat-box">
             <div className="stat-icon">{s.icon}</div>
@@ -2204,7 +2249,7 @@ function EmpDashboard() {
                 <Badge status={t.status} />
               </div>
             ))}
-            {myTasks.filter(t => t.status !== "completed").length === 0 && <div className="empty"><div className="empty-icon">🎉</div><div>All caught up!</div></div>}
+            {myTasks.filter(t => t.status !== "completed").length === 0 && <div className="empty"><div className="empty-icon">ð</div><div>All caught up!</div></div>}
           </div>
         </div>
       </div>
@@ -2258,7 +2303,7 @@ function EmpClients() {
   return (
     <>
       <div style={{ display:"flex", gap:10, marginBottom:18, alignItems:"center" }}>
-        <input className="f-input" placeholder="Search client…" value={search} onChange={e=>setSearch(e.target.value)} style={{ maxWidth:260 }} />
+        <input className="f-input" placeholder="Search clientâ¦" value={search} onChange={e=>setSearch(e.target.value)} style={{ maxWidth:260 }} />
         <button className="btn btn-primary" style={{ marginLeft:"auto" }}
           onClick={()=>openModal("create-client", { defaultAssignTo: user.id })}>
           + New Client
@@ -2270,7 +2315,7 @@ function EmpClients() {
             <thead><tr><th>Client</th><th>Type</th><th>Contact</th><th>Billing</th><th>Collected</th><th>Pending</th><th>Progress</th><th></th></tr></thead>
             <tbody>
               {visible.length === 0 && (
-                <tr><td colSpan={8}><div className="empty"><div className="empty-icon">🏢</div><div>No clients assigned to you yet</div></div></td></tr>
+                <tr><td colSpan={8}><div className="empty"><div className="empty-icon">ð¢</div><div>No clients assigned to you yet</div></div></td></tr>
               )}
               {visible.map(c => {
                 const clientTasks = tasks.filter(t => t.clientId === c.id);
@@ -2290,7 +2335,7 @@ function EmpClients() {
                         <span style={{ fontSize:12,fontWeight:700 }}>{progress}%</span>
                       </div>
                     </td>
-                    <td><button className="btn btn-sm">View →</button></td>
+                    <td><button className="btn btn-sm">View â</button></td>
                   </tr>
                 );
               })}
@@ -2302,9 +2347,9 @@ function EmpClients() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // CLIENT VIEWS
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ClientHome() {
   const { clients, user, tasks, invoices } = useApp();
   const [selectedCo, setSelectedCo] = useState(null);
@@ -2355,7 +2400,7 @@ function ClientHome() {
                 {/* Action needed alert */}
                 {needsAction > 0 && (
                   <div style={{ padding:"7px 10px",background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:7,marginBottom:12,fontSize:12,color:"#C2410C",fontWeight:600 }}>
-                    ⚠️ {needsAction} task{needsAction>1?"s":""} need{needsAction===1?"s":""} your action
+                    â ï¸ {needsAction} task{needsAction>1?"s":""} need{needsAction===1?"s":""} your action
                   </div>
                 )}
 
@@ -2390,7 +2435,7 @@ function ClientHome() {
   );
 }
 
-// ─── Client Company Detail Page ───────────────────────────────────────
+// âââ Client Company Detail Page âââââââââââââââââââââââââââââââââââââââ
 function ClientCompanyDetail({ company, onBack }) {
   const { tasks, invoices, submissions, openModal } = useApp();
   const [tab, setTab] = useState("tasks");
@@ -2418,19 +2463,19 @@ function ClientCompanyDetail({ company, onBack }) {
 
   return (
     <>
-      <button className="btn" style={{ marginBottom:16 }} onClick={onBack}>← My Companies</button>
+      <button className="btn" style={{ marginBottom:16 }} onClick={onBack}>â My Companies</button>
 
       {/* Company header */}
       <div className="card" style={{ padding:"20px 24px",marginBottom:20 }}>
         <div style={{ display:"flex",alignItems:"flex-start",gap:16 }}>
-          <div style={{ width:50,height:50,borderRadius:13,background:"linear-gradient(135deg,var(--navy),var(--blue))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0 }}>🏢</div>
+          <div style={{ width:50,height:50,borderRadius:13,background:"linear-gradient(135deg,var(--navy),var(--blue))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0 }}>ð¢</div>
           <div style={{ flex:1 }}>
             <div style={{ display:"flex",alignItems:"center",gap:10,flexWrap:"wrap" }}>
               <span style={{ fontFamily:"'Fraunces',serif",fontSize:20 }}>{company.name}</span>
               <span className="tag">{company.type}</span>
             </div>
             <div style={{ display:"flex",gap:16,marginTop:8,flexWrap:"wrap",fontSize:12,color:"var(--muted)" }}>
-              <span>📋 {company.clientNo}</span>
+              <span>ð {company.clientNo}</span>
               {company.cin  && <span>CIN: {company.cin}</span>}
               {company.gst  && <span>GST: {company.gst}</span>}
               {company.pan  && <span>PAN: {company.pan}</span>}
@@ -2446,13 +2491,13 @@ function ClientCompanyDetail({ company, onBack }) {
       {/* Action needed banner */}
       {needsAction.length > 0 && (
         <div style={{ padding:"14px 18px",background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:10,marginBottom:16,display:"flex",alignItems:"center",gap:12 }}>
-          <span style={{ fontSize:22 }}>⚠️</span>
+          <span style={{ fontSize:22 }}>â ï¸</span>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:14,fontWeight:700,color:"#C2410C" }}>{needsAction.length} task{needsAction.length>1?"s":""} need{needsAction.length===1?"s":""} your action</div>
             <div style={{ fontSize:12,color:"#92400E",marginTop:2 }}>Please complete and submit these to allow your team to proceed</div>
           </div>
           <button className="btn btn-sm" style={{ background:"#C2410C",color:"#fff",border:"none" }} onClick={()=>setTab("tasks")}>
-            View Tasks →
+            View Tasks â
           </button>
         </div>
       )}
@@ -2470,7 +2515,7 @@ function ClientCompanyDetail({ company, onBack }) {
               <thead><tr><th>#</th><th>Task</th><th>Status</th><th>Due Date</th><th>Action</th></tr></thead>
               <tbody>
                 {clientTasks.length===0 && (
-                  <tr><td colSpan={5}><div className="empty"><div className="empty-icon">✅</div><div>No tasks yet</div></div></td></tr>
+                  <tr><td colSpan={5}><div className="empty"><div className="empty-icon">â</div><div>No tasks yet</div></div></td></tr>
                 )}
                 {clientTasks.map(t=>{
                   const sub = submissions.find(s=>s.taskId===t.id);
@@ -2480,27 +2525,27 @@ function ClientCompanyDetail({ company, onBack }) {
                       <td style={{ fontSize:11,color:"var(--muted)",fontWeight:700 }}>#{t.sequence}</td>
                       <td>
                         <div style={{ fontWeight:500,fontSize:13 }}>{t.title}</div>
-                        {sub?.status==="changes_requested"&&<div style={{ fontSize:11,color:"var(--red)",marginTop:2 }}>↩ Changes needed: {sub.reviewNote}</div>}
+                        {sub?.status==="changes_requested"&&<div style={{ fontSize:11,color:"var(--red)",marginTop:2 }}>â© Changes needed: {sub.reviewNote}</div>}
                       </td>
                       <td>
                         <Badge status={t.status}/>
                         {t.status==="team_approval"&&<div style={{ fontSize:10,color:"var(--purple)",marginTop:2 }}>Under review</div>}
-                        {t.status==="completed"&&<div style={{ fontSize:10,color:"var(--green)",marginTop:2 }}>✓ {t.completedDate}</div>}
+                        {t.status==="completed"&&<div style={{ fontSize:10,color:"var(--green)",marginTop:2 }}>â {t.completedDate}</div>}
                       </td>
                       <td>
                         <span style={{ fontSize:12,fontWeight:600,color:isOverdue?"var(--red)":"var(--muted)" }}>
-                          {t.dueDate?new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short"}):"—"}
-                          {isOverdue&&" ⚠"}
+                          {t.dueDate?new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short"}):"â"}
+                          {isOverdue&&" â "}
                         </span>
                       </td>
                       <td>
                         {(t.status==="client_action"||sub?.status==="changes_requested") && (
                           <button className="btn btn-blue btn-sm" onClick={()=>openModal("client-submit-task",{task:t})}>
-                            {sub?.status==="changes_requested"?"Resubmit":"Submit →"}
+                            {sub?.status==="changes_requested"?"Resubmit":"Submit â"}
                           </button>
                         )}
-                        {t.status==="completed"&&<span style={{ fontSize:12,color:"var(--green)",fontWeight:700 }}>✓ Done</span>}
-                        {t.status==="team_approval"&&<span style={{ fontSize:12,color:"var(--purple)" }}>⏳ Reviewing</span>}
+                        {t.status==="completed"&&<span style={{ fontSize:12,color:"var(--green)",fontWeight:700 }}>â Done</span>}
+                        {t.status==="team_approval"&&<span style={{ fontSize:12,color:"var(--purple)" }}>â³ Reviewing</span>}
                         {(t.status==="open"||t.status==="team_action"||t.status==="govt_approval")&&
                           <span style={{ fontSize:12,color:"var(--muted)" }}>Team working on it</span>}
                       </td>
@@ -2528,14 +2573,14 @@ function ClientCompanyDetail({ company, onBack }) {
         <div className="card">
           <div className="card-head"><div className="card-title">Submitted Documents</div></div>
           {allDocs.length===0 ? (
-            <div className="empty"><div className="empty-icon">📁</div><div>No documents submitted yet</div></div>
+            <div className="empty"><div className="empty-icon">ð</div><div>No documents submitted yet</div></div>
           ) : (
             allDocs.map((d,i)=>(
               <div key={i} className="row-item">
-                <span style={{ fontSize:20 }}>📄</span>
+                <span style={{ fontSize:20 }}>ð</span>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13,fontWeight:500 }}>{d.name}</div>
-                  <div style={{ fontSize:11,color:"var(--muted)" }}>{d.size} · Submitted {d.submittedAt}</div>
+                  <div style={{ fontSize:11,color:"var(--muted)" }}>{d.size} Â· Submitted {d.submittedAt}</div>
                 </div>
                 <button className="btn btn-sm">Download</button>
               </div>
@@ -2640,25 +2685,25 @@ function ClientDocs() {
       a.click();
     } else {
       // For demo docs without real data, show message
-      alert(`Download for "${doc.name}" — In production this will download from secure server storage.`);
+      alert(`Download for "${doc.name}" â In production this will download from secure server storage.`);
     }
   };
 
   const DocRow = ({doc}) => (
     <div className="row-item" style={{ padding:"12px 20px" }}>
       <div style={{ width:40,height:40,borderRadius:10,background:doc.source==="team"?"rgba(11,31,58,.07)":"var(--gold-lt)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0 }}>
-        {doc.name?.endsWith(".pdf")?"📕":doc.name?.match(/\.(jpg|jpeg|png)$/i)?"🖼️":"📄"}
+        {doc.name?.endsWith(".pdf")?"ð":doc.name?.match(/\.(jpg|jpeg|png)$/i)?"ð¼ï¸":"ð"}
       </div>
       <div style={{ flex:1 }}>
         <div style={{ fontSize:13,fontWeight:600,color:"var(--navy)" }}>{doc.name}</div>
         <div style={{ fontSize:11,color:"var(--muted)",marginTop:2 }}>
-          {doc.taskTitle && <span>{doc.taskTitle} · </span>}
-          {doc.size} · {doc.uploadedAt}
+          {doc.taskTitle && <span>{doc.taskTitle} Â· </span>}
+          {doc.size} Â· {doc.uploadedAt}
           {doc.category && <span style={{ marginLeft:6,padding:"1px 6px",borderRadius:4,background:"var(--gold-lt)",color:"var(--gold-dk)",fontSize:10,fontWeight:700 }}>{doc.category}</span>}
         </div>
       </div>
       <button className="btn btn-sm" style={{ background:"var(--navy)",color:"#fff",border:"none" }} onClick={()=>downloadFile(doc)}>
-        ⬇ Download
+        â¬ Download
       </button>
     </div>
   );
@@ -2667,8 +2712,8 @@ function ClientDocs() {
     <>
       <input type="file" ref={fileRef} multiple style={{display:"none"}} onChange={handleClientUpload} />
       <div className="tabs">
-        <div className={`tab ${tab==="team"?"on":""}`} onClick={()=>setTab("team")}>📂 Team Uploaded ({teamUploaded.length})</div>
-        <div className={`tab ${tab==="mine"?"on":""}`} onClick={()=>setTab("mine")}>📤 My Uploads ({clientUploads.length})</div>
+        <div className={`tab ${tab==="team"?"on":""}`} onClick={()=>setTab("team")}>ð Team Uploaded ({teamUploaded.length})</div>
+        <div className={`tab ${tab==="mine"?"on":""}`} onClick={()=>setTab("mine")}>ð¤ My Uploads ({clientUploads.length})</div>
       </div>
 
       {tab==="team" && (
@@ -2678,7 +2723,7 @@ function ClientDocs() {
             <div style={{fontSize:12,color:"var(--muted)"}}>{teamUploaded.length} documents</div>
           </div>
           {teamUploaded.length===0
-            ? <div className="empty"><div className="empty-icon">📁</div><div>No documents uploaded by team yet</div></div>
+            ? <div className="empty"><div className="empty-icon">ð</div><div>No documents uploaded by team yet</div></div>
             : teamUploaded.map((d,i)=><DocRow key={i} doc={d}/>)
           }
         </div>
@@ -2688,10 +2733,10 @@ function ClientDocs() {
         <div className="card">
           <div className="card-head">
             <div className="card-title">My Uploaded Documents</div>
-            <button className="btn btn-gold btn-sm" onClick={()=>fileRef.current?.click()}>⬆ Upload File</button>
+            <button className="btn btn-gold btn-sm" onClick={()=>fileRef.current?.click()}>â¬ Upload File</button>
           </div>
           {clientUploads.length===0
-            ? <div className="empty"><div className="empty-icon">📤</div><div style={{fontWeight:600,marginBottom:6}}>No uploads yet</div><div style={{fontSize:13}}>Upload any documents you want to share with your team.</div></div>
+            ? <div className="empty"><div className="empty-icon">ð¤</div><div style={{fontWeight:600,marginBottom:6}}>No uploads yet</div><div style={{fontSize:13}}>Upload any documents you want to share with your team.</div></div>
             : clientUploads.map((d,i)=><DocRow key={i} doc={{...d,source:"client"}}/>)
           }
         </div>
@@ -2700,11 +2745,11 @@ function ClientDocs() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // MODALS
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-// ─── Create Client Modal ──────────────────────────────────────────────
+// âââ Create Client Modal ââââââââââââââââââââââââââââââââââââââââââââââ
 function CreateClientModal({ data, onClose }) {
   const { employees, clients, dbCreateClient, showToast, user } = useApp();
   const defaultAssign = data?.defaultAssignTo || user?.id || employees[0]?.id || "";
@@ -2751,7 +2796,7 @@ function CreateClientModal({ data, onClose }) {
 
   return (
     <div className="modal-box" style={{ maxWidth: 580 }}>
-      <div className="modal-head"><div className="modal-title">New Client</div><button className="modal-close" onClick={onClose}>✕</button></div>
+      <div className="modal-head"><div className="modal-title">New Client</div><button className="modal-close" onClick={onClose}>â</button></div>
       <div className="modal-body">
         <div className="form-grid">
           <div className="form-grid-2">
@@ -2793,7 +2838,7 @@ function CreateClientModal({ data, onClose }) {
             )}
           </div>
           <div className="info-box" style={{ background:"#EFF6FF", border:"1px solid #BFDBFE", marginTop: 4 }}>
-            <span>ℹ️</span>
+            <span>â¹ï¸</span>
             <div style={{ fontSize:12, color:"var(--blue)" }}>
               After creating, share these login details with the client:<br/>
               <strong>URL:</strong> founders-bridge-portal.vercel.app<br/>
@@ -2811,7 +2856,7 @@ function CreateClientModal({ data, onClose }) {
   );
 }
 
-// ─── Create Invoice Modal ─────────────────────────────────────────────
+// âââ Create Invoice Modal âââââââââââââââââââââââââââââââââââââââââââââ
 function CreateInvoiceModal({ data, onClose }) {
   const { clients, invoices, dbCreateInvoice, bundles, org, showToast } = useApp();
   const [clientId, setClientId]   = useState(data?.clientId || "");
@@ -2849,7 +2894,7 @@ function CreateInvoiceModal({ data, onClose }) {
   const subtotal = lineItems.reduce((s, li) => s + li.unitPrice * li.qty, 0);
   const gstAmt   = total - subtotal;
 
-  // Generate tasks from line items — passes docTemplateId + directorCount
+  // Generate tasks from line items â passes docTemplateId + directorCount
   const generateTasks = (invoiceId) => {
     const newTasks = [];
     let seq = 1;
@@ -2910,23 +2955,23 @@ function CreateInvoiceModal({ data, onClose }) {
     <div className="modal-box" style={{ maxWidth: 700 }}>
       <div className="modal-head">
         <div className="modal-title">Create Invoice</div>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose}>â</button>
       </div>
       <div className="modal-body">
-        {/* Step 1 — Select client + bundle */}
+        {/* Step 1 â Select client + bundle */}
         {step === 1 && (
           <div className="form-grid">
             <div className="f-group">
               <label className="f-label">Client <span className="f-req">*</span></label>
               <select className="f-select" value={clientId} onChange={e => setClientId(e.target.value)}>
-                <option value="">Select client…</option>
+                <option value="">Select clientâ¦</option>
                 {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div className="f-group">
               <label className="f-label">Start from Bundle (optional)</label>
               <select className="f-select" value={bundleId} onChange={e => loadBundle(e.target.value)}>
-                <option value="">Select bundle to auto-fill…</option>
+                <option value="">Select bundle to auto-fillâ¦</option>
                 {bundles.map(b => <option key={b.id} value={b.id}>{b.icon} {b.name}</option>)}
               </select>
               <div className="f-hint">Selecting a bundle auto-fills line items and creates tasks</div>
@@ -2952,7 +2997,7 @@ function CreateInvoiceModal({ data, onClose }) {
               <table>
                 <thead>
                   <tr>
-                    <th>Item</th><th>SAC</th><th>Type</th><th>Qty</th><th>Unit Price (₹)</th><th>GST</th><th>Amount</th>
+                    <th>Item</th><th>SAC</th><th>Type</th><th>Qty</th><th>Unit Price (â¹)</th><th>GST</th><th>Amount</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2960,7 +3005,7 @@ function CreateInvoiceModal({ data, onClose }) {
                     <tr key={li.id}>
                       <td style={{ minWidth: 180 }}>
                         <input className="f-input" value={li.name} onChange={e => setItem(li.id, "name", e.target.value)} style={{ fontSize: 12, padding: "5px 9px" }} />
-                        {li.note && <div style={{ fontSize: 10, color: "var(--orange)", marginTop: 2 }}>⚠️ {li.note}</div>}
+                        {li.note && <div style={{ fontSize: 10, color: "var(--orange)", marginTop: 2 }}>â ï¸ {li.note}</div>}
                       </td>
                       <td>
                         <input className="f-input" value={li.sac||org.sac||"998211"} onChange={e=>setItem(li.id,"sac",e.target.value)} style={{ width:80,fontSize:12,padding:"5px 9px" }} />
@@ -2997,7 +3042,7 @@ function CreateInvoiceModal({ data, onClose }) {
               return orig?.tasks?.length > 0;
             }) && (
               <div className="info-box" style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", marginTop: 16 }}>
-                <span>⚡</span>
+                <span>â¡</span>
                 <div style={{ fontSize: 12, color: "var(--green)" }}>
                   <strong>Tasks will be auto-created</strong> from this invoice based on line items and quantities. DSC tasks will create 1 task per director.
                 </div>
@@ -3009,14 +3054,14 @@ function CreateInvoiceModal({ data, onClose }) {
       <div className="modal-foot">
         <button className="btn" onClick={onClose}>Cancel</button>
         <button className="btn btn-primary" onClick={createInvoice} disabled={!clientId || lineItems.length === 0}>
-          Create Invoice & Tasks →
+          Create Invoice & Tasks â
         </button>
       </div>
     </div>
   );
 }
 
-// ─── View Invoice Modal ───────────────────────────────────────────────
+// âââ View Invoice Modal âââââââââââââââââââââââââââââââââââââââââââââââ
 function ViewInvoiceModal({ data, onClose }) {
   const { invoice } = data;
   const { org, openModal, user } = useApp();
@@ -3055,14 +3100,14 @@ function ViewInvoiceModal({ data, onClose }) {
           <div className="modal-title">Invoice {invoice.invoiceNo}</div>
           <div style={{ fontSize:12,color:"var(--muted)",marginTop:2 }}>
             {invoice.date}
-            {invoice.dueDate && ` · Due ${invoice.dueDate}`}
+            {invoice.dueDate && ` Â· Due ${invoice.dueDate}`}
           </div>
         </div>
         <div style={{ display:"flex",gap:8,alignItems:"center" }}>
           {isPaid && <span className="badge" style={{ background:"#F0FDF4",color:"var(--green)" }}><span className="badge-dot" style={{ background:"var(--green)" }}/>Paid</span>}
           {isPartial && <span className="badge" style={{ background:"#FFF8EC",color:"var(--orange)" }}><span className="badge-dot" style={{ background:"var(--orange)" }}/>Partial</span>}
           {!isPaid && !isPartial && <span className="badge" style={{ background:"#FEF2F2",color:"var(--red)" }}><span className="badge-dot" style={{ background:"var(--red)" }}/>Unpaid</span>}
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="modal-close" onClick={onClose}>â</button>
         </div>
       </div>
       <div className="modal-body" style={{ padding:0 }}>
@@ -3076,7 +3121,7 @@ function ViewInvoiceModal({ data, onClose }) {
                 : <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,marginBottom:4 }}>Founders <span style={{ color:"#C9A14A" }}>Bridge</span></div>
               }
               <div style={{ fontSize:11,opacity:.7,marginBottom:2 }}>{org.name}</div>
-              <div style={{ fontSize:11,opacity:.7,marginBottom:2 }}>GSTIN: {org.gstin} · PAN: {org.pan}</div>
+              <div style={{ fontSize:11,opacity:.7,marginBottom:2 }}>GSTIN: {org.gstin} Â· PAN: {org.pan}</div>
               <div style={{ fontSize:11,opacity:.7 }}>{org.address}</div>
             </div>
             <div style={{ textAlign:"right" }}>
@@ -3097,7 +3142,7 @@ function ViewInvoiceModal({ data, onClose }) {
               <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:8 }}>Payment Details</div>
               <div style={{ fontSize:12,color:"var(--ink2)",lineHeight:1.7 }}>
                 <div><strong>{org.bankName}</strong></div>
-                <div>A/c: {org.accountNo} · IFSC: {org.ifsc}</div>
+                <div>A/c: {org.accountNo} Â· IFSC: {org.ifsc}</div>
                 <div style={{ color:"var(--gold-dk)",fontWeight:600 }}>UPI: {org.upi}</div>
               </div>
             </div>
@@ -3175,12 +3220,12 @@ function ViewInvoiceModal({ data, onClose }) {
           {/* Status & notes */}
           {invoice.pending > 0 && (
             <div style={{ padding:"12px 16px",background:"#FFF8EC",border:"1px solid rgba(201,161,74,.3)",borderRadius:8,fontSize:12,color:"var(--gold-dk)" }}>
-              ⚠️ Please make payment by <strong>{invoice.dueDate||"the due date"}</strong> to avoid late fees.
+              â ï¸ Please make payment by <strong>{invoice.dueDate||"the due date"}</strong> to avoid late fees.
             </div>
           )}
           {isPaid && (
             <div style={{ padding:"12px 16px",background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:8,fontSize:12,color:"var(--green)",fontWeight:600 }}>
-              ✅ This invoice has been fully paid. Thank you!
+              â This invoice has been fully paid. Thank you!
             </div>
           )}
         </div>
@@ -3189,22 +3234,22 @@ function ViewInvoiceModal({ data, onClose }) {
         <button className="btn" onClick={onClose}>Close</button>
         {!isPaid && isClient && (
           <button className="btn btn-green" onClick={()=>{ onClose(); openModal("pay-now",{invoiceId:invoice.id}); }}>
-            💳 Pay {INR(invoice.pending||0)}
+            ð³ Pay {INR(invoice.pending||0)}
           </button>
         )}
         {!isPaid && !isClient && (
           <button className="btn btn-sm" style={{ background:"var(--green)",color:"#fff",border:"none" }}
             onClick={()=>{ onClose(); openModal("record-payment",{invoiceId:invoice.id}); }}>
-            💰 Record Payment
+            ð° Record Payment
           </button>
         )}
-        <button className="btn btn-primary" onClick={printInvoice}>🖨️ Print / Download PDF</button>
+        <button className="btn btn-primary" onClick={printInvoice}>ð¨ï¸ Print / Download PDF</button>
       </div>
     </div>
   );
 }
 
-// ─── View Task Modal ──────────────────────────────────────────────────
+// âââ View Task Modal ââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ViewTaskModal({ data, onClose }) {
   const { task } = data;
   const { tasks, setTasks, employees, showToast, user, submissions, openModal } = useApp();
@@ -3229,14 +3274,14 @@ function ViewTaskModal({ data, onClose }) {
       <div className="modal-head">
         <div>
           <div className="modal-title">{localTask.title}</div>
-          <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{localTask.clientName} · Sequence #{localTask.sequence}</div>
+          <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{localTask.clientName} Â· Sequence #{localTask.sequence}</div>
         </div>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose}>â</button>
       </div>
 
       {/* Tabs */}
       <div style={{ display:"flex", gap:2, padding:"0 20px", borderBottom:"1px solid var(--border)", background:"#FAFAF8" }}>
-        {[["details","Details"], ...(isTeam&&sub ? [["submission","📥 Submission"]] : [])].map(([id,label])=>(
+        {[["details","Details"], ...(isTeam&&sub ? [["submission","ð¥ Submission"]] : [])].map(([id,label])=>(
           <div key={id} onClick={()=>setActiveTab(id)} style={{ padding:"10px 14px", fontSize:13, fontWeight:activeTab===id?700:500, cursor:"pointer", color:activeTab===id?"var(--blue)":"var(--muted)", borderBottom:activeTab===id?"2px solid var(--blue)":"2px solid transparent", marginBottom:-1 }}>
             {label}
             {id==="submission"&&sub?.status==="submitted"&&<span style={{ marginLeft:6, background:"#7C3AED", color:"#fff", fontSize:9, padding:"1px 6px", borderRadius:20, fontWeight:700 }}>NEW</span>}
@@ -3269,12 +3314,12 @@ function ViewTaskModal({ data, onClose }) {
             {/* Document template info */}
             {tpl && (
               <div style={{ padding:"12px 14px", background:"#F0F9FF", border:"1px solid #BAE6FD", borderRadius:8 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:"#0369A1", marginBottom:4 }}>📋 Configured Template: {tpl.name}</div>
+                <div style={{ fontSize:12, fontWeight:700, color:"#0369A1", marginBottom:4 }}>ð Configured Template: {tpl.name}</div>
                 <div style={{ fontSize:11, color:"#0369A1" }}>
                   Collection: <strong>{tpl.collectionType==="director"?"Per Director":"Per Company"}</strong>
-                  {" · "}{tpl.infoFields.length} info fields
-                  {" · "}{tpl.docSlots.length} document slots
-                  {" · "}{tpl.docSlots.filter(s=>s.required).length} required docs
+                  {" Â· "}{tpl.infoFields.length} info fields
+                  {" Â· "}{tpl.docSlots.length} document slots
+                  {" Â· "}{tpl.docSlots.filter(s=>s.required).length} required docs
                 </div>
               </div>
             )}
@@ -3296,18 +3341,18 @@ function ViewTaskModal({ data, onClose }) {
                     value={localTask.docsList||""}
                     onChange={e=>setLocal(t=>({...t,docsList:e.target.value}))}
                   />
-                  <div className="f-hint">Or use a Document Template from Settings → Document Templates</div>
+                  <div className="f-hint">Or use a Document Template from Settings â Document Templates</div>
                 </div>
               )}
             </div>
 
             <div className="f-group">
               <label className="f-label">Internal Notes (team only)</label>
-              <textarea className="f-textarea" value={localTask.notes||""} onChange={e=>setLocal(t=>({...t,notes:e.target.value}))} rows={3} placeholder="Notes visible to team only…" />
+              <textarea className="f-textarea" value={localTask.notes||""} onChange={e=>setLocal(t=>({...t,notes:e.target.value}))} rows={3} placeholder="Notes visible to team onlyâ¦" />
             </div>
 
             {localTask.completedDate && (
-              <div style={{ fontSize:12, color:"var(--green)", fontWeight:600 }}>✅ Completed on {localTask.completedDate}</div>
+              <div style={{ fontSize:12, color:"var(--green)", fontWeight:600 }}>â Completed on {localTask.completedDate}</div>
             )}
           </div>
         )}
@@ -3322,12 +3367,12 @@ function ViewTaskModal({ data, onClose }) {
         {activeTab==="submission" && sub?.status==="submitted" && (
           <button className="btn" style={{ background:"#7C3AED",color:"#fff",border:"none" }}
             onClick={()=>{ onClose(); openModal("review-submission",{submissionId:sub.id}); }}>
-            📥 Review Submission
+            ð¥ Review Submission
           </button>
         )}
         {activeTab==="details" && (
           <>
-            <button className="btn btn-green" onClick={()=>{ setLocal(t=>({...t,status:"completed"})); setTimeout(save,100); }}>✓ Mark Complete</button>
+            <button className="btn btn-green" onClick={()=>{ setLocal(t=>({...t,status:"completed"})); setTimeout(save,100); }}>â Mark Complete</button>
             <button className="btn btn-primary" onClick={save}>Save Changes</button>
           </>
         )}
@@ -3336,7 +3381,7 @@ function ViewTaskModal({ data, onClose }) {
   );
 }
 
-// ─── SUBMISSION VIEWER — shows submitted data cleanly to team ─────────
+// âââ SUBMISSION VIEWER â shows submitted data cleanly to team âââââââââ
 function SubmissionViewer({ sub, tpl, task, onReview }) {
   const statusColors = { submitted:"#7C3AED", approved:"#16A34A", changes_requested:"#DC2626" };
   const sc = statusColors[sub.status] || "#6B7280";
@@ -3347,12 +3392,12 @@ function SubmissionViewer({ sub, tpl, task, onReview }) {
       <div style={{ padding:"12px 14px", background:sub.status==="submitted"?"#EDE9FE":sub.status==="approved"?"#F0FDF4":"#FFF1F2", border:`1px solid ${sub.status==="submitted"?"#C4B5FD":sub.status==="approved"?"#BBF7D0":"#FECACA"}`, borderRadius:8, marginBottom:16, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:sc }}>
-            {sub.status==="submitted"?"📥 Pending Review":sub.status==="approved"?"✅ Approved":"↩ Changes Requested"}
+            {sub.status==="submitted"?"ð¥ Pending Review":sub.status==="approved"?"â Approved":"â© Changes Requested"}
           </div>
           <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Submitted on {sub.submittedAt}</div>
         </div>
         {sub.status==="submitted" && (
-          <button className="btn btn-sm" style={{ background:"#7C3AED",color:"#fff",border:"none" }} onClick={onReview}>Review Now →</button>
+          <button className="btn btn-sm" style={{ background:"#7C3AED",color:"#fff",border:"none" }} onClick={onReview}>Review Now â</button>
         )}
       </div>
 
@@ -3372,7 +3417,7 @@ function SubmissionViewer({ sub, tpl, task, onReview }) {
           <div key={dirIdx} style={{ border:"1px solid var(--border)", borderRadius:10, overflow:"hidden", marginBottom:14 }}>
             <div style={{ padding:"10px 16px", background:"linear-gradient(90deg,#F0F6FF,#fff)", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", gap:10 }}>
               <div style={{ width:28,height:28,borderRadius:"50%",background:"var(--blue)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff" }}>
-                {tpl?.collectionType==="director" ? dirIdx : "🏢"}
+                {tpl?.collectionType==="director" ? dirIdx : "ð¢"}
               </div>
               <div style={{ fontSize:13, fontWeight:700 }}>{dirLabel}</div>
             </div>
@@ -3380,7 +3425,7 @@ function SubmissionViewer({ sub, tpl, task, onReview }) {
             {/* Info fields */}
             {fields && Object.keys(fields).length>0 && (
               <div style={{ padding:"12px 16px", borderBottom:docs&&Object.keys(docs).length>0?"1px solid var(--border)":undefined }}>
-                <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>📝 Submitted Information</div>
+                <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>ð Submitted Information</div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px 16px" }}>
                   {tpl?.infoFields?.map(f=>(
                     <div key={f.id} style={{ gridColumn:f.type==="textarea"?"1/-1":undefined }}>
@@ -3392,7 +3437,7 @@ function SubmissionViewer({ sub, tpl, task, onReview }) {
                   )) || Object.entries(fields).map(([k,v])=>(
                     <div key={k}>
                       <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"0.8px",marginBottom:2 }}>{k}</div>
-                      <div style={{ fontSize:13,fontWeight:500,padding:"6px 10px",background:"#F9FAFB",borderRadius:6,border:"1px solid var(--border)" }}>{v||"—"}</div>
+                      <div style={{ fontSize:13,fontWeight:500,padding:"6px 10px",background:"#F9FAFB",borderRadius:6,border:"1px solid var(--border)" }}>{v||"â"}</div>
                     </div>
                   ))}
                 </div>
@@ -3402,27 +3447,27 @@ function SubmissionViewer({ sub, tpl, task, onReview }) {
             {/* Documents */}
             {docs && Object.keys(docs).length>0 && (
               <div style={{ padding:"12px 16px" }}>
-                <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>📎 Uploaded Documents</div>
+                <div style={{ fontSize:10,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>ð Uploaded Documents</div>
                 {tpl?.docSlots?.map(slot=>{
                   const up = docs[slot.id];
                   return (
                     <div key={slot.id} style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:"1px solid #F3F4F6" }}>
                       <div style={{ width:30,height:30,borderRadius:7,background:up?"#F0FDF4":"#FFF1F2",border:`1px solid ${up?"#BBF7D0":"#FECACA"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>
-                        {up?"✅":"❌"}
+                        {up?"â":"â"}
                       </div>
                       <div style={{ flex:1 }}>
                         <div style={{ fontSize:13,fontWeight:500 }}>{slot.label}{slot.required&&<span style={{ color:"var(--red)",marginLeft:3 }}>*</span>}</div>
-                        {up ? <div style={{ fontSize:11,color:"var(--green)" }}>✓ {up.name} · {up.size}</div>
+                        {up ? <div style={{ fontSize:11,color:"var(--green)" }}>â {up.name} Â· {up.size}</div>
                              : <div style={{ fontSize:11,color:"var(--red)" }}>Not uploaded</div>}
                       </div>
-                      {up && <button className="btn btn-sm">⬇ Download</button>}
+                      {up && <button className="btn btn-sm">â¬ Download</button>}
                     </div>
                   );
                 }) || Object.entries(docs).map(([slotId,up])=>(
                   <div key={slotId} style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:"1px solid #F3F4F6" }}>
-                    <span style={{ fontSize:16 }}>✅</span>
+                    <span style={{ fontSize:16 }}>â</span>
                     <div style={{ flex:1 }}><div style={{ fontSize:13,fontWeight:500 }}>{up.name}</div><div style={{ fontSize:11,color:"var(--muted)" }}>{up.size}</div></div>
-                    <button className="btn btn-sm">⬇ Download</button>
+                    <button className="btn btn-sm">â¬ Download</button>
                   </div>
                 ))}
               </div>
@@ -3433,14 +3478,14 @@ function SubmissionViewer({ sub, tpl, task, onReview }) {
 
       {sub.note && (
         <div style={{ padding:"10px 14px",background:"#F9FAFB",border:"1px solid var(--border)",borderRadius:8,fontSize:12,color:"var(--muted)" }}>
-          💬 <strong>Client note:</strong> {sub.note}
+          ð¬ <strong>Client note:</strong> {sub.note}
         </div>
       )}
     </div>
   );
 }
 
-// ─── Create Employee Modal ────────────────────────────────────────────
+// âââ Create Employee Modal ââââââââââââââââââââââââââââââââââââââââââââ
 function CreateEmployeeModal({ data, onClose }) {
   const { employees, setEmps, showToast } = useApp();
   const [form, setForm] = useState({ name: "", email: "", phone: "", role: "employee" });
@@ -3457,7 +3502,7 @@ function CreateEmployeeModal({ data, onClose }) {
 
   return (
     <div className="modal-box" style={{ maxWidth: 480 }}>
-      <div className="modal-head"><div className="modal-title">Invite Team Member</div><button className="modal-close" onClick={onClose}>✕</button></div>
+      <div className="modal-head"><div className="modal-title">Invite Team Member</div><button className="modal-close" onClick={onClose}>â</button></div>
       <div className="modal-body">
         <div className="form-grid">
           <div className="f-group"><label className="f-label">Full Name <span className="f-req">*</span></label><input className="f-input" value={form.name} onChange={e => set("name", e.target.value)} placeholder="e.g. Priya Sharma" /></div>
@@ -3465,12 +3510,12 @@ function CreateEmployeeModal({ data, onClose }) {
           <div className="f-group"><label className="f-label">Phone</label><input className="f-input" type="tel" value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="98xxxxxxxx" /></div>
           <div className="f-group"><label className="f-label">Role</label>
             <select className="f-select" value={form.role} onChange={e => set("role", e.target.value)}>
-              <option value="employee">Employee — sees only assigned clients</option>
-              <option value="manager">Manager — sees all clients</option>
+              <option value="employee">Employee â sees only assigned clients</option>
+              <option value="manager">Manager â sees all clients</option>
             </select>
           </div>
           <div className="info-box" style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
-            <span>ℹ️</span>
+            <span>â¹ï¸</span>
             <div style={{ fontSize: 12, color: "var(--blue)" }}>An invitation email will be sent to this person with login instructions. Default password: <strong>Welcome@123</strong> (they should change on first login)</div>
           </div>
         </div>
@@ -3480,14 +3525,14 @@ function CreateEmployeeModal({ data, onClose }) {
   );
 }
 /* eslint-disable */
-// ═══════════════════════════════════════════════════════════════════════
-// FOUNDERS BRIDGE CRM — SESSION 2 ADDITIONS
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// FOUNDERS BRIDGE CRM â SESSION 2 ADDITIONS
 // Paste this BELOW the last line of App_Session1.jsx
-// DO NOT paste above the existing code — append only
-// ═══════════════════════════════════════════════════════════════════════
+// DO NOT paste above the existing code â append only
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 //
 // New features added in Session 2:
-// 1. Client Task Submission Flow (fill form / upload docs → team review)
+// 1. Client Task Submission Flow (fill form / upload docs â team review)
 // 2. Record Payment modal
 // 3. Notifications centre (team + client)
 // 4. Client Self-Registration
@@ -3495,7 +3540,7 @@ function CreateEmployeeModal({ data, onClose }) {
 // 6. WhatsApp notification triggers (Kraya)
 // 7. Improved client portal with full task details
 // 8. Password change modal
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 //
 // INSTRUCTIONS TO DEPLOY:
 // 1. Open App_Session1.jsx in Notepad
@@ -3503,9 +3548,9 @@ function CreateEmployeeModal({ data, onClose }) {
 // 3. Paste everything below this comment block
 // 4. Save the file
 // 5. Upload to GitHub as App.jsx (replace existing)
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-// ─── WHATSAPP / KRAYA SERVICE ─────────────────────────────────────────
+// âââ WHATSAPP / KRAYA SERVICE âââââââââââââââââââââââââââââââââââââââââ
 const KRAYA = {
   API_URL:   process.env.REACT_APP_KRAYA_URL   || "https://api.kraya.io/v1/messages",
   API_TOKEN: process.env.REACT_APP_KRAYA_TOKEN || "",
@@ -3519,7 +3564,7 @@ const KRAYA = {
   },
   async send(phone, template, vars = []) {
     if (!this.API_TOKEN) {
-      console.log(`📲 WhatsApp [DEMO] → ${phone} | ${template} | ${vars.join(", ")}`);
+      console.log(`ð² WhatsApp [DEMO] â ${phone} | ${template} | ${vars.join(", ")}`);
       return { success: true, demo: true };
     }
     try {
@@ -3552,23 +3597,23 @@ const KRAYA = {
     KRAYA.send(phone, KRAYA.TEMPLATES.TEAM_ALERT, [message]),
 };
 
-// ─── DEMO NOTIFICATIONS ───────────────────────────────────────────────
+// âââ DEMO NOTIFICATIONS âââââââââââââââââââââââââââââââââââââââââââââââ
 const DEMO_NOTIFICATIONS = [
-  { id: "n1", userId: "u1", type: "task",    title: "Task submitted by client", body: "TechSpark: Main Application Filing — client submitted documents",   time: "10 min ago", read: false, icon: "📋" },
-  { id: "n2", userId: "u1", type: "payment", title: "Payment received",         body: "FB/2025/001 — ₹72,500 received from TechSpark Solutions",           time: "2 hrs ago",  read: false, icon: "💰" },
-  { id: "n3", userId: "u1", type: "client",  title: "New client registered",    body: "Sunrise Trading LLP registered and awaiting team assignment",        time: "1 day ago",  read: true,  icon: "🏢" },
-  { id: "n4", userId: "u3", type: "task",    title: "Task assigned to you",     body: "DSC Creation for Director 2 — TechSpark Solutions",                  time: "3 hrs ago",  read: false, icon: "✅" },
-  { id: "n5", userId: "u5", type: "task",    title: "Action required",          body: "Please upload documents for: Main Application Filing",               time: "1 day ago",  read: false, icon: "⚠️" },
-  { id: "n6", userId: "u5", type: "invoice", title: "Invoice created",          body: "FB/2025/001 for ₹85,000 — due Jan 31, 2025",                        time: "2 days ago", read: true,  icon: "📄" },
+  { id: "n1", userId: "u1", type: "task",    title: "Task submitted by client", body: "TechSpark: Main Application Filing â client submitted documents",   time: "10 min ago", read: false, icon: "ð" },
+  { id: "n2", userId: "u1", type: "payment", title: "Payment received",         body: "FB/2025/001 â â¹72,500 received from TechSpark Solutions",           time: "2 hrs ago",  read: false, icon: "ð°" },
+  { id: "n3", userId: "u1", type: "client",  title: "New client registered",    body: "Sunrise Trading LLP registered and awaiting team assignment",        time: "1 day ago",  read: true,  icon: "ð¢" },
+  { id: "n4", userId: "u3", type: "task",    title: "Task assigned to you",     body: "DSC Creation for Director 2 â TechSpark Solutions",                  time: "3 hrs ago",  read: false, icon: "â" },
+  { id: "n5", userId: "u5", type: "task",    title: "Action required",          body: "Please upload documents for: Main Application Filing",               time: "1 day ago",  read: false, icon: "â ï¸" },
+  { id: "n6", userId: "u5", type: "invoice", title: "Invoice created",          body: "FB/2025/001 for â¹85,000 â due Jan 31, 2025",                        time: "2 days ago", read: true,  icon: "ð" },
 ];
 
-// ─── DEMO PAYMENTS ───────────────────────────────────────────────────
+// âââ DEMO PAYMENTS âââââââââââââââââââââââââââââââââââââââââââââââââââ
 const DEMO_PAYMENTS = [
   { id: "p1", invoiceId: "inv1", clientId: "c1", clientName: "TechSpark Solutions Pvt Ltd", amount: 72500, mode: "bank_transfer", reference: "NEFT2025001", date: "Jan 20, 2025", notes: "Partial payment received", recordedBy: "u2" },
   { id: "p2", invoiceId: "inv2", clientId: "c2", clientName: "GreenLeaf Ventures LLP",     amount: 45000, mode: "upi",           reference: "UPI123456",   date: "Feb 10, 2025", notes: "Full payment",            recordedBy: "u2" },
 ];
 
-// ─── DEMO TASK SUBMISSIONS ────────────────────────────────────────────
+// âââ DEMO TASK SUBMISSIONS ââââââââââââââââââââââââââââââââââââââââââââ
 const DEMO_SUBMISSIONS = [
   {
     id: "sub1", taskId: "t4", clientId: "c1", status: "submitted",
@@ -3578,21 +3623,21 @@ const DEMO_SUBMISSIONS = [
   },
 ];
 
-// ═══════════════════════════════════════════════════════════════════════
-// EXTENDED APP SHELL — replaces the original App() export
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// EXTENDED APP SHELL â replaces the original App() export
 // Copy this entire block and replace "export default function App()"
 // in Session 1 with this version
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 // NOTE: Since we can't re-export, these components are standalone.
 // The Session 2 file should be MERGED into Session 1 by a developer,
 // or use the combined file provided below.
 
-// ═══════════════════════════════════════════════════════════════════════
-// NEW COMPONENTS — ADD THESE TO THE PAGE ROUTER
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// NEW COMPONENTS â ADD THESE TO THE PAGE ROUTER
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-// ─── NOTIFICATIONS PAGE ──────────────────────────────────────────────
+// âââ NOTIFICATIONS PAGE ââââââââââââââââââââââââââââââââââââââââââââââ
 function NotificationsPage({ notifications, setNotifications, userId }) {
   const myNotifs = notifications.filter(n => n.userId === userId);
   const unread   = myNotifs.filter(n => !n.read).length;
@@ -3608,7 +3653,7 @@ function NotificationsPage({ notifications, setNotifications, userId }) {
       </div>
       <div className="card">
         {myNotifs.length === 0 && (
-          <div className="empty"><div className="empty-icon">🔔</div><div>No notifications yet</div></div>
+          <div className="empty"><div className="empty-icon">ð</div><div>No notifications yet</div></div>
         )}
         {myNotifs.map(n => (
           <div key={n.id} className="row-item" style={{ background: n.read ? "var(--white)" : "var(--blue-lt)", cursor: "pointer" }} onClick={() => markRead(n.id)}>
@@ -3626,7 +3671,7 @@ function NotificationsPage({ notifications, setNotifications, userId }) {
   );
 }
 
-// ─── RECORD PAYMENT MODAL ─────────────────────────────────────────────
+// âââ RECORD PAYMENT MODAL âââââââââââââââââââââââââââââââââââââââââââââ
 function RecordPaymentModal({ data, onClose, invoices, setInvoices, payments, setPayments, clients, showToast }) {
   const { invoiceId } = data;
   const invoice = invoices.find(i => i.id === invoiceId);
@@ -3667,11 +3712,11 @@ function RecordPaymentModal({ data, onClose, invoices, setInvoices, payments, se
 
   return (
     <div className="modal-box" style={{ maxWidth: 480 }}>
-      <div className="modal-head"><div className="modal-title">Record Payment</div><button className="modal-close" onClick={onClose}>✕</button></div>
+      <div className="modal-head"><div className="modal-title">Record Payment</div><button className="modal-close" onClick={onClose}>â</button></div>
       <div className="modal-body">
         {invoice && (
           <div style={{ background: "linear-gradient(135deg,var(--navy),#1E40AF)", borderRadius: 10, padding: "14px 18px", marginBottom: 20, color: "#fff" }}>
-            <div style={{ fontSize: 12, opacity: .7, marginBottom: 4 }}>{invoice.invoiceNo} · {invoice.clientName}</div>
+            <div style={{ fontSize: 12, opacity: .7, marginBottom: 4 }}>{invoice.invoiceNo} Â· {invoice.clientName}</div>
             <div style={{ display: "flex", gap: 20 }}>
               <div><div style={{ fontSize: 10, opacity: .6 }}>Total</div><div style={{ fontSize: 16, fontWeight: 700 }}>{INR(invoice.total)}</div></div>
               <div><div style={{ fontSize: 10, opacity: .6 }}>Paid so far</div><div style={{ fontSize: 16, fontWeight: 700, color: "#86EFAC" }}>{INR(invoice.paid)}</div></div>
@@ -3681,7 +3726,7 @@ function RecordPaymentModal({ data, onClose, invoices, setInvoices, payments, se
         )}
         <div className="form-grid">
           <div className="f-group">
-            <label className="f-label">Payment Amount (₹) <span className="f-req">*</span></label>
+            <label className="f-label">Payment Amount (â¹) <span className="f-req">*</span></label>
             <input className="f-input" type="number" value={form.amount} onChange={e => set("amount", e.target.value)} max={outstanding} />
             <div className="f-hint">Maximum: {INR(outstanding)}</div>
           </div>
@@ -3701,19 +3746,19 @@ function RecordPaymentModal({ data, onClose, invoices, setInvoices, payments, se
           </div>
           <div className="f-group">
             <label className="f-label">Notes</label>
-            <textarea className="f-textarea" rows={2} placeholder="Optional notes…" value={form.notes} onChange={e => set("notes", e.target.value)} />
+            <textarea className="f-textarea" rows={2} placeholder="Optional notesâ¦" value={form.notes} onChange={e => set("notes", e.target.value)} />
           </div>
         </div>
       </div>
       <div className="modal-foot">
         <button className="btn" onClick={onClose}>Cancel</button>
-        <button className="btn btn-green" onClick={save}>💰 Record Payment</button>
+        <button className="btn btn-green" onClick={save}>ð° Record Payment</button>
       </div>
     </div>
   );
 }
 
-// ─── CLIENT TASK SUBMISSION MODAL ─────────────────────────────────────
+// âââ CLIENT TASK SUBMISSION MODAL âââââââââââââââââââââââââââââââââââââ
 function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tasks, setTasks, showToast }) {
   const { task } = data;
   const { docTpls } = useApp();
@@ -3747,7 +3792,7 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
 
   const noActionNeeded = !tpl || (tpl.infoFields.length === 0 && tpl.docSlots.length === 0);
 
-  // Validation — all required fields and docs per director
+  // Validation â all required fields and docs per director
   const isComplete = () => {
     if (noActionNeeded) return true;
     const checkDirs = isDirectorLevel ? directors : [1];
@@ -3792,7 +3837,7 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
     setSubmissions(ss => [...ss, newSub]);
     setTasks(ts => ts.map(t => t.id === task.id ? { ...t, status: "team_approval" } : t));
     setLoading(false);
-    showToast("Submitted! Your team will review within 1–2 working days.", "success");
+    showToast("Submitted! Your team will review within 1â2 working days.", "success");
     onClose();
   };
 
@@ -3802,13 +3847,13 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
       {/* Section header */}
       <div style={{ padding:"11px 16px", background:"linear-gradient(90deg,#F0F6FF,var(--white))", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", gap:10 }}>
         <div style={{ width:30,height:30,borderRadius:"50%",background:"var(--blue)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff",flexShrink:0 }}>
-          {isDirectorLevel ? dirIdx : "🏢"}
+          {isDirectorLevel ? dirIdx : "ð¢"}
         </div>
         <div>
           <div style={{ fontSize:13,fontWeight:700 }}>{label}</div>
           <div style={{ fontSize:11,color:"var(--muted)" }}>
             {(tpl?.infoFields||[]).filter(f=>f.required).length} required fields
-            {" · "}{(tpl?.docSlots||[]).filter(s=>s.required).length} required documents
+            {" Â· "}{(tpl?.docSlots||[]).filter(s=>s.required).length} required documents
           </div>
         </div>
       </div>
@@ -3816,7 +3861,7 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
       {/* Info fields */}
       {(tpl?.infoFields||[]).length > 0 && (
         <div style={{ padding:"14px 16px", borderBottom:(tpl?.docSlots||[]).length>0?"1px solid var(--border)":undefined }}>
-          <div style={{ fontSize:11,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>📝 Information</div>
+          <div style={{ fontSize:11,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>ð Information</div>
           <div className="form-grid-2">
             {(tpl?.infoFields||[]).map(f => (
               <div key={f.id} className="f-group" style={{ gridColumn: f.type==="textarea"?"1/-1":undefined }}>
@@ -3833,7 +3878,7 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
                   <select className="f-select"
                     value={formData[dirIdx]?.[f.id]||""}
                     onChange={e=>setField(dirIdx,f.id,e.target.value)}>
-                    <option value="">Select…</option>
+                    <option value="">Selectâ¦</option>
                     {(f.options||[]).map(o=><option key={o}>{o}</option>)}
                   </select>
                 ) : (
@@ -3851,13 +3896,13 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
       {/* Document slots */}
       {(tpl?.docSlots||[]).length > 0 && (
         <div style={{ padding:"14px 16px" }}>
-          <div style={{ fontSize:11,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>📎 Documents</div>
+          <div style={{ fontSize:11,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:10 }}>ð Documents</div>
           {(tpl?.docSlots||[]).map(slot => {
             const up = docData[dirIdx]?.[slot.id];
             return (
               <div key={slot.id} style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #F3F4F6" }}>
                 <div style={{ width:32,height:32,borderRadius:8,background:up?"#F0FDF4":"#F9FAFB",border:`1px solid ${up?"#BBF7D0":"var(--border)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0 }}>
-                  {up?"✅":"📄"}
+                  {up?"â":"ð"}
                 </div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13,fontWeight:500 }}>
@@ -3865,12 +3910,12 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
                     {slot.required && <span style={{ color:"var(--red)",marginLeft:3 }}>*</span>}
                   </div>
                   {up
-                    ? <div style={{ fontSize:11,color:"var(--green)",marginTop:1 }}>✓ {up.name} · {up.size} — <em style={{ color:"var(--muted)" }}>Cannot be removed after submission</em></div>
+                    ? <div style={{ fontSize:11,color:"var(--green)",marginTop:1 }}>â {up.name} Â· {up.size} â <em style={{ color:"var(--muted)" }}>Cannot be removed after submission</em></div>
                     : <div style={{ fontSize:11,color:"var(--muted)" }}>{slot.required?"Required":"Optional"}</div>
                   }
                 </div>
                 {!up
-                  ? <button className="btn btn-ghost btn-sm" onClick={()=>triggerUpload(dirIdx,slot.id)}>⬆ Upload</button>
+                  ? <button className="btn btn-ghost btn-sm" onClick={()=>triggerUpload(dirIdx,slot.id)}>â¬ Upload</button>
                   : <span style={{ fontSize:11,color:"var(--muted)" }}>Uploaded</span>
                 }
               </div>
@@ -3889,22 +3934,22 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
         <div>
           <div className="modal-title">{task.title}</div>
           <div style={{ fontSize:12,color:"var(--muted)",marginTop:2 }}>
-            {tpl ? `${tpl.name} — ${isDirectorLevel?`${directorCount} director${directorCount>1?"s":""}`:""} · ${tpl.collectionType==="director"?"Director-level collection":"Company-level collection"}` : "No collection required"}
+            {tpl ? `${tpl.name} â ${isDirectorLevel?`${directorCount} director${directorCount>1?"s":""}`:""} Â· ${tpl.collectionType==="director"?"Director-level collection":"Company-level collection"}` : "No collection required"}
           </div>
         </div>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose}>â</button>
       </div>
       <div className="modal-body">
         <input type="file" ref={fileRef} style={{ display:"none" }} onChange={onFile} />
 
         <div style={{ padding:"10px 14px",background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:8,marginBottom:16,fontSize:12,color:"#C2410C" }}>
-          ⚠️ Please complete all required fields and upload all documents before submitting.
-          Once submitted, <strong>documents cannot be deleted</strong> — only your team can request resubmission.
+          â ï¸ Please complete all required fields and upload all documents before submitting.
+          Once submitted, <strong>documents cannot be deleted</strong> â only your team can request resubmission.
         </div>
 
         {noActionNeeded ? (
           <div style={{ padding:"16px",background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:10,fontSize:13,color:"var(--green)" }}>
-            ✅ No information or documents required for this task. Click Submit to acknowledge.
+            â No information or documents required for this task. Click Submit to acknowledge.
           </div>
         ) : (
           <>
@@ -3917,12 +3962,12 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
 
         <div className="f-group" style={{ marginTop:16 }}>
           <label className="f-label">Additional Note for Team (optional)</label>
-          <textarea className="f-textarea" rows={2} placeholder="Any message for your team…" value={note} onChange={e=>setNote(e.target.value)} />
+          <textarea className="f-textarea" rows={2} placeholder="Any message for your teamâ¦" value={note} onChange={e=>setNote(e.target.value)} />
         </div>
 
         {!noActionNeeded && (
           <div style={{ marginTop:12,padding:"10px 14px",background:done?"#F0FDF4":"#FFF1F2",border:`1px solid ${done?"#BBF7D0":"#FECACA"}`,borderRadius:8,fontSize:12,color:done?"var(--green)":"var(--red)",fontWeight:600 }}>
-            {done ? "✓ All required fields complete — ready to submit!" : "⚠ Some required fields or documents are missing"}
+            {done ? "â All required fields complete â ready to submit!" : "â  Some required fields or documents are missing"}
           </div>
         )}
       </div>
@@ -3931,7 +3976,7 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
         <button className="btn btn-primary" onClick={submit} disabled={loading||(!noActionNeeded&&!done)} style={{ opacity:(!noActionNeeded&&!done)?0.5:1 }}>
           {loading
             ? <span style={{ display:"inline-block",width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .7s linear infinite" }}/>
-            : "Submit for Review →"
+            : "Submit for Review â"
           }
         </button>
       </div>
@@ -3939,7 +3984,7 @@ function ClientTaskSubmitModal({ data, onClose, submissions, setSubmissions, tas
   );
 }
 
-// ─── REVIEW SUBMISSION MODAL (Team) ──────────────────────────────────
+// âââ REVIEW SUBMISSION MODAL (Team) ââââââââââââââââââââââââââââââââââ
 function ReviewSubmissionModal({ data, onClose, submissions, setSubmissions, tasks, setTasks, showToast }) {
   const { submissionId } = data;
   const sub  = submissions.find(s => s.id === submissionId);
@@ -3962,7 +4007,7 @@ function ReviewSubmissionModal({ data, onClose, submissions, setSubmissions, tas
       status: approved ? "completed" : "client_action",
       completedDate: approved ? new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : null,
     } : t));
-    showToast(approved ? "Submission approved! Task marked complete." : "Changes requested — client notified.", approved?"success":"warning");
+    showToast(approved ? "Submission approved! Task marked complete." : "Changes requested â client notified.", approved?"success":"warning");
     onClose();
   };
 
@@ -3971,9 +4016,9 @@ function ReviewSubmissionModal({ data, onClose, submissions, setSubmissions, tas
       <div className="modal-head">
         <div>
           <div className="modal-title">Review Submission</div>
-          <div style={{ fontSize:12,color:"var(--muted)",marginTop:2 }}>{task.title} · {task.clientName}</div>
+          <div style={{ fontSize:12,color:"var(--muted)",marginTop:2 }}>{task.title} Â· {task.clientName}</div>
         </div>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose}>â</button>
       </div>
       <div className="modal-body">
         <SubmissionViewer sub={sub} tpl={tpl} task={task} onReview={()=>{}} />
@@ -3987,14 +4032,14 @@ function ReviewSubmissionModal({ data, onClose, submissions, setSubmissions, tas
       </div>
       <div className="modal-foot">
         <button className="btn" onClick={onClose}>Cancel</button>
-        <button className="btn btn-red" onClick={()=>decide(false)}>↩ Request Changes</button>
-        <button className="btn btn-green" onClick={()=>decide(true)}>✓ Approve & Complete</button>
+        <button className="btn btn-red" onClick={()=>decide(false)}>â© Request Changes</button>
+        <button className="btn btn-green" onClick={()=>decide(true)}>â Approve & Complete</button>
       </div>
     </div>
   );
 }
 
-// ─── CLIENT SELF REGISTRATION ─────────────────────────────────────────
+// âââ CLIENT SELF REGISTRATION âââââââââââââââââââââââââââââââââââââââââ
 function RegistrationPage({ onBack, showToast }) {
   const [step, setStep]   = useState(1);
   const [form, setForm]   = useState({ name: "", phone: "", email: "", password: "", confirmPassword: "", companyName: "", companyType: "Private Limited" });
@@ -4031,7 +4076,7 @@ function RegistrationPage({ onBack, showToast }) {
 
         {step < 4 && (
           <>
-            <button onClick={onBack} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 13, marginBottom: 20, display: "flex", alignItems: "center", gap: 4 }}>← Back to login</button>
+            <button onClick={onBack} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 13, marginBottom: 20, display: "flex", alignItems: "center", gap: 4 }}>â Back to login</button>
             <div style={{ fontFamily: "'Fraunces',serif", fontSize: 22, marginBottom: 4 }}>Create Account</div>
             <div style={{ fontSize: 11, color: "var(--muted)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 24 }}>Founders Bridge Portal</div>
 
@@ -4041,7 +4086,7 @@ function RegistrationPage({ onBack, showToast }) {
                 <div key={s} style={{ flex: 1, height: 4, borderRadius: 4, background: i + 1 <= step ? "var(--blue)" : "var(--border)", transition: ".3s" }} />
               ))}
             </div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 18 }}>Step {step} — {STEPS[step - 1]}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 18 }}>Step {step} â {STEPS[step - 1]}</div>
           </>
         )}
 
@@ -4050,7 +4095,7 @@ function RegistrationPage({ onBack, showToast }) {
             <div className="f-group"><label className="f-label">Full Name <span className="f-req">*</span></label><input className="f-input" placeholder="As per PAN card" value={form.name} onChange={e => set("name", e.target.value)} /></div>
             <div className="f-group"><label className="f-label">Mobile Number <span className="f-req">*</span></label><input className="f-input" type="tel" placeholder="10-digit mobile" value={form.phone} onChange={e => set("phone", e.target.value.replace(/\D/g, ""))} maxLength={10} /></div>
             <div className="f-group"><label className="f-label">Email Address <span className="f-req">*</span></label><input className="f-input" type="email" placeholder="your@email.com" value={form.email} onChange={e => set("email", e.target.value)} /></div>
-            <button className="btn btn-primary btn-lg" style={{ width: "100%", marginTop: 8 }} onClick={nextStep}>Next →</button>
+            <button className="btn btn-primary btn-lg" style={{ width: "100%", marginTop: 8 }} onClick={nextStep}>Next â</button>
           </div>
         )}
 
@@ -4059,8 +4104,8 @@ function RegistrationPage({ onBack, showToast }) {
             <div className="f-group"><label className="f-label">Set Password <span className="f-req">*</span></label><input className="f-input" type="password" placeholder="Minimum 6 characters" value={form.password} onChange={e => set("password", e.target.value)} /></div>
             <div className="f-group"><label className="f-label">Confirm Password <span className="f-req">*</span></label><input className="f-input" type="password" placeholder="Repeat password" value={form.confirmPassword} onChange={e => set("confirmPassword", e.target.value)} /></div>
             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-              <button className="btn" style={{ flex: 1 }} onClick={() => setStep(1)}>← Back</button>
-              <button className="btn btn-primary" style={{ flex: 2 }} onClick={nextStep}>Next →</button>
+              <button className="btn" style={{ flex: 1 }} onClick={() => setStep(1)}>â Back</button>
+              <button className="btn btn-primary" style={{ flex: 2 }} onClick={nextStep}>Next â</button>
             </div>
           </div>
         )}
@@ -4075,12 +4120,12 @@ function RegistrationPage({ onBack, showToast }) {
               </select>
             </div>
             <div style={{ padding: "12px 14px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 8, fontSize: 12, color: "var(--blue)" }}>
-              ℹ️ Our team will review your registration and be in touch within 24 hours to complete your onboarding.
+              â¹ï¸ Our team will review your registration and be in touch within 24 hours to complete your onboarding.
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn" style={{ flex: 1 }} onClick={() => setStep(2)}>← Back</button>
+              <button className="btn" style={{ flex: 1 }} onClick={() => setStep(2)}>â Back</button>
               <button className="btn btn-primary" style={{ flex: 2 }} onClick={submit} disabled={loading}>
-                {loading ? "Creating account…" : "Create Account →"}
+                {loading ? "Creating accountâ¦" : "Create Account â"}
               </button>
             </div>
           </div>
@@ -4088,14 +4133,14 @@ function RegistrationPage({ onBack, showToast }) {
 
         {step === 4 && (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
-            <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>ð</div>
             <div style={{ fontFamily: "'Fraunces',serif", fontSize: 24, marginBottom: 8 }}>Account Created!</div>
             <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>Welcome to Founders Bridge, <strong>{form.name}</strong>!</div>
             <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 20 }}>Our team will contact you within 24 hours to set up your portal.</div>
             <div style={{ padding: "10px 14px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, fontSize: 12, color: "var(--green)", marginBottom: 20 }}>
-              📲 A welcome message has been sent to your WhatsApp
+              ð² A welcome message has been sent to your WhatsApp
             </div>
-            <button className="btn btn-primary btn-lg" style={{ width: "100%" }} onClick={onBack}>Go to Login →</button>
+            <button className="btn btn-primary btn-lg" style={{ width: "100%" }} onClick={onBack}>Go to Login â</button>
           </div>
         )}
       </div>
@@ -4103,7 +4148,7 @@ function RegistrationPage({ onBack, showToast }) {
   );
 }
 
-// ─── REPORTS PAGE ─────────────────────────────────────────────────────
+// âââ REPORTS PAGE âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ReportsPage({ clients, invoices, tasks, employees, payments }) {
   const totalBilling   = clients.reduce((s, c) => s + c.totalBilling, 0);
   const totalCollected = clients.reduce((s, c) => s + c.collected, 0);
@@ -4165,10 +4210,10 @@ function ReportsPage({ clients, invoices, tasks, employees, payments }) {
   }));
 
   const REPORTS = [
-    { id: "clients",   icon: "🏢", title: "Client Report",    desc: `${clients.length} clients · ${INR(totalBilling)} total billing`,         data: clientReport,   file: "founders_bridge_clients.csv" },
-    { id: "invoices",  icon: "📄", title: "Invoice Report",   desc: `${invoices.length} invoices · ${INR(totalCollected)} collected`,          data: invoiceReport,  file: "founders_bridge_invoices.csv" },
-    { id: "tasks",     icon: "✅", title: "Task Report",      desc: `${tasks.length} total tasks · ${completedTasks} completed`,               data: taskReport,     file: "founders_bridge_tasks.csv" },
-    { id: "payments",  icon: "💰", title: "Payment Report",   desc: `${(payments||[]).length} payments · ${INR((payments||[]).reduce((s,p)=>s+p.amount,0))} collected`, data: paymentReport, file: "founders_bridge_payments.csv" },
+    { id: "clients",   icon: "ð¢", title: "Client Report",    desc: `${clients.length} clients Â· ${INR(totalBilling)} total billing`,         data: clientReport,   file: "founders_bridge_clients.csv" },
+    { id: "invoices",  icon: "ð", title: "Invoice Report",   desc: `${invoices.length} invoices Â· ${INR(totalCollected)} collected`,          data: invoiceReport,  file: "founders_bridge_invoices.csv" },
+    { id: "tasks",     icon: "â", title: "Task Report",      desc: `${tasks.length} total tasks Â· ${completedTasks} completed`,               data: taskReport,     file: "founders_bridge_tasks.csv" },
+    { id: "payments",  icon: "ð°", title: "Payment Report",   desc: `${(payments||[]).length} payments Â· ${INR((payments||[]).reduce((s,p)=>s+p.amount,0))} collected`, data: paymentReport, file: "founders_bridge_payments.csv" },
   ];
 
   return (
@@ -4197,7 +4242,7 @@ function ReportsPage({ clients, invoices, tasks, employees, payments }) {
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{r.title}</div>
               <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 16 }}>{r.desc}</div>
               <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => downloadCSV(r.data, r.file)}>
-                ⬇ Download CSV
+                â¬ Download CSV
               </button>
             </div>
           </div>
@@ -4205,13 +4250,13 @@ function ReportsPage({ clients, invoices, tasks, employees, payments }) {
       </div>
 
       <div style={{ marginTop: 20, padding: "12px 16px", background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 10, fontSize: 12, color: "#0369A1" }}>
-        ℹ️ Reports are downloaded as CSV files. Open in Excel or Google Sheets for analysis. PDF reports and automated monthly email reports are available in the Enterprise plan.
+        â¹ï¸ Reports are downloaded as CSV files. Open in Excel or Google Sheets for analysis. PDF reports and automated monthly email reports are available in the Enterprise plan.
       </div>
     </>
   );
 }
 
-// ─── CHANGE PASSWORD MODAL ────────────────────────────────────────────
+// âââ CHANGE PASSWORD MODAL ââââââââââââââââââââââââââââââââââââââââââââ
 function ChangePasswordModal({ onClose, showToast }) {
   const { user } = useApp();
   const [form, setForm] = useState({ current:"", newPwd:"", confirm:"" });
@@ -4236,10 +4281,10 @@ function ChangePasswordModal({ onClose, showToast }) {
 
   return (
     <div className="modal-box" style={{maxWidth:420}}>
-      <div className="modal-head"><div className="modal-title">Change Password</div><button className="modal-close" onClick={onClose}>✕</button></div>
+      <div className="modal-head"><div className="modal-title">Change Password</div><button className="modal-close" onClick={onClose}>â</button></div>
       <div className="modal-body">
         <div className="info-box" style={{background:"#EFF6FF",border:"1px solid #BFDBFE",marginBottom:16}}>
-          <span>🔐</span>
+          <span>ð</span>
           <div style={{fontSize:12,color:"var(--blue)"}}>Changing password for <strong>{user?.name}</strong> ({user?.email})</div>
         </div>
         <div className="form-grid">
@@ -4253,13 +4298,13 @@ function ChangePasswordModal({ onClose, showToast }) {
   );
 }
 
-// ─── POLICY PAGE ──────────────────────────────────────────────────────
+// âââ POLICY PAGE ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function PolicyPage({ onBack }) {
   const [tab, setTab] = useState("privacy");
   return (
     <div style={{minHeight:"100vh",background:"var(--cream)",display:"flex",flexDirection:"column"}}>
       <div style={{background:"var(--navy)",padding:"16px 28px",display:"flex",alignItems:"center",gap:16}}>
-        <button onClick={onBack} style={{background:"none",border:"none",color:"rgba(255,255,255,.7)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:4}}>← Back to Login</button>
+        <button onClick={onBack} style={{background:"none",border:"none",color:"rgba(255,255,255,.7)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:4}}>â Back to Login</button>
         <div style={{fontFamily:"'Fraunces',serif",fontSize:18,color:"#fff"}}>Founders Bridge LLP</div>
       </div>
       <div style={{maxWidth:800,margin:"0 auto",padding:"32px 24px",flex:1}}>
@@ -4341,7 +4386,7 @@ function PolicyPage({ onBack }) {
   );
 }
 
-// ─── PAYMENTS HISTORY PAGE ────────────────────────────────────────────
+// âââ PAYMENTS HISTORY PAGE ââââââââââââââââââââââââââââââââââââââââââââ
 function PaymentsPage({ payments, invoices, clients }) {
   const total = (payments || []).reduce((s, p) => s + p.amount, 0);
   const MODES = { bank_transfer: "Bank Transfer", upi: "UPI", cheque: "Cheque", cash: "Cash", cashfree: "Cashfree" };
@@ -4362,15 +4407,15 @@ function PaymentsPage({ payments, invoices, clients }) {
           <table>
             <thead><tr><th>Date</th><th>Client</th><th>Amount</th><th>Mode</th><th>Reference</th><th>Notes</th></tr></thead>
             <tbody>
-              {(payments || []).length === 0 && <tr><td colSpan={6}><div className="empty"><div className="empty-icon">💰</div><div>No payments recorded yet</div></div></td></tr>}
+              {(payments || []).length === 0 && <tr><td colSpan={6}><div className="empty"><div className="empty-icon">ð°</div><div>No payments recorded yet</div></div></td></tr>}
               {(payments || []).map(p => (
                 <tr key={p.id}>
                   <td style={{ fontSize: 12, whiteSpace: "nowrap" }}>{p.date}</td>
                   <td style={{ fontSize: 13, fontWeight: 500 }}>{p.clientName}</td>
                   <td style={{ fontSize: 14, fontWeight: 700, color: "var(--green)" }}>{INR(p.amount)}</td>
                   <td><span className="tag">{MODES[p.mode] || p.mode}</span></td>
-                  <td style={{ fontSize: 12, color: "var(--muted)", fontFamily: "monospace" }}>{p.reference || "—"}</td>
-                  <td style={{ fontSize: 12, color: "var(--muted)" }}>{p.notes || "—"}</td>
+                  <td style={{ fontSize: 12, color: "var(--muted)", fontFamily: "monospace" }}>{p.reference || "â"}</td>
+                  <td style={{ fontSize: 12, color: "var(--muted)" }}>{p.notes || "â"}</td>
                 </tr>
               ))}
             </tbody>
@@ -4381,7 +4426,7 @@ function PaymentsPage({ payments, invoices, clients }) {
   );
 }
 
-// ─── KRAYA SETTINGS PAGE ──────────────────────────────────────────────
+// âââ KRAYA SETTINGS PAGE ââââââââââââââââââââââââââââââââââââââââââââââ
 function KrayaSettings({ showToast }) {
   const [url,    setUrl]   = useState(process.env.REACT_APP_KRAYA_URL   || "");
   const [token,  setToken] = useState(process.env.REACT_APP_KRAYA_TOKEN || "");
@@ -4395,10 +4440,10 @@ function KrayaSettings({ showToast }) {
   return (
     <div style={{ maxWidth: 640 }}>
       <div className="card">
-        <div className="card-head"><div className="card-title">📲 Kraya WhatsApp Integration</div></div>
+        <div className="card-head"><div className="card-title">ð² Kraya WhatsApp Integration</div></div>
         <div className="card-body">
           <div style={{ padding: "10px 14px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, fontSize: 12, color: "#B45309", marginBottom: 16 }}>
-            ⚠️ Add your Kraya API token to <strong>REACT_APP_KRAYA_TOKEN</strong> in Vercel environment variables for live WhatsApp messages.
+            â ï¸ Add your Kraya API token to <strong>REACT_APP_KRAYA_TOKEN</strong> in Vercel environment variables for live WhatsApp messages.
           </div>
           <div className="form-grid">
             <div className="f-group">
@@ -4434,21 +4479,21 @@ function KrayaSettings({ showToast }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// COMPLETE COMBINED APP — Session 1 + Session 2
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// COMPLETE COMBINED APP â Session 1 + Session 2
 // This is the final merged export. Replace your App_Session1.jsx
 // with this complete version.
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-// ═══════════════════════════════════════════════════════════════════════
-// UPDATED EXPORTS — REPLACE THE ORIGINAL App() IN SESSION 1
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// UPDATED EXPORTS â REPLACE THE ORIGINAL App() IN SESSION 1
 // This version adds: notifications, payments, reports, registration,
 // task submission, review submission modals
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 // Extended App with all Session 2 features
 function AppV2() {
-  // ─── Restore session from localStorage ───────────────────────────
+  // âââ Restore session from localStorage âââââââââââââââââââââââââââ
   const getSavedUser = () => {
     try { return JSON.parse(localStorage.getItem("fb_user") || "null"); } catch { return null; }
   };
@@ -4465,7 +4510,7 @@ function AppV2() {
   const [showReg,   setShowReg] = useState(false);
   const [dbReady,   setDbReady] = useState(false);
 
-  // ─── Core data ────────────────────────────────────────────────────
+  // âââ Core data ââââââââââââââââââââââââââââââââââââââââââââââââââââ
   const [org,          setOrg]      = useState(DEFAULT_ORG);
   const [bundles,      setBundles]  = useState(DEFAULT_BUNDLES);
   const [docTpls,      setDocTpls]  = useState(DEFAULT_DOC_TEMPLATES);
@@ -4485,7 +4530,7 @@ function AppV2() {
   // Persist view to localStorage
   const setView = (v) => { setViewRaw(v); localStorage.setItem("fb_view", v); };
 
-  // ─── Load data from Supabase ──────────────────────────────────────
+  // âââ Load data from Supabase ââââââââââââââââââââââââââââââââââââââ
   const loadAll = async (currentUser) => {
     if (!currentUser) return;
     try {
@@ -4558,7 +4603,7 @@ function AppV2() {
     }
   };
 
-  // ─── Poll every 5s when logged in ────────────────────────────────
+  // âââ Poll every 5s when logged in ââââââââââââââââââââââââââââââââ
   useEffect(() => {
     if (!user) return;
     loadAll(user);
@@ -4566,7 +4611,7 @@ function AppV2() {
     return () => clearInterval(t);
   }, [user?.id]);
 
-  // ─── Login / Logout ───────────────────────────────────────────────
+  // âââ Login / Logout âââââââââââââââââââââââââââââââââââââââââââââââ
   const handleLogin = async (u) => {
     localStorage.setItem("fb_user", JSON.stringify(u));
     setUser(u);
@@ -4583,7 +4628,7 @@ function AppV2() {
     setInvoices(DEMO_INVOICES); setTickets(DEMO_TICKETS);
   };
 
-  // ─── DB write helpers ─────────────────────────────────────────────
+  // âââ DB write helpers âââââââââââââââââââââââââââââââââââââââââââââ
   const persistTaskUpdate = async (task) => {
     await sb.update("tasks","id",task.id,{
       status:task.status, notes:task.notes||"", assigned_to:task.assignedTo||null,
@@ -4795,69 +4840,69 @@ function AppV2() {
   const NAV_V2 = {
     admin: [
       { sec:"Overview", items:[
-        { id:"dashboard",      icon:"⬡",  label:"Dashboard"         },
-        { id:"analytics",      icon:"📊", label:"Analytics"         },
-        { id:"emp-analytics",  icon:"👤", label:"Employee Analytics" },
-        { id:"billing-summary",icon:"💹", label:"Billing Summary"   },
-        { id:"reports",        icon:"📈", label:"Reports"           },
+        { id:"dashboard",      icon:"â¬¡",  label:"Dashboard"         },
+        { id:"analytics",      icon:"ð", label:"Analytics"         },
+        { id:"emp-analytics",  icon:"ð¤", label:"Employee Analytics" },
+        { id:"billing-summary",icon:"ð¹", label:"Billing Summary"   },
+        { id:"reports",        icon:"ð", label:"Reports"           },
       ]},
       { sec:"Clients", items:[
-        { id:"clients",      icon:"🏢", label:"All Clients"      },
-        { id:"invoices",     icon:"📄", label:"Invoices"         },
-        { id:"payments",     icon:"💰", label:"Payments"         },
-        { id:"tasks",        icon:"✓",  label:"Tasks"            },
-        { id:"recurring",    icon:"🔄", label:"Recurring Tasks"  },
-        { id:"tickets",      icon:"🎫", label:"Tickets"          },
-        { id:"marketplace",  icon:"🛒", label:"Marketplace"      },
+        { id:"clients",      icon:"ð¢", label:"All Clients"      },
+        { id:"invoices",     icon:"ð", label:"Invoices"         },
+        { id:"payments",     icon:"ð°", label:"Payments"         },
+        { id:"tasks",        icon:"â",  label:"Tasks"            },
+        { id:"recurring",    icon:"ð", label:"Recurring Tasks"  },
+        { id:"tickets",      icon:"ð«", label:"Tickets"          },
+        { id:"marketplace",  icon:"ð", label:"Marketplace"      },
       ]},
       { sec:"Team", items:[
-        { id:"employees",    icon:"👥", label:"Employees"   },
+        { id:"employees",    icon:"ð¥", label:"Employees"   },
       ]},
       { sec:"Settings", items:[
-        { id:"settings-org",      icon:"🏛️", label:"Organisation"      },
-        { id:"settings-bundles",  icon:"📦", label:"Bundles & Services" },
-        { id:"settings-doctpls",  icon:"📋", label:"Document Templates" },
-        { id:"settings-users",    icon:"🔐", label:"Users & Roles"      },
-        { id:"settings-kraya",    icon:"📲", label:"WhatsApp (Kraya)"   },
+        { id:"settings-org",      icon:"ðï¸", label:"Organisation"      },
+        { id:"settings-bundles",  icon:"ð¦", label:"Bundles & Services" },
+        { id:"settings-doctpls",  icon:"ð", label:"Document Templates" },
+        { id:"settings-users",    icon:"ð", label:"Users & Roles"      },
+        { id:"settings-kraya",    icon:"ð²", label:"WhatsApp (Kraya)"   },
       ]},
     ],
     manager: [
       { sec:"Overview", items:[
-        { id:"dashboard",      icon:"⬡",  label:"Dashboard"         },
-        { id:"emp-analytics",  icon:"👤", label:"Employee Analytics" },
-        { id:"billing-summary",icon:"💹", label:"Billing Summary"   },
-        { id:"reports",        icon:"📈", label:"Reports"           },
+        { id:"dashboard",      icon:"â¬¡",  label:"Dashboard"         },
+        { id:"emp-analytics",  icon:"ð¤", label:"Employee Analytics" },
+        { id:"billing-summary",icon:"ð¹", label:"Billing Summary"   },
+        { id:"reports",        icon:"ð", label:"Reports"           },
       ]},
       { sec:"Clients", items:[
-        { id:"clients",      icon:"🏢", label:"All Clients"      },
-        { id:"invoices",     icon:"📄", label:"Invoices"         },
-        { id:"payments",     icon:"💰", label:"Payments"         },
-        { id:"tasks",        icon:"✓",  label:"Tasks"            },
-        { id:"recurring",    icon:"🔄", label:"Recurring Tasks"  },
-        { id:"tickets",      icon:"🎫", label:"Tickets"          },
-        { id:"marketplace",  icon:"🛒", label:"Marketplace"      },
+        { id:"clients",      icon:"ð¢", label:"All Clients"      },
+        { id:"invoices",     icon:"ð", label:"Invoices"         },
+        { id:"payments",     icon:"ð°", label:"Payments"         },
+        { id:"tasks",        icon:"â",  label:"Tasks"            },
+        { id:"recurring",    icon:"ð", label:"Recurring Tasks"  },
+        { id:"tickets",      icon:"ð«", label:"Tickets"          },
+        { id:"marketplace",  icon:"ð", label:"Marketplace"      },
       ]},
       { sec:"Team", items:[
-        { id:"employees",    icon:"👥", label:"Team"        },
+        { id:"employees",    icon:"ð¥", label:"Team"        },
       ]},
     ],
     employee: [
       { sec:"My Work", items:[
-        { id:"emp-dashboard", icon:"⬡",  label:"Dashboard"      },
-        { id:"emp-tasks",     icon:"✓",  label:"My Tasks"       },
-        { id:"emp-clients",   icon:"🏢", label:"My Clients"     },
-        { id:"recurring",     icon:"🔄", label:"Recurring Tasks"},
-        { id:"tickets",       icon:"🎫", label:"Tickets"        },
+        { id:"emp-dashboard", icon:"â¬¡",  label:"Dashboard"      },
+        { id:"emp-tasks",     icon:"â",  label:"My Tasks"       },
+        { id:"emp-clients",   icon:"ð¢", label:"My Clients"     },
+        { id:"recurring",     icon:"ð", label:"Recurring Tasks"},
+        { id:"tickets",       icon:"ð«", label:"Tickets"        },
       ]},
     ],
     client: [
       { sec:"My Portal", items:[
-        { id:"client-home",     icon:"🏢", label:"My Companies"   },
-        { id:"client-tasks",    icon:"✓",  label:"My Tasks"       },
-        { id:"client-invoices", icon:"💳", label:"My Billing"     },
-        { id:"client-docs",     icon:"📁", label:"Documents"      },
-        { id:"free-gifts",      icon:"🎁", label:"Free Resources" },
-        { id:"tickets",         icon:"🎫", label:"Raise a Query"  },
+        { id:"client-home",     icon:"ð¢", label:"My Companies"   },
+        { id:"client-tasks",    icon:"â",  label:"My Tasks"       },
+        { id:"client-invoices", icon:"ð³", label:"My Billing"     },
+        { id:"client-docs",     icon:"ð", label:"Documents"      },
+        { id:"free-gifts",      icon:"ð", label:"Free Resources" },
+        { id:"tickets",         icon:"ð«", label:"Raise a Query"  },
       ]},
     ],
   };
@@ -4925,11 +4970,11 @@ function AppV2() {
               <button
                 style={{flex:1,padding:"5px 8px",background:"rgba(255,255,255,.08)",border:"none",color:"rgba(255,255,255,.5)",fontSize:10,borderRadius:6,cursor:"pointer"}}
                 onClick={()=>openModal("change-password")}
-              >🔑 Change Password</button>
+              >ð Change Password</button>
               <button
                 style={{flex:1,padding:"5px 8px",background:"rgba(255,255,255,.08)",border:"none",color:"rgba(255,255,255,.5)",fontSize:10,borderRadius:6,cursor:"pointer"}}
                 onClick={()=>setView("policies")}
-              >📋 Policies</button>
+              >ð Policies</button>
             </div>
           </div>
         </aside>
@@ -4940,7 +4985,7 @@ function AppV2() {
             <div className="topbar-title">{TITLES[view] || "Founders Bridge"}</div>
             {/* Notification bell */}
             <div style={{position:"relative",cursor:"pointer",marginRight:8}} onClick={() => setView("notifications")}>
-              <span style={{fontSize:20}}>🔔</span>
+              <span style={{fontSize:20}}>ð</span>
               {unreadNotifs > 0 && (
                 <span style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"var(--red)",color:"#fff",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{unreadNotifs}</span>
               )}
@@ -5003,7 +5048,7 @@ function AppV2() {
   );
 }
 
-// ─── LOGIN V2 — with Register link ───────────────────────────────────
+// âââ LOGIN V2 â with Register link âââââââââââââââââââââââââââââââââââ
 function LoginPageV2({ onLogin, showToast, onRegister }) {
   const [mode, setMode]         = useState("password");
   const [identifier, setId]     = useState("");
@@ -5038,15 +5083,15 @@ function LoginPageV2({ onLogin, showToast, onRegister }) {
       <div className="auth-card">
         {/* Logo + Brand */}
         <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{width:56,height:56,borderRadius:16,background:"linear-gradient(135deg,var(--navy),var(--blue))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto 12px"}}>⚖️</div>
+          <div style={{width:56,height:56,borderRadius:16,background:"linear-gradient(135deg,var(--navy),var(--blue))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto 12px"}}>âï¸</div>
           <div style={{fontFamily:"'Fraunces',serif",fontSize:26,marginBottom:2}}>Founders Bridge</div>
           <div style={{fontSize:12,color:"var(--muted)",letterSpacing:1}}>Secure Portal</div>
         </div>
 
         {/* Login mode tabs */}
         <div className="auth-tabs" style={{marginBottom:20}}>
-          <div className={`auth-tab ${mode==="password"?"on":""}`} onClick={()=>{setMode("password");setError("");}}>🔑 Password Login</div>
-          <div className={`auth-tab ${mode==="otp"?"on":""}`} onClick={()=>{setMode("otp");setError("");}}>📱 OTP Login</div>
+          <div className={`auth-tab ${mode==="password"?"on":""}`} onClick={()=>{setMode("password");setError("");}}>ð Password Login</div>
+          <div className={`auth-tab ${mode==="otp"?"on":""}`} onClick={()=>{setMode("otp");setError("");}}>ð± OTP Login</div>
         </div>
 
         <div className="f-group" style={{marginBottom:14}}>
@@ -5064,7 +5109,7 @@ function LoginPageV2({ onLogin, showToast, onRegister }) {
             <button className="btn btn-primary btn-lg" style={{width:"100%"}} onClick={handleLogin} disabled={loading}>
               {loading
                 ? <span style={{display:"inline-block",width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .7s linear infinite"}}/>
-                : "Sign In →"
+                : "Sign In â"
               }
             </button>
           </>
@@ -5072,14 +5117,14 @@ function LoginPageV2({ onLogin, showToast, onRegister }) {
 
         {mode==="otp" && (
           <div style={{padding:"14px 16px",background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:8,fontSize:12,color:"#B45309",marginTop:4}}>
-            ⚠️ OTP login via SMS is coming soon. Please use password login for now.
+            â ï¸ OTP login via SMS is coming soon. Please use password login for now.
           </div>
         )}
 
         {/* Register link */}
         <div style={{textAlign:"center",marginTop:16,fontSize:12,color:"var(--muted)"}}>
           New here?{" "}
-          <span style={{color:"var(--blue)",cursor:"pointer",fontWeight:600}} onClick={onRegister}>Create account →</span>
+          <span style={{color:"var(--blue)",cursor:"pointer",fontWeight:600}} onClick={onRegister}>Create account â</span>
         </div>
 
         {/* Disclaimer */}
@@ -5103,7 +5148,7 @@ function LoginPageV2({ onLogin, showToast, onRegister }) {
   );
 }
 
-// ─── CLIENT TASKS V2 — with submission flow ───────────────────────────
+// âââ CLIENT TASKS V2 â with submission flow âââââââââââââââââââââââââââ
 function ClientTasksV2({ submissions, setSubs }) {
   const { tasks, setTasks, openModal, showToast } = useApp();
   // Show first client's tasks for demo
@@ -5128,7 +5173,7 @@ function ClientTasksV2({ submissions, setSubs }) {
                     <td>
                       <div style={{fontWeight:500,fontSize:13}}>{t.title}</div>
                       {sub?.status === "changes_requested" && (
-                        <div style={{fontSize:11,color:"var(--red)",marginTop:2}}>⚠️ Changes needed: {sub.reviewNote}</div>
+                        <div style={{fontSize:11,color:"var(--red)",marginTop:2}}>â ï¸ Changes needed: {sub.reviewNote}</div>
                       )}
                     </td>
                     <td>
@@ -5137,17 +5182,17 @@ function ClientTasksV2({ submissions, setSubs }) {
                     </td>
                     <td>
                       <span style={{fontSize:12,color:isOverdue?"var(--red)":"var(--muted)",fontWeight:isOverdue?700:400}}>
-                        {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short"}) : "—"}
+                        {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short"}) : "â"}
                       </span>
                     </td>
                     <td>
                       {(needsAction || sub?.status === "changes_requested") && (
                         <button className="btn btn-blue btn-sm" onClick={() => openModal("client-submit-task",{task:t})}>
-                          {sub?.status === "changes_requested" ? "Resubmit" : "Submit →"}
+                          {sub?.status === "changes_requested" ? "Resubmit" : "Submit â"}
                         </button>
                       )}
-                      {t.status === "completed" && <span style={{fontSize:12,color:"var(--green)",fontWeight:700}}>✓ Complete</span>}
-                      {submitted && <span style={{fontSize:12,color:"var(--purple)"}}>⏳ Reviewing</span>}
+                      {t.status === "completed" && <span style={{fontSize:12,color:"var(--green)",fontWeight:700}}>â Complete</span>}
+                      {submitted && <span style={{fontSize:12,color:"var(--purple)"}}>â³ Reviewing</span>}
                     </td>
                   </tr>
                 );
@@ -5160,10 +5205,10 @@ function ClientTasksV2({ submissions, setSubs }) {
   );
 }
 
-// ─── FINAL EXPORT ────────────────────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════════════
-// SECTION 3 — CASHFREE LIVE PAYMENT INTEGRATION
-// ═══════════════════════════════════════════════════════════════════════
+// âââ FINAL EXPORT ââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// SECTION 3 â CASHFREE LIVE PAYMENT INTEGRATION
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 // Paste your keys here OR set as Vercel environment variables (recommended)
 const CF_CONFIG = {
@@ -5174,7 +5219,7 @@ const CF_CONFIG = {
 };
 
 const CashfreeService = {
-  // Step 1: Create order — ⚠️ In production move to backend to hide secret key
+  // Step 1: Create order â â ï¸ In production move to backend to hide secret key
   async createOrder(invoice, customer) {
     const orderId = `FB_${invoice.invoiceNo.replace(/\//g,"_")}_${Date.now()}`;
     const amount  = invoice.pending;
@@ -5226,8 +5271,8 @@ const CashfreeService = {
         });
       }
       if (sessionId.startsWith("DEMO_SESSION")) {
-        // Demo mode — simulate success after 2 seconds
-        console.log("🎭 Cashfree DEMO mode — simulating payment");
+        // Demo mode â simulate success after 2 seconds
+        console.log("ð­ Cashfree DEMO mode â simulating payment");
         resolve({ demo: true, orderId });
         return;
       }
@@ -5287,10 +5332,10 @@ function PayNowModal({ data, onClose, invoices, setInvoices, payments, setPaymen
   };
 
   const METHODS = [
-    { id:"upi",  label:"UPI",                sub:"Google Pay, PhonePe, Paytm, any UPI",   icon:"📱" },
-    { id:"card", label:"Credit / Debit Card", sub:"Visa, Mastercard, RuPay",               icon:"💳" },
-    { id:"nb",   label:"Net Banking",         sub:"All major Indian banks",                icon:"🏦" },
-    { id:"emi",  label:"EMI",                 sub:"Available on eligible cards",           icon:"📅" },
+    { id:"upi",  label:"UPI",                sub:"Google Pay, PhonePe, Paytm, any UPI",   icon:"ð±" },
+    { id:"card", label:"Credit / Debit Card", sub:"Visa, Mastercard, RuPay",               icon:"ð³" },
+    { id:"nb",   label:"Net Banking",         sub:"All major Indian banks",                icon:"ð¦" },
+    { id:"emi",  label:"EMI",                 sub:"Available on eligible cards",           icon:"ð" },
   ];
 
   return (
@@ -5298,13 +5343,13 @@ function PayNowModal({ data, onClose, invoices, setInvoices, payments, setPaymen
       <div className="modal-box" style={{ maxWidth:440 }}>
         {step==="confirm" && (
           <>
-            <div className="modal-head"><div className="modal-title">Pay Invoice</div><button className="modal-close" onClick={onClose}>✕</button></div>
+            <div className="modal-head"><div className="modal-title">Pay Invoice</div><button className="modal-close" onClick={onClose}>â</button></div>
             <div className="modal-body">
               {/* Amount display */}
               <div style={{ background:"linear-gradient(135deg,#0F172A,#1E40AF)", borderRadius:12, padding:"20px 22px", marginBottom:20, color:"#fff" }}>
                 <div style={{ fontSize:11, opacity:.7, textTransform:"uppercase", letterSpacing:"1.5px", marginBottom:6 }}>Amount Due</div>
                 <div style={{ fontFamily:"'Fraunces',serif", fontSize:38 }}>{INR(outstanding)}</div>
-                <div style={{ fontSize:11, opacity:.7, marginTop:4 }}>{invoice.invoiceNo} · {invoice.clientName}</div>
+                <div style={{ fontSize:11, opacity:.7, marginTop:4 }}>{invoice.invoiceNo} Â· {invoice.clientName}</div>
               </div>
               {/* Payment methods */}
               <div style={{ marginBottom:16 }}>
@@ -5320,12 +5365,12 @@ function PayNowModal({ data, onClose, invoices, setInvoices, payments, setPaymen
                 ))}
               </div>
               <div style={{ display:"flex",alignItems:"center",gap:8,padding:"9px 12px",background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:8,fontSize:11,color:"var(--green)",marginBottom:16 }}>
-                🔒 <strong>Secured by Cashfree Payments</strong> · 256-bit SSL · PCI-DSS compliant
+                ð <strong>Secured by Cashfree Payments</strong> Â· 256-bit SSL Â· PCI-DSS compliant
               </div>
             </div>
             <div className="modal-foot">
               <button className="btn" onClick={onClose}>Cancel</button>
-              <button className="btn btn-green" style={{ padding:"9px 24px" }} onClick={pay}>Pay {INR(outstanding)} →</button>
+              <button className="btn btn-green" style={{ padding:"9px 24px" }} onClick={pay}>Pay {INR(outstanding)} â</button>
             </div>
           </>
         )}
@@ -5334,19 +5379,19 @@ function PayNowModal({ data, onClose, invoices, setInvoices, payments, setPaymen
             <div style={{ width:44,height:44,border:"3px solid #E5E4DF",borderTopColor:"var(--blue)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto 20px" }}/>
             <div style={{ fontFamily:"'Fraunces',serif",fontSize:20,marginBottom:8 }}>Processing Payment</div>
             <div style={{ fontSize:13,color:"var(--muted)" }}>Please wait. Do not close this window.</div>
-            <div style={{ marginTop:12,fontSize:11,color:"var(--faint)",animation:"pulse 1.5s ease infinite" }}>Connecting to Cashfree…</div>
+            <div style={{ marginTop:12,fontSize:11,color:"var(--faint)",animation:"pulse 1.5s ease infinite" }}>Connecting to Cashfreeâ¦</div>
           </div>
         )}
         {step==="success" && (
           <div style={{ padding:"48px 28px", textAlign:"center" }}>
-            <div style={{ fontSize:52,marginBottom:16 }}>✅</div>
+            <div style={{ fontSize:52,marginBottom:16 }}>â</div>
             <div style={{ fontFamily:"'Fraunces',serif",fontSize:22,marginBottom:8 }}>Payment Successful!</div>
             <div style={{ fontSize:13,color:"var(--muted)" }}>{INR(outstanding)} paid for {invoice.invoiceNo}</div>
           </div>
         )}
         {step==="failed" && (
           <div style={{ padding:"48px 28px", textAlign:"center" }}>
-            <div style={{ fontSize:52,marginBottom:16 }}>❌</div>
+            <div style={{ fontSize:52,marginBottom:16 }}>â</div>
             <div style={{ fontFamily:"'Fraunces',serif",fontSize:22,marginBottom:8 }}>Payment Failed</div>
             <div style={{ fontSize:12,color:"var(--red)",marginBottom:20 }}>{errMsg||"Something went wrong. Please try again."}</div>
             <div style={{ display:"flex",gap:10,justifyContent:"center" }}>
@@ -5360,13 +5405,13 @@ function PayNowModal({ data, onClose, invoices, setInvoices, payments, setPaymen
   );
 }
 
-// Add Pay Now button to InvoicesTable — wrap existing with payment modal trigger
+// Add Pay Now button to InvoicesTable â wrap existing with payment modal trigger
 // The InvoicesPage and InvoicesTable already exist above; this adds the modal trigger
-// In AppV2, add modal handler: modal?.id==="pay-now" → <PayNowModal ... />
+// In AppV2, add modal handler: modal?.id==="pay-now" â <PayNowModal ... />
 
-// ═══════════════════════════════════════════════════════════════════════
-// SECTION 4 — MSG91 OTP LOGIN
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// SECTION 4 â MSG91 OTP LOGIN
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 // Paste your MSG91 keys here OR set as Vercel env vars (recommended)
 const MSG91_CONFIG = {
@@ -5385,10 +5430,10 @@ const OTPService = {
     const otp     = this.generate();
     const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
     this._otpStore[phone] = { otp, expires };
-    console.log(`🔐 OTP for ${phone}: ${otp}`); // Remove in production
+    console.log(`ð OTP for ${phone}: ${otp}`); // Remove in production
 
     if (!MSG91_CONFIG.AUTH_KEY) {
-      // Demo mode — OTP visible in console only
+      // Demo mode â OTP visible in console only
       return { success: true, demo: true, otp };
     }
 
@@ -5416,10 +5461,10 @@ const OTPService = {
   },
 };
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // DOCUMENT TEMPLATES SETTINGS PAGE
 // Admin can add / edit / delete field lists and doc slot lists per template
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 function DocTemplatesSettings() {
   const { docTpls, setDocTpls, showToast } = useApp();
@@ -5455,7 +5500,7 @@ function DocTemplatesSettings() {
 
   if (editing && form) return (
     <div style={{ maxWidth:780 }}>
-      <button className="btn" style={{ marginBottom:16 }} onClick={()=>setEditing(null)}>← Back</button>
+      <button className="btn" style={{ marginBottom:16 }} onClick={()=>setEditing(null)}>â Back</button>
       <div className="card">
         <div className="card-head"><div className="card-title">Edit Template</div></div>
         <div className="card-body">
@@ -5468,8 +5513,8 @@ function DocTemplatesSettings() {
             <div className="f-group">
               <label className="f-label">Collection Level</label>
               <select className="f-select" value={form.collectionType} onChange={e=>setF("collectionType",e.target.value)}>
-                <option value="common">Common — collected once per company</option>
-                <option value="director">Director-level — once per director (repeats)</option>
+                <option value="common">Common â collected once per company</option>
+                <option value="director">Director-level â once per director (repeats)</option>
               </select>
             </div>
           </div>
@@ -5477,10 +5522,10 @@ function DocTemplatesSettings() {
           {/* Info fields */}
           <div style={{ marginBottom:24 }}>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
-              <div style={{ fontSize:13,fontWeight:700 }}>📝 Information Fields ({form.infoFields.length})</div>
+              <div style={{ fontSize:13,fontWeight:700 }}>ð Information Fields ({form.infoFields.length})</div>
               <button className="btn btn-ghost btn-sm" onClick={addField}>+ Add Field</button>
             </div>
-            {form.infoFields.length===0 && <div style={{ fontSize:12,color:"var(--muted)",padding:"12px",background:"#FAFAF8",borderRadius:8,textAlign:"center" }}>No fields yet — click Add Field</div>}
+            {form.infoFields.length===0 && <div style={{ fontSize:12,color:"var(--muted)",padding:"12px",background:"#FAFAF8",borderRadius:8,textAlign:"center" }}>No fields yet â click Add Field</div>}
             {form.infoFields.map((f,i) => (
               <div key={f.id} style={{ display:"flex",gap:8,alignItems:"flex-start",marginBottom:8,padding:10,background:"#FAFAF8",borderRadius:8,border:"1px solid var(--border)" }}>
                 <div style={{ flex:2 }}>
@@ -5504,7 +5549,7 @@ function DocTemplatesSettings() {
                     <input type="checkbox" checked={f.required} onChange={e=>updField(i,"required",e.target.checked)} />
                     Required
                   </label>
-                  <button className="btn btn-sm btn-red" onClick={()=>delField(i)}>✕</button>
+                  <button className="btn btn-sm btn-red" onClick={()=>delField(i)}>â</button>
                 </div>
               </div>
             ))}
@@ -5513,10 +5558,10 @@ function DocTemplatesSettings() {
           {/* Doc slots */}
           <div>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
-              <div style={{ fontSize:13,fontWeight:700 }}>📎 Document Slots ({form.docSlots.length})</div>
+              <div style={{ fontSize:13,fontWeight:700 }}>ð Document Slots ({form.docSlots.length})</div>
               <button className="btn btn-ghost btn-sm" onClick={addSlot}>+ Add Document Slot</button>
             </div>
-            {form.docSlots.length===0 && <div style={{ fontSize:12,color:"var(--muted)",padding:"12px",background:"#FAFAF8",borderRadius:8,textAlign:"center" }}>No document slots yet — click Add Document Slot</div>}
+            {form.docSlots.length===0 && <div style={{ fontSize:12,color:"var(--muted)",padding:"12px",background:"#FAFAF8",borderRadius:8,textAlign:"center" }}>No document slots yet â click Add Document Slot</div>}
             {form.docSlots.map((s,i) => (
               <div key={s.id} style={{ display:"flex",gap:8,alignItems:"center",marginBottom:8,padding:10,background:"#FAFAF8",borderRadius:8,border:"1px solid var(--border)" }}>
                 <div style={{ flex:1 }}>
@@ -5526,7 +5571,7 @@ function DocTemplatesSettings() {
                   <input type="checkbox" checked={s.required} onChange={e=>updSlot(i,"required",e.target.checked)} />
                   Required
                 </label>
-                <button className="btn btn-sm btn-red" onClick={()=>delSlot(i)}>✕</button>
+                <button className="btn btn-sm btn-red" onClick={()=>delSlot(i)}>â</button>
               </div>
             ))}
           </div>
@@ -5567,20 +5612,20 @@ function DocTemplatesSettings() {
             <div className="card-body" style={{ padding:0 }}>
               {tpl.infoFields.slice(0,4).map(f=>(
                 <div key={f.id} className="row-item" style={{ padding:"8px 16px" }}>
-                  <span style={{ fontSize:13 }}>📝</span>
+                  <span style={{ fontSize:13 }}>ð</span>
                   <div style={{ flex:1,fontSize:12 }}>{f.label}</div>
                   <span style={{ fontSize:10,color:f.required?"var(--red)":"var(--muted)" }}>{f.required?"Required":"Optional"}</span>
                 </div>
               ))}
-              {tpl.infoFields.length>4 && <div style={{ padding:"6px 16px",fontSize:11,color:"var(--muted)" }}>+{tpl.infoFields.length-4} more fields…</div>}
+              {tpl.infoFields.length>4 && <div style={{ padding:"6px 16px",fontSize:11,color:"var(--muted)" }}>+{tpl.infoFields.length-4} more fieldsâ¦</div>}
               {tpl.docSlots.slice(0,3).map(s=>(
                 <div key={s.id} className="row-item" style={{ padding:"8px 16px",background:"#FAFAF8" }}>
-                  <span style={{ fontSize:13 }}>📄</span>
+                  <span style={{ fontSize:13 }}>ð</span>
                   <div style={{ flex:1,fontSize:12 }}>{s.label}</div>
                   <span style={{ fontSize:10,color:s.required?"var(--red)":"var(--muted)" }}>{s.required?"Required":"Optional"}</span>
                 </div>
               ))}
-              {tpl.docSlots.length>3 && <div style={{ padding:"6px 16px",fontSize:11,color:"var(--muted)" }}>+{tpl.docSlots.length-3} more doc slots…</div>}
+              {tpl.docSlots.length>3 && <div style={{ padding:"6px 16px",fontSize:11,color:"var(--muted)" }}>+{tpl.docSlots.length-3} more doc slotsâ¦</div>}
             </div>
           </div>
         ))}
@@ -5589,9 +5634,9 @@ function DocTemplatesSettings() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// BATCH B — BILLING SUMMARY PAGE
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// BATCH B â BILLING SUMMARY PAGE
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -5650,7 +5695,7 @@ function BillingSummaryPage() {
 
       {/* Monthly billing chart */}
       <div className="card card-gold" style={{ marginBottom:20 }}>
-        <div className="card-head"><div className="card-title">Monthly Billing & Collections — {now.getFullYear()}</div></div>
+        <div className="card-head"><div className="card-title">Monthly Billing & Collections â {now.getFullYear()}</div></div>
         <div className="card-body">
           <div style={{ display:"flex",gap:16,alignItems:"center",marginBottom:16,fontSize:12 }}>
             {[["Billed","var(--navy)"],["Collected","var(--green)"],["Gross Margin","var(--gold-dk)"]].map(([l,c])=>(
@@ -5717,17 +5762,17 @@ function BillingSummaryPage() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// BATCH B — RECURRING TASKS ENGINE
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// BATCH B â RECURRING TASKS ENGINE
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 const RECURRING_TEMPLATES = [
-  { id:"gst_monthly",    name:"GST Return Filing",           freq:"monthly",  dayOfMonth:20, category:"GST",        icon:"📊" },
-  { id:"tds_quarterly",  name:"TDS Return Filing",           freq:"quarterly",months:[7,10,1,4], dayOfMonth:31, category:"TDS", icon:"💼" },
-  { id:"roc_annual",     name:"Annual ROC Filing",           freq:"yearly",   month:11, dayOfMonth:30, category:"ROC", icon:"🏛️" },
-  { id:"pt_monthly",     name:"Professional Tax",            freq:"monthly",  dayOfMonth:15, category:"PT",         icon:"💰" },
-  { id:"mca_annual",     name:"MCA Annual Return",           freq:"yearly",   month:9,  dayOfMonth:30, category:"MCA", icon:"📋" },
-  { id:"audit_annual",   name:"Annual Audit",                freq:"yearly",   month:9,  dayOfMonth:30, category:"Audit",icon:"🔍" },
+  { id:"gst_monthly",    name:"GST Return Filing",           freq:"monthly",  dayOfMonth:20, category:"GST",        icon:"ð" },
+  { id:"tds_quarterly",  name:"TDS Return Filing",           freq:"quarterly",months:[7,10,1,4], dayOfMonth:31, category:"TDS", icon:"ð¼" },
+  { id:"roc_annual",     name:"Annual ROC Filing",           freq:"yearly",   month:11, dayOfMonth:30, category:"ROC", icon:"ðï¸" },
+  { id:"pt_monthly",     name:"Professional Tax",            freq:"monthly",  dayOfMonth:15, category:"PT",         icon:"ð°" },
+  { id:"mca_annual",     name:"MCA Annual Return",           freq:"yearly",   month:9,  dayOfMonth:30, category:"MCA", icon:"ð" },
+  { id:"audit_annual",   name:"Annual Audit",                freq:"yearly",   month:9,  dayOfMonth:30, category:"Audit",icon:"ð" },
 ];
 
 function RecurringTasksPage() {
@@ -5801,7 +5846,7 @@ function RecurringTasksPage() {
       dates.forEach((d, idx) => {
         newTasks.push({
           id: "rt_"+uuid(),
-          title: `${tpl.name} — ${new Date(d).toLocaleDateString("en-IN",{month:"short",year:"numeric"})}`,
+          title: `${tpl.name} â ${new Date(d).toLocaleDateString("en-IN",{month:"short",year:"numeric"})}`,
           clientId: cId, clientName: client?.name||"",
           invoiceId: null, assignedTo: assignTo, status: "open",
           sequence: idx+1, requirementType: "none",
@@ -5815,7 +5860,7 @@ function RecurringTasksPage() {
     });
 
     setTasks(ts=>[...ts,...newTasks]);
-    showToast(`✅ ${newTasks.length} tasks created across ${dates.length} periods for ${selClients.length} client${selClients.length>1?"s":""}!`,"success");
+    showToast(`â ${newTasks.length} tasks created across ${dates.length} periods for ${selClients.length} client${selClients.length>1?"s":""}!`,"success");
     setSelClients([]); setSelTemplate(""); setCreating(false); setPreview([]);
   };
 
@@ -5846,7 +5891,7 @@ function RecurringTasksPage() {
               <div className="f-group">
                 <label className="f-label">Service Template <span className="f-req">*</span></label>
                 <select className="f-select" value={selTemplate} onChange={e=>{setSelTemplate(e.target.value);setPreview([]);}}>
-                  <option value="">Select template…</option>
+                  <option value="">Select templateâ¦</option>
                   {RECURRING_TEMPLATES.map(t=><option key={t.id} value={t.id}>{t.icon} {t.name} ({t.freq})</option>)}
                 </select>
                 {selTemplate && (
@@ -5855,8 +5900,8 @@ function RecurringTasksPage() {
                       const tpl = RECURRING_TEMPLATES.find(t=>t.id===selTemplate);
                       if (!tpl) return "";
                       if (tpl.freq==="monthly") return `Due on ${tpl.dayOfMonth}th of every month`;
-                      if (tpl.freq==="quarterly") return `Due quarterly — ${tpl.months?.map(m=>["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m]).join(", ")} ${tpl.dayOfMonth}`;
-                      if (tpl.freq==="yearly") return `Due annually — ${["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][tpl.month]} ${tpl.dayOfMonth}`;
+                      if (tpl.freq==="quarterly") return `Due quarterly â ${tpl.months?.map(m=>["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m]).join(", ")} ${tpl.dayOfMonth}`;
+                      if (tpl.freq==="yearly") return `Due annually â ${["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][tpl.month]} ${tpl.dayOfMonth}`;
                       return "";
                     })()}
                   </div>
@@ -5885,7 +5930,7 @@ function RecurringTasksPage() {
                 {clients.map(c=>(
                   <div key={c.id} onClick={()=>{setSelClients(s=>s.includes(c.id)?s.filter(x=>x!==c.id):[...s,c.id]);setPreview([]);}}
                     style={{ padding:"5px 14px",borderRadius:20,fontSize:12,fontWeight:600,cursor:"pointer",border:`1.5px solid ${selClients.includes(c.id)?"var(--gold)":"var(--border)"}`,background:selClients.includes(c.id)?"var(--gold-lt)":"#fff",color:selClients.includes(c.id)?"var(--gold-dk)":"var(--muted)",transition:".15s" }}>
-                    {selClients.includes(c.id)?"✓ ":""}{c.name}
+                    {selClients.includes(c.id)?"â ":""}{c.name}
                   </div>
                 ))}
               </div>
@@ -5893,7 +5938,7 @@ function RecurringTasksPage() {
             </div>
 
             {/* Preview */}
-            <button className="btn btn-sm" style={{ marginBottom:12 }} onClick={previewTasks}>👁 Preview Tasks to be Created</button>
+            <button className="btn btn-sm" style={{ marginBottom:12 }} onClick={previewTasks}>ð Preview Tasks to be Created</button>
             {preview.length > 0 && (
               <div style={{ maxHeight:200,overflowY:"auto",border:"1px solid var(--border)",borderRadius:8,marginBottom:16 }}>
                 <div style={{ padding:"8px 14px",background:"var(--gold-lt)",borderBottom:"1px solid var(--border)",fontSize:12,fontWeight:700,color:"var(--gold-dk)" }}>
@@ -5906,14 +5951,14 @@ function RecurringTasksPage() {
                     <span style={{ marginLeft:"auto",color:"var(--navy)",fontWeight:600 }}>Due: {new Date(p.date).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</span>
                   </div>
                 ))}
-                {preview.length > 20 && <div style={{ padding:"7px 14px",fontSize:11,color:"var(--muted)" }}>+{preview.length-20} more…</div>}
+                {preview.length > 20 && <div style={{ padding:"7px 14px",fontSize:11,color:"var(--muted)" }}>+{preview.length-20} moreâ¦</div>}
               </div>
             )}
 
             <div style={{ display:"flex",gap:10 }}>
               <button className="btn" onClick={()=>{setCreating(false);setPreview([]);}}>Cancel</button>
               <button className="btn btn-gold" onClick={create}>
-                ✅ Create {preview.length > 0 ? `${preview.length} Tasks` : "Tasks"} →
+                â Create {preview.length > 0 ? `${preview.length} Tasks` : "Tasks"} â
               </button>
             </div>
           </div>
@@ -5942,10 +5987,10 @@ function RecurringTasksPage() {
           <div key={tplId} className="card" style={{ marginBottom:16 }}>
             <div className="card-head">
               <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-                <span style={{ fontSize:20 }}>{tpl?.icon||"🔄"}</span>
+                <span style={{ fontSize:20 }}>{tpl?.icon||"ð"}</span>
                 <div>
                   <div className="card-title">{tpl?.name||tplId}</div>
-                  <div style={{ fontSize:11,color:"var(--muted)" }}>{taskList.length} tasks · {tpl?.freq}</div>
+                  <div style={{ fontSize:11,color:"var(--muted)" }}>{taskList.length} tasks Â· {tpl?.freq}</div>
                 </div>
               </div>
               <span className="tag tag-gold">{tpl?.category}</span>
@@ -5962,12 +6007,12 @@ function RecurringTasksPage() {
                         <td style={{ fontSize:12,color:"var(--muted)" }}>{t.clientName}</td>
                         <td>
                           <span style={{ fontSize:12,fontWeight:600,color:isOverdue?"var(--red)":"var(--ink)" }}>
-                            {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : "—"}
-                            {isOverdue&&" ⚠️"}
+                            {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : "â"}
+                            {isOverdue&&" â ï¸"}
                           </span>
                         </td>
                         <td><Badge status={t.status}/></td>
-                        <td style={{ fontSize:11,color:"var(--muted)" }}>{t.startDate||"—"} → {t.endDate||"Ongoing"}</td>
+                        <td style={{ fontSize:11,color:"var(--muted)" }}>{t.startDate||"â"} â {t.endDate||"Ongoing"}</td>
                       </tr>
                     );
                   })}
@@ -5981,7 +6026,7 @@ function RecurringTasksPage() {
       {recurringTasks.length===0 && (
         <div className="card">
           <div className="empty">
-            <div className="empty-icon">🔄</div>
+            <div className="empty-icon">ð</div>
             <div style={{ fontWeight:600,marginBottom:6 }}>No recurring tasks yet</div>
             <div style={{ fontSize:13 }}>Set up GST filing, annual ROC compliance, TDS returns etc.</div>
           </div>
@@ -5992,9 +6037,9 @@ function RecurringTasksPage() {
 }
 
 
-// ═══════════════════════════════════════════════════════════════════════
-// BATCH B — TICKET / QUERY SYSTEM
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// BATCH B â TICKET / QUERY SYSTEM
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 const DEMO_TICKETS = [
   { id:"tk1", ticketNo:"TK-001", clientId:"c1", clientName:"TechSpark Solutions Pvt Ltd", subject:"DSC not working on MCA portal", description:"Our DSC is showing error when logging into MCA portal. Getting error code 2304.", priority:"high", status:"open", assignedTo:"e1", createdAt:"Jun 1, 2025", updatedAt:"Jun 1, 2025", responses:[], tat:null },
@@ -6061,7 +6106,7 @@ function TicketsPage() {
     if (!t) return null;
     return (
       <>
-        <button className="btn" style={{ marginBottom:16 }} onClick={()=>setSelTicket(null)}>← All Tickets</button>
+        <button className="btn" style={{ marginBottom:16 }} onClick={()=>setSelTicket(null)}>â All Tickets</button>
         <div className="card">
           <div className="card-head">
             <div>
@@ -6069,11 +6114,11 @@ function TicketsPage() {
                 <div className="card-title">{t.subject}</div>
                 <span className="tag" style={{ background:PRIORITY_COLORS[t.priority]+"20",color:PRIORITY_COLORS[t.priority] }}>{t.priority}</span>
               </div>
-              <div style={{ fontSize:12,color:"var(--muted)",marginTop:3 }}>{t.ticketNo} · {t.clientName} · Opened {t.createdAt}</div>
+              <div style={{ fontSize:12,color:"var(--muted)",marginTop:3 }}>{t.ticketNo} Â· {t.clientName} Â· Opened {t.createdAt}</div>
             </div>
             <div style={{ display:"flex",gap:10,alignItems:"center" }}>
               <span style={{ fontSize:12,fontWeight:700,color:STATUS_COLORS[t.status],background:STATUS_COLORS[t.status]+"18",padding:"4px 10px",borderRadius:20 }}>{t.status.replace("_"," ")}</span>
-              {isTeam && t.status!=="resolved" && <button className="btn btn-green btn-sm" onClick={()=>resolveTicket(t.id)}>✓ Resolve</button>}
+              {isTeam && t.status!=="resolved" && <button className="btn btn-green btn-sm" onClick={()=>resolveTicket(t.id)}>â Resolve</button>}
             </div>
           </div>
           <div className="card-body">
@@ -6086,15 +6131,15 @@ function TicketsPage() {
             {t.responses.map((r,i)=>(
               <div key={i} style={{ display:"flex",gap:12,marginBottom:14,justifyContent:r.by==="team"?"flex-start":"flex-end" }}>
                 <div style={{ maxWidth:"80%",padding:"10px 14px",borderRadius:10,background:r.by==="team"?"var(--navy)":"var(--gold-lt)",color:r.by==="team"?"#fff":"var(--ink)" }}>
-                  <div style={{ fontSize:10,opacity:.7,marginBottom:4,textTransform:"uppercase",letterSpacing:"1px" }}>{r.by==="team"?"Founders Bridge Team":"You"} · {r.date}</div>
+                  <div style={{ fontSize:10,opacity:.7,marginBottom:4,textTransform:"uppercase",letterSpacing:"1px" }}>{r.by==="team"?"Founders Bridge Team":"You"} Â· {r.date}</div>
                   <div style={{ fontSize:13 }}>{r.text}</div>
                 </div>
               </div>
             ))}
             {t.status!=="resolved" && (
               <div>
-                <textarea className="f-textarea" rows={3} placeholder="Type your response…" value={response} onChange={e=>setResponse(e.target.value)} style={{ marginBottom:10 }}/>
-                <button className="btn btn-primary" onClick={()=>addResponse(t.id)}>Send Response →</button>
+                <textarea className="f-textarea" rows={3} placeholder="Type your responseâ¦" value={response} onChange={e=>setResponse(e.target.value)} style={{ marginBottom:10 }}/>
+                <button className="btn btn-primary" onClick={()=>addResponse(t.id)}>Send Response â</button>
               </div>
             )}
           </div>
@@ -6127,7 +6172,7 @@ function TicketsPage() {
                 <div className="f-group">
                   <label className="f-label">Client</label>
                   <select className="f-select" value={form.clientId} onChange={e=>setForm(f=>({...f,clientId:e.target.value}))}>
-                    <option value="">Select client…</option>
+                    <option value="">Select clientâ¦</option>
                     {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
@@ -6141,16 +6186,16 @@ function TicketsPage() {
                 <select className="f-select" value={form.priority} onChange={e=>setForm(f=>({...f,priority:e.target.value}))}>
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
-                  <option value="high">High — Urgent</option>
+                  <option value="high">High â Urgent</option>
                 </select>
               </div>
               <div className="f-group">
                 <label className="f-label">Description</label>
-                <textarea className="f-textarea" rows={4} placeholder="Describe your query in detail…" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} />
+                <textarea className="f-textarea" rows={4} placeholder="Describe your query in detailâ¦" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} />
               </div>
               <div style={{ display:"flex",gap:10 }}>
                 <button className="btn" onClick={()=>setNewTicket(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={createTicket}>Submit Ticket →</button>
+                <button className="btn btn-primary" onClick={createTicket}>Submit Ticket â</button>
               </div>
             </div>
           </div>
@@ -6162,19 +6207,19 @@ function TicketsPage() {
           <div className="card-title">Tickets</div>
           {isTeam && (
             <div style={{ fontSize:12,color:"var(--muted)" }}>
-              {tickets.filter(t=>t.status==="open").length} open ·{" "}
-              {tickets.filter(t=>t.status==="in_progress").length} in progress ·{" "}
-              Avg TAT: {tickets.filter(t=>t.tat).length>0 ? tickets.filter(t=>t.tat).map(t=>t.tat)[0] : "—"}
+              {tickets.filter(t=>t.status==="open").length} open Â·{" "}
+              {tickets.filter(t=>t.status==="in_progress").length} in progress Â·{" "}
+              Avg TAT: {tickets.filter(t=>t.tat).length>0 ? tickets.filter(t=>t.tat).map(t=>t.tat)[0] : "â"}
             </div>
           )}
         </div>
         {visible.length===0 ? (
-          <div className="empty"><div className="empty-icon">🎫</div><div>No tickets found</div></div>
+          <div className="empty"><div className="empty-icon">ð«</div><div>No tickets found</div></div>
         ) : (
           visible.map(t=>(
             <div key={t.id} className={`ticket-row ticket-priority-${t.priority}`} onClick={()=>setSelTicket(t.id)}>
               <div style={{ width:40,height:40,borderRadius:10,background:STATUS_COLORS[t.status]+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0 }}>
-                {t.status==="resolved"?"✅":t.priority==="high"?"🔴":t.priority==="medium"?"🟡":"🟢"}
+                {t.status==="resolved"?"â":t.priority==="high"?"ð´":t.priority==="medium"?"ð¡":"ð¢"}
               </div>
               <div style={{ flex:1 }}>
                 <div style={{ display:"flex",alignItems:"center",gap:8 }}>
@@ -6182,9 +6227,9 @@ function TicketsPage() {
                   <span style={{ fontSize:10,background:PRIORITY_COLORS[t.priority]+"20",color:PRIORITY_COLORS[t.priority],padding:"1px 6px",borderRadius:4,fontWeight:700 }}>{t.priority}</span>
                 </div>
                 <div style={{ fontSize:11,color:"var(--muted)",marginTop:2 }}>
-                  {t.ticketNo} · {t.clientName} · {t.createdAt}
-                  {t.responses.length>0&&<span style={{ marginLeft:8 }}>💬 {t.responses.length} response{t.responses.length!==1?"s":""}</span>}
-                  {t.tat&&<span style={{ marginLeft:8,color:"var(--green)" }}>✓ Resolved in {t.tat}</span>}
+                  {t.ticketNo} Â· {t.clientName} Â· {t.createdAt}
+                  {t.responses.length>0&&<span style={{ marginLeft:8 }}>ð¬ {t.responses.length} response{t.responses.length!==1?"s":""}</span>}
+                  {t.tat&&<span style={{ marginLeft:8,color:"var(--green)" }}>â Resolved in {t.tat}</span>}
                 </div>
               </div>
               <div style={{ display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4 }}>
@@ -6201,9 +6246,9 @@ function TicketsPage() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // EMPLOYEE EFFICIENCY ANALYTICS
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function EmployeeAnalyticsPage() {
   const { employees, tasks, clients } = useApp();
   const [period, setPeriod] = useState("monthly");
@@ -6272,7 +6317,7 @@ function EmployeeAnalyticsPage() {
               <div className="av av-lg" style={{ background:emp.color }}>{emp.avatar}</div>
               <div>
                 <div className="card-title">{emp.name}</div>
-                <div style={{ fontSize:12,color:"var(--muted)" }}>{emp.role} · {emp.clients} clients · {emp.allTasks} total tasks</div>
+                <div style={{ fontSize:12,color:"var(--muted)" }}>{emp.role} Â· {emp.clients} clients Â· {emp.allTasks} total tasks</div>
               </div>
             </div>
             <div style={{ textAlign:"right" }}>
@@ -6302,9 +6347,9 @@ function EmployeeAnalyticsPage() {
                 <div style={{ fontSize:12,fontWeight:700,marginBottom:8,color:"var(--navy)" }}>Overdue Ageing</div>
                 <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8 }}>
                   {[
-                    ["12–24 hrs", emp.aged12, "#FFF8EC","#B45309"],
-                    ["24–48 hrs", emp.aged24, "#FEF2F2","#DC2626"],
-                    ["48–72 hrs", emp.aged48, "#FFF1F2","#BE123C"],
+                    ["12â24 hrs", emp.aged12, "#FFF8EC","#B45309"],
+                    ["24â48 hrs", emp.aged24, "#FEF2F2","#DC2626"],
+                    ["48â72 hrs", emp.aged48, "#FFF1F2","#BE123C"],
                     ["72 hrs+",   emp.aged72p,"#FDF2F8","#9D174D"],
                   ].map(([l,v,bg,c])=>(
                     <div key={l} style={{ padding:"10px",borderRadius:8,background:bg,textAlign:"center",border:`1px solid ${c}30` }}>
@@ -6333,9 +6378,9 @@ function EmployeeAnalyticsPage() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// MANAGER DASHBOARD — with overdue ageing focus
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// MANAGER DASHBOARD â with overdue ageing focus
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ManagerDashboard() {
   const { clients, tasks, employees, invoices, user, setView } = useApp();
   const [drill, setDrill] = useState(null);
@@ -6357,26 +6402,26 @@ function ManagerDashboard() {
 
   return (
     <>
-      {/* Overdue ageing — main focus for manager */}
+      {/* Overdue ageing â main focus for manager */}
       <div className="card card-gold" style={{ marginBottom:20 }}>
         <div className="card-head">
-          <div className="card-title">⚠️ Overdue Tasks — Ageing Analysis</div>
+          <div className="card-title">â ï¸ Overdue Tasks â Ageing Analysis</div>
           <div style={{ fontSize:12,color:"var(--muted)" }}>{overdue.length} total overdue</div>
         </div>
         <div className="card-body">
           <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16 }}>
             {[
               ["< 24 Hours",  aged12.length,  "#FFF8EC","#B45309","Low Risk"],
-              ["24–48 Hours", aged24.length,  "#FEF2F2","#DC2626","Needs Action"],
-              ["48–72 Hours", aged48.length,  "#FFF1F2","#BE123C","Urgent"],
+              ["24â48 Hours", aged24.length,  "#FEF2F2","#DC2626","Needs Action"],
+              ["48â72 Hours", aged48.length,  "#FFF1F2","#BE123C","Urgent"],
               ["72 Hours +",  aged72p.length, "#FDF2F8","#9D174D","Critical"],
             ].map(([l,v,bg,c,tag])=>(
               <div key={l} style={{ padding:"16px",borderRadius:12,background:bg,border:`1.5px solid ${c}30`,cursor:"pointer",transition:".2s" }}
                 onClick={()=>setDrill({list: overdue.filter(t=>{
                   const h=(now-new Date(t.dueDate))/(1000*3600);
                   if(l==="< 24 Hours") return h<24;
-                  if(l==="24–48 Hours") return h>=24&&h<48;
-                  if(l==="48–72 Hours") return h>=48&&h<72;
+                  if(l==="24â48 Hours") return h>=24&&h<48;
+                  if(l==="48â72 Hours") return h>=48&&h<72;
                   return h>=72;
                 }), title:l+" Overdue"})}>
                 <div style={{ fontSize:28,fontWeight:700,color:c,fontFamily:"'Cormorant Garamond',serif" }}>{v}</div>
@@ -6386,7 +6431,7 @@ function ManagerDashboard() {
             ))}
           </div>
           {overdue.length===0 && (
-            <div style={{ textAlign:"center",padding:"20px",color:"var(--green)",fontWeight:600 }}>✅ No overdue tasks! Great work by the team.</div>
+            <div style={{ textAlign:"center",padding:"20px",color:"var(--green)",fontWeight:600 }}>â No overdue tasks! Great work by the team.</div>
           )}
         </div>
       </div>
@@ -6394,17 +6439,17 @@ function ManagerDashboard() {
       {/* Stats */}
       <div className="stat-grid grid4" style={{ marginBottom:20 }}>
         {[
-          { id:"clients",  icon:"🏢", label:"Active Clients",   val:myClients.filter(c=>c.status==="active").length, color:"var(--blue)",  note:`${myClients.length} total` },
-          { id:"review",   icon:"📥", label:"Pending Review",   val:pendingReview.length,                            color:"#7C3AED",     note:"Submissions awaiting review" },
-          { id:"client_a", icon:"⚠️", label:"Client Action Due",val:clientAction.length,                             color:"var(--orange)",note:"Waiting for client" },
-          { id:"overdue",  icon:"🔴", label:"Overdue",          val:overdue.length,                                  color:"var(--red)",  note:`${aged72p.length} critical (72hr+)` },
+          { id:"clients",  icon:"ð¢", label:"Active Clients",   val:myClients.filter(c=>c.status==="active").length, color:"var(--blue)",  note:`${myClients.length} total` },
+          { id:"review",   icon:"ð¥", label:"Pending Review",   val:pendingReview.length,                            color:"#7C3AED",     note:"Submissions awaiting review" },
+          { id:"client_a", icon:"â ï¸", label:"Client Action Due",val:clientAction.length,                             color:"var(--orange)",note:"Waiting for client" },
+          { id:"overdue",  icon:"ð´", label:"Overdue",          val:overdue.length,                                  color:"var(--red)",  note:`${aged72p.length} critical (72hr+)` },
         ].map(s=>(
           <div key={s.id} className="stat-box" onClick={()=>setDrill({list:s.id==="review"?pendingReview:s.id==="client_a"?clientAction:s.id==="overdue"?overdue:null, title:s.label})}>
             <div className="stat-icon">{s.icon}</div>
             <div className="stat-lbl">{s.label}</div>
             <div className="stat-val" style={{ color:s.color,fontSize:22 }}>{s.val}</div>
             <div className="stat-note">{s.note}</div>
-            <div className="stat-drill">Click to expand →</div>
+            <div className="stat-drill">Click to expand â</div>
           </div>
         ))}
       </div>
@@ -6414,7 +6459,7 @@ function ManagerDashboard() {
         <div className="card">
           <div className="card-head">
             <div className="card-title">Team Performance</div>
-            <button className="btn btn-sm" onClick={()=>setView("analytics")}>Full Analytics →</button>
+            <button className="btn btn-sm" onClick={()=>setView("analytics")}>Full Analytics â</button>
           </div>
           {employees.map(emp=>{
             const empTasks    = tasks.filter(t=>t.assignedTo===emp.id);
@@ -6426,7 +6471,7 @@ function ManagerDashboard() {
                 <div className="av av-md" style={{ background:emp.color }}>{emp.avatar}</div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13,fontWeight:600 }}>{emp.name}</div>
-                  <div style={{ fontSize:11,color:"var(--muted)" }}>{empCompleted}/{empTasks.length} done · {empOverdue.length} overdue</div>
+                  <div style={{ fontSize:11,color:"var(--muted)" }}>{empCompleted}/{empTasks.length} done Â· {empOverdue.length} overdue</div>
                   <div className="prog-bg" style={{ marginTop:5,maxWidth:160 }}>
                     <div className="prog-fill" style={{ width:pct+"%",background:pct>=80?"var(--green)":pct>=50?"var(--gold)":"var(--red)" }}/>
                   </div>
@@ -6443,7 +6488,7 @@ function ManagerDashboard() {
           </div>
           {tasks.filter(t=>t.status==="team_approval").slice(0,5).map(t=>(
             <div key={t.id} className="row-item">
-              <span style={{ fontSize:18 }}>📥</span>
+              <span style={{ fontSize:18 }}>ð¥</span>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:13,fontWeight:500 }}>{t.title}</div>
                 <div style={{ fontSize:11,color:"var(--muted)" }}>{t.clientName}</div>
@@ -6463,7 +6508,7 @@ function ManagerDashboard() {
           <div className="drill-panel">
             <div className="drill-head">
               <div className="drill-title">{drill.title}</div>
-              <button onClick={()=>setDrill(null)} style={{ background:"none",border:"none",fontSize:22,cursor:"pointer",color:"var(--muted)" }}>✕</button>
+              <button onClick={()=>setDrill(null)} style={{ background:"none",border:"none",fontSize:22,cursor:"pointer",color:"var(--muted)" }}>â</button>
             </div>
             <div className="drill-body">
               <TasksTable tasks={drill.list} showClient={true}/>
@@ -6475,50 +6520,50 @@ function ManagerDashboard() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // CROSS-SELL TRIGGER + FREE GIFTS + MARKETPLACE
-// ═══════════════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 // Free gifts/resources available for download
 const FREE_GIFTS = [
   {
     id:"g1", name:"Startup Kit 2025",
-    desc:"Complete startup guide — legal checklist, tax calendar, compliance tracker",
-    icon:"🎁", format:"PDF", pages:24, triggerOn:"registration_complete",
+    desc:"Complete startup guide â legal checklist, tax calendar, compliance tracker",
+    icon:"ð", format:"PDF", pages:24, triggerOn:"registration_complete",
     downloadUrl:"#", color:"var(--gold)",
   },
   {
     id:"g2", name:"GST Compliance Calendar",
     desc:"Month-by-month GST filing calendar with due dates and penalties",
-    icon:"📅", format:"PDF", pages:8, triggerOn:"gst_registered",
+    icon:"ð", format:"PDF", pages:8, triggerOn:"gst_registered",
     downloadUrl:"#", color:"var(--blue)",
   },
   {
     id:"g3", name:"Director KYC Checklist",
     desc:"Complete KYC document checklist for all directors",
-    icon:"📋", format:"PDF", pages:4, triggerOn:"always",
+    icon:"ð", format:"PDF", pages:4, triggerOn:"always",
     downloadUrl:"#", color:"var(--green)",
   },
   {
     id:"g4", name:"Startup India Guide",
     desc:"Step-by-step guide to Startup India recognition and benefits",
-    icon:"🚀", format:"PDF", pages:16, triggerOn:"registration_complete",
+    icon:"ð", format:"PDF", pages:16, triggerOn:"registration_complete",
     downloadUrl:"#", color:"#7C3AED",
   },
 ];
 
 // Marketplace services
 const MARKETPLACE_SERVICES = [
-  { id:"ms1", category:"GST",          icon:"📊", name:"GST Registration",          price:2500,  desc:"GSTIN registration for your business" },
-  { id:"ms2", category:"GST",          icon:"📊", name:"GST Return Filing (Annual)",price:12000, desc:"All GST returns for 12 months" },
-  { id:"ms3", category:"Compliance",   icon:"🏛️", name:"Annual ROC Compliance",     price:8000,  desc:"Annual return filing with MCA" },
-  { id:"ms4", category:"Compliance",   icon:"🏛️", name:"Annual Audit",              price:15000, desc:"Statutory audit by CA" },
-  { id:"ms5", category:"Tax",          icon:"💼", name:"Income Tax Return (Co)",     price:6000,  desc:"Corporate ITR filing" },
-  { id:"ms6", category:"Tax",          icon:"💼", name:"TDS Returns (Quarterly)",   price:4000,  desc:"4 quarters TDS filing" },
-  { id:"ms7", category:"Trademark",    icon:"™️",  name:"Trademark Registration",    price:8500,  desc:"Class 1 trademark application" },
-  { id:"ms8", category:"Startup India",icon:"🚀", name:"Startup India Recognition", price:5000,  desc:"DPIIT recognition certificate" },
-  { id:"ms9", category:"MSME",         icon:"🏭", name:"MSME/Udyam Registration",   price:1500,  desc:"Udyam certificate" },
-  { id:"ms10",category:"Payroll",      icon:"👥", name:"Payroll Processing (Monthly)",price:2000,desc:"Monthly payroll & compliance" },
+  { id:"ms1", category:"GST",          icon:"ð", name:"GST Registration",          price:2500,  desc:"GSTIN registration for your business" },
+  { id:"ms2", category:"GST",          icon:"ð", name:"GST Return Filing (Annual)",price:12000, desc:"All GST returns for 12 months" },
+  { id:"ms3", category:"Compliance",   icon:"ðï¸", name:"Annual ROC Compliance",     price:8000,  desc:"Annual return filing with MCA" },
+  { id:"ms4", category:"Compliance",   icon:"ðï¸", name:"Annual Audit",              price:15000, desc:"Statutory audit by CA" },
+  { id:"ms5", category:"Tax",          icon:"ð¼", name:"Income Tax Return (Co)",     price:6000,  desc:"Corporate ITR filing" },
+  { id:"ms6", category:"Tax",          icon:"ð¼", name:"TDS Returns (Quarterly)",   price:4000,  desc:"4 quarters TDS filing" },
+  { id:"ms7", category:"Trademark",    icon:"â¢ï¸",  name:"Trademark Registration",    price:8500,  desc:"Class 1 trademark application" },
+  { id:"ms8", category:"Startup India",icon:"ð", name:"Startup India Recognition", price:5000,  desc:"DPIIT recognition certificate" },
+  { id:"ms9", category:"MSME",         icon:"ð­", name:"MSME/Udyam Registration",   price:1500,  desc:"Udyam certificate" },
+  { id:"ms10",category:"Payroll",      icon:"ð¥", name:"Payroll Processing (Monthly)",price:2000,desc:"Monthly payroll & compliance" },
 ];
 
 function MarketplacePage() {
@@ -6540,7 +6585,7 @@ function MarketplacePage() {
     if (!selClient) { showToast("Select a client first","error"); return; }
     if (cart.length===0) { showToast("Add at least one service to cart","error"); return; }
     const client = clients.find(c=>c.id===selClient);
-    showToast(`✅ ${cart.length} services submitted to sales team for ${client?.name}!`,"success");
+    showToast(`â ${cart.length} services submitted to sales team for ${client?.name}!`,"success");
     setSubmitted(true);
     setCart([]);
   };
@@ -6548,7 +6593,7 @@ function MarketplacePage() {
   if (submitted) return (
     <div className="card" style={{ maxWidth:500,margin:"40px auto" }}>
       <div className="card-body" style={{ textAlign:"center",padding:"40px 30px" }}>
-        <div style={{ fontSize:52,marginBottom:16 }}>🎉</div>
+        <div style={{ fontSize:52,marginBottom:16 }}>ð</div>
         <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:24,marginBottom:8 }}>Submitted to Sales Team!</div>
         <div style={{ fontSize:13,color:"var(--muted)",marginBottom:20 }}>The sales team will reach out to the client within 24 hours.</div>
         <button className="btn btn-primary" onClick={()=>setSubmitted(false)}>Browse More Services</button>
@@ -6563,14 +6608,14 @@ function MarketplacePage() {
         <div style={{ position:"sticky",top:58,zIndex:40,marginBottom:16 }}>
           <div style={{ background:"linear-gradient(135deg,var(--navy),#1E3A5F)",borderRadius:10,padding:"14px 20px",display:"flex",alignItems:"center",gap:16,boxShadow:"0 4px 20px rgba(11,31,58,.3)" }}>
             <div style={{ fontSize:13,color:"#fff",flex:1 }}>
-              🛒 <strong>{cart.length} service{cart.length>1?"s":""}</strong> in cart · Total: <strong style={{ color:"#C9A14A" }}>₹{cart.reduce((s,c)=>s+c.price,0).toLocaleString("en-IN")}</strong>
+              ð <strong>{cart.length} service{cart.length>1?"s":""}</strong> in cart Â· Total: <strong style={{ color:"#C9A14A" }}>â¹{cart.reduce((s,c)=>s+c.price,0).toLocaleString("en-IN")}</strong>
             </div>
             <select className="f-select" style={{ width:220,background:"rgba(255,255,255,.1)",color:"#fff",border:"1px solid rgba(255,255,255,.2)" }}
               value={selClient} onChange={e=>setSelCli(e.target.value)}>
-              <option value="">Select client for pitch…</option>
+              <option value="">Select client for pitchâ¦</option>
               {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            <button className="btn btn-gold" onClick={submitCart}>Submit to Sales →</button>
+            <button className="btn btn-gold" onClick={submitCart}>Submit to Sales â</button>
           </div>
         </div>
       )}
@@ -6597,12 +6642,12 @@ function MarketplacePage() {
                 <div style={{ fontSize:12,color:"var(--muted)",marginBottom:14 }}>{svc.desc}</div>
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
                   <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:"var(--navy)" }}>
-                    ₹{svc.price.toLocaleString("en-IN")}
+                    â¹{svc.price.toLocaleString("en-IN")}
                   </div>
                   <button
                     className={`btn btn-sm ${inCart?"btn-gold":"btn-primary"}`}
                     onClick={()=>addToCart(svc)}>
-                    {inCart ? "✓ In Cart" : "+ Add"}
+                    {inCart ? "â In Cart" : "+ Add"}
                   </button>
                 </div>
               </div>
@@ -6639,7 +6684,7 @@ function FreeGiftsPage() {
     a.href = gift.downloadUrl;
     a.download = gift.name + ".pdf";
     // For demo, show a message
-    alert(`📥 Downloading "${gift.name}".\n\nIn production, this downloads from secure server storage.`);
+    alert(`ð¥ Downloading "${gift.name}".\n\nIn production, this downloads from secure server storage.`);
   };
 
   return (
@@ -6649,7 +6694,7 @@ function FreeGiftsPage() {
         <div style={{ padding:"16px 20px",background:"linear-gradient(135deg,var(--navy),#1E3A5F)",borderRadius:12,marginBottom:20,color:"#fff" }}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
             <div>
-              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,marginBottom:3 }}>Complete your registration to unlock all gifts 🎁</div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,marginBottom:3 }}>Complete your registration to unlock all gifts ð</div>
               <div style={{ fontSize:12,opacity:.7 }}>{doneTasks} of {totalTasks} tasks completed</div>
             </div>
             <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:32,color:"#C9A14A",fontWeight:700 }}>{progress}%</div>
@@ -6662,7 +6707,7 @@ function FreeGiftsPage() {
 
       {regComplete && (
         <div style={{ padding:"16px 20px",background:"linear-gradient(135deg,var(--green),#15803D)",borderRadius:12,marginBottom:20,color:"#fff",display:"flex",alignItems:"center",gap:14 }}>
-          <span style={{ fontSize:32 }}>🎉</span>
+          <span style={{ fontSize:32 }}>ð</span>
           <div>
             <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18 }}>Registration Complete! All gifts unlocked.</div>
             <div style={{ fontSize:12,opacity:.8 }}>Thank you for choosing Founders Bridge. Download your free resources below.</div>
@@ -6679,7 +6724,7 @@ function FreeGiftsPage() {
               {!unlocked && (
                 <div style={{ position:"absolute",inset:0,background:"rgba(247,246,242,.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2,backdropFilter:"blur(2px)" }}>
                   <div style={{ textAlign:"center" }}>
-                    <div style={{ fontSize:32 }}>🔒</div>
+                    <div style={{ fontSize:32 }}>ð</div>
                     <div style={{ fontSize:12,color:"var(--navy)",fontWeight:700,marginTop:6 }}>Complete registration to unlock</div>
                   </div>
                 </div>
@@ -6690,13 +6735,13 @@ function FreeGiftsPage() {
                 </div>
                 <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:"var(--navy)",marginBottom:6 }}>{gift.name}</div>
                 <div style={{ fontSize:12,color:"var(--muted)",marginBottom:4 }}>{gift.desc}</div>
-                <div style={{ fontSize:11,color:"var(--faint)",marginBottom:14 }}>{gift.format} · {gift.pages} pages</div>
+                <div style={{ fontSize:11,color:"var(--faint)",marginBottom:14 }}>{gift.format} Â· {gift.pages} pages</div>
                 <button
                   className="btn btn-primary btn-sm"
                   style={{ width:"100%",background:unlocked?"var(--navy)":"var(--muted)" }}
                   disabled={!unlocked}
                   onClick={()=>download(gift)}>
-                  {unlocked ? "⬇ Download Free" : "🔒 Locked"}
+                  {unlocked ? "â¬ Download Free" : "ð Locked"}
                 </button>
               </div>
             </div>
@@ -6719,13 +6764,13 @@ function CrossSellAlert({ client, tasks }) {
 
   return (
     <div style={{ padding:"14px 18px",background:"linear-gradient(135deg,var(--navy),#1E3A5F)",borderRadius:12,marginBottom:16,color:"#fff",display:"flex",alignItems:"center",gap:14,animation:"fadeUp .3s ease" }}>
-      <span style={{ fontSize:28 }}>🎯</span>
+      <span style={{ fontSize:28 }}>ð¯</span>
       <div style={{ flex:1 }}>
-        <div style={{ fontSize:14,fontWeight:700,marginBottom:3 }}>Registration Complete — Cross-sell Opportunity!</div>
+        <div style={{ fontSize:14,fontWeight:700,marginBottom:3 }}>Registration Complete â Cross-sell Opportunity!</div>
         <div style={{ fontSize:12,opacity:.8 }}><strong style={{ color:"#C9A14A" }}>{client.name}</strong> has completed all registration tasks. Time to pitch annual compliance, GST filing, or Startup India!</div>
       </div>
       <div style={{ display:"flex",gap:8,flexShrink:0 }}>
-        <button className="btn btn-gold btn-sm" onClick={()=>setView("marketplace")}>Pitch Services →</button>
+        <button className="btn btn-gold btn-sm" onClick={()=>setView("marketplace")}>Pitch Services â</button>
         <button onClick={()=>setDismissed(true)} style={{ background:"rgba(255,255,255,.1)",border:"none",color:"rgba(255,255,255,.5)",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:11 }}>Dismiss</button>
       </div>
     </div>

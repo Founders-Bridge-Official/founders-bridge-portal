@@ -40,9 +40,9 @@ export default function Login() {
     return (
       <div className="login-wrapper">
         <div className="login-card">
-          <div className="login-logo"><img src="/assets/public_images/foundersbridge-icon.jpeg" alt="Founders Bridge" /></div>
+          <div className="login-logo"><img src="https://foundersbridge.co.in/assets/public_images/foundersbridge-icon.jpeg" alt="Founders Bridge" /></div>
           <h2>Check your email</h2>
-          <p className="login-subtitle">We sent a login link to <strong>{email}</strong>.<br />Click the link to sign in — no password needed.</p>
+          <p className="login-subtitle">We sent a login link to <strong>{email}</strong>.<br />Click the link to sign in â no password needed.</p>
           <button className="btn-link" onClick={() => { setOtpSent(false); setEmail(''); }}>Use a different email</button>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function Login() {
   return (
     <div className="login-wrapper">
       <div className="login-card">
-        <div className="login-logo"><img src="/assets/public_images/foundersbridge-icon.jpeg" alt="Founders Bridge" /></div>
+        <div className="login-logo"><img src="https://foundersbridge.co.in/assets/public_images/foundersbridge-icon.jpeg" alt="Founders Bridge" /></div>
         <h1 className="login-title">Client Portal</h1>
         <p className="login-subtitle">Sign in to track your tasks, documents &amp; filings.</p>
         <div className="login-tabs">
@@ -67,12 +67,12 @@ export default function Login() {
           {mode === 'password' && (
             <div className="field">
               <label htmlFor="password">Password</label>
-              <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required autoComplete="current-password" />
+              <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="â¢â¢â¢â¢â¢â¢â¢â¢" required autoComplete="current-password" />
             </div>
           )}
           {error && <p className="login-error">{error}</p>}
           <button type="submit" className="btn-primary" disabled={submitting || loading}>
-            {submitting ? 'Please wait…' : mode === 'password' ? 'Sign in' : 'Send magic link'}
+            {submitting ? 'Please waitâ¦' : mode === 'password' ? 'Sign in' : 'Send magic link'}
           </button>
         </form>
         {mode === 'password' && (

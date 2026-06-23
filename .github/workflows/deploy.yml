@@ -3,7 +3,7 @@ name: Build & Deploy to Cloudflare Pages
 on:
   push:
     branches: [main]
-  workflow_dispatch:   # allows manual trigger from GitHub Actions tab
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -14,19 +14,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 18
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: '22'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build React app
         run: npm run build
         env:
-          CI: false   # CRA exits on warnings without this; keep false until warnings are cleaned up
+          CI: false
           REACT_APP_SUPABASE_URL: https://suodxuignbbsxmqrfagx.supabase.co
           REACT_APP_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b2R4dWlnbmJic3htcXJmYWd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NzI2MzAsImV4cCI6MjA5NjE0ODYzMH0.pQVau8xGbgQzVl7JijINms2ZEuaKzXmSQpwWS8jpbaY
 

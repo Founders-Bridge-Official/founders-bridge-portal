@@ -1,20 +1,17 @@
-// src/lib/supabase.js
-// Single shared Supabase client for the entire app.
-// Reads credentials from env vars injected by Cloudflare Workers (wrangler.toml [vars]).
-
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl  = import.meta.env.VITE_SUPABASE_URL  || process.env.SUPABASE_URL;
-const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+// Anon key is safe to commit — it's a public read-only key protected by RLS.
+// Override via REACT_APP_SUPABASE_URL / REACT_APP_SUPABASE_ANON_KEY in .env.local
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
+  || 'https://suodxuignbbsxmqrfagx.supabase.co';
 
-if (!supabaseUrl || !supabaseAnon) {
-  throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY env vars');
-}
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY
+  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b2R4dWlnbmJic3htcXJmYWd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NzI2MzAsImV4cCI6MjA5NjE0ODYzMH0.pQVau8xGbgQzVl7JijINms2ZEuaKzXmSQpwWS8jpbaY';
 
-export const supabase = createClient(supabaseUrl, supabaseAnon, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,   // handles magic-link redirects automatically
+    persistSession:      true,
+    autoRefreshToken:    true,
+    detectSessionInUrl:  true,  // picks up magic-link tokens from the URL
   },
 });

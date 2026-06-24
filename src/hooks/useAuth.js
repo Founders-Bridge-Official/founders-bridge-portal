@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
   const [activeCompany, setActiveCompany] = useState(null);
   const [loading,       setLoading]       = useState(true);
 
-  // helpers
+  // ─── helpers ──────────────────────────────────────────────────────────────────────────────
 
   async function loadUserData(authUser) {
     if (!authUser) {
@@ -36,6 +36,19 @@ export function AuthProvider({ children }) {
       return;
     }
 
+    // ─── Bridge to legacy App.jsx auth system ──────────────────────────────────────────────
+    // CRITICAL: Write fb_user BEFORE the first await so App.jsx always sees
+    // a valid user when it mounts after login navigation. Without this, App.jsx
+    // reads localStorage once on mount and finds null (the DB fetch hasn't
+    // completed yet), causing a "wrong password" false error on first login.
+    localStorage.setItem('fb_user', JSON.stringify({
+      id: authUser.id,
+      email: authUser.email,
+      name: authUser.email,
+      role: 'admin',
+      mustChangePassword: false,
+    }));
+
     // 1. Load profile from public.users (match on auth_uid)
     const { data: profileData } = await supabase
       .from('users')
@@ -45,9 +58,7 @@ export function AuthProvider({ children }) {
 
     setProfile(profileData ?? null);
 
-    // Bridge to legacy App.jsx auth system
-    // Old App.jsx reads fb_user from localStorage to decide whether to show
-    // the app or its own login screen.
+    // Update fb_user with real profile data from DB
     if (profileData) {
       localStorage.setItem('fb_user', JSON.stringify({
         id: profileData.id,
@@ -56,23 +67,20 @@ export function AuthProvider({ children }) {
         role: profileData.role || 'admin',
         mustChangePassword: false,
       }));
-    } else {
-      // Profile row not found yet - fall back to auth user data so the app
-      // still loads instead of looping on the old LoginPage.
-      localStorage.setItem('fb_user', JSON.stringify({
-        id: authUser.id,
-        email: authUser.email,
-        name: authUser.email,
-        role: 'admin',
-        mustChangePassword: false,
-      }));
     }
+    // (if no profile row found, the initial write above remains valid)
 
     // 2. Load all companies for this user via user_companies junction table
     if (profileData) {
       const { data: ucRows } = await supabase
         .from('user_companies')
-        .select('role, is_primary, companies ( id, name, type, status, assigned_to )')
+        .select(`
+          role,
+          is_primary,
+          companies (
+            id, name, type, status, assigned_to
+          )
+        `)
         .eq('user_id', profileData.id);
 
       const companyList = (ucRows ?? []).map(row => ({
@@ -89,7 +97,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // session lifecycle
+  // ─── session lifecycle ─────────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     // Get initial session (handles magic-link redirect on page load)
@@ -110,7 +118,7 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // auth actions
+  // ─── auth actions ──────────────────────────────────────────────────────────────────────────────
 
   async function signInWithPassword(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -139,7 +147,7 @@ export function AuthProvider({ children }) {
     setActiveCompany(null);
   }
 
-  // context value
+  // ─── context value ───────────────────────────────────────────────────────────────────────────────
 
   return (
     <AuthContext.Provider value={{
